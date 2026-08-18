@@ -1,0 +1,15 @@
+---
+import SiteLayout from "../../layouts/SiteLayout.astro";
+import ToolCatalog from "../../components/tools/ToolCatalog.astro";
+import { getToolsStructuredData } from "../../lib/seo";
+---
+
+<SiteLayout
+  title="All file tools — DoMyFile"
+  description="Browse DoMyFile's production-ready image, PDF, audio, and video tools."
+  structuredData={getToolsStructuredData()}
+>
+  <main id="main-content">
+    <ToolCatalog />
+  </main>
+</SiteLayout>

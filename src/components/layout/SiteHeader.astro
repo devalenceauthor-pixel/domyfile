@@ -1,0 +1,48 @@
+---
+import Brand from "../ui/Brand.astro";
+import SearchBox from "../ui/SearchBox.astro";
+---
+
+<header class="site-header">
+  <div class="container header-inner">
+    <Brand />
+
+    <nav class="primary-nav" aria-label="Primary navigation">
+      <a href="/image/">Image</a>
+      <a href="/pdf/">PDF</a>
+      <a href="/audio/">Audio</a>
+      <a href="/video/">Video</a>
+    </nav>
+
+    <div class="header-actions">
+      <SearchBox variant="header" />
+      <a class="button button--small button--secondary header-tools-link" href="/tools/">All tools</a>
+      <button
+        class="icon-button menu-toggle"
+        type="button"
+        aria-expanded="false"
+        aria-controls="mobileNav"
+        aria-label="Open navigation"
+        data-menu-toggle
+      >
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+          <path d="M4 7h16M4 12h16M4 17h16"></path>
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <nav class="mobile-nav container" id="mobileNav" aria-label="Mobile navigation" hidden data-mobile-nav>
+    <a href="/image/">Image</a>
+    <a href="/pdf/">PDF &amp; Document</a>
+    <a href="/audio/">Audio</a>
+    <a href="/video/">Video</a>
+    <a href="/tools/">All tools</a>
+  </nav>
+</header>
+
+<script>
+  import { initSiteHeader } from "../../scripts/site-header";
+
+  initSiteHeader();
+</script>

@@ -1,0 +1,6 @@
+# Hostname migration is configured in Cloudflare Bulk Redirects; Pages _redirects
+# handles only path-level redirects for the static project.
+/image/image-converter https://domyfile.web.id/image/ 301
+/image/image-converter/ https://domyfile.web.id/image/ 301
+/pdf/images-to-pdf https://domyfile.web.id/pdf/ 301
+/pdf/images-to-pdf/ https://domyfile.web.id/pdf/ 301

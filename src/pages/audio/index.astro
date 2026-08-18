@@ -1,0 +1,17 @@
+---
+import SiteLayout from "../../layouts/SiteLayout.astro";
+import ToolCatalog from "../../components/tools/ToolCatalog.astro";
+import RelatedCategories from "../../components/tools/RelatedCategories.astro";
+import { getCategoryStructuredData } from "../../lib/seo";
+---
+
+<SiteLayout
+  title="Audio tools — DoMyFile"
+  description="Trim, merge, compress, and convert common audio files with clear browser-first controls."
+  structuredData={getCategoryStructuredData("audio")}
+>
+  <main id="main-content">
+    <ToolCatalog category="audio" />
+    <div class="container category-related-wrap"><RelatedCategories current="audio" /></div>
+  </main>
+</SiteLayout>

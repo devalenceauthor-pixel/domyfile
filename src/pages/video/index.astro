@@ -1,0 +1,17 @@
+---
+import SiteLayout from "../../layouts/SiteLayout.astro";
+import ToolCatalog from "../../components/tools/ToolCatalog.astro";
+import RelatedCategories from "../../components/tools/RelatedCategories.astro";
+import { getCategoryStructuredData } from "../../lib/seo";
+---
+
+<SiteLayout
+  title="Video tools — DoMyFile"
+  description="Browse DoMyFile's verified local video tools and its disclosed temporary video compression route."
+  structuredData={getCategoryStructuredData("video")}
+>
+  <main id="main-content">
+    <ToolCatalog category="video" />
+    <div class="container category-related-wrap"><RelatedCategories current="video" /></div>
+  </main>
+</SiteLayout>

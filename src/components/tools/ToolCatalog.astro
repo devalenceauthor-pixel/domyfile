@@ -1,0 +1,122 @@
+---
+import SearchBox from "../ui/SearchBox.astro";
+import ToolCard from "../ui/ToolCard.astro";
+import Breadcrumbs from "./Breadcrumbs.astro";
+import ContextualToolLinks from "./ContextualToolLinks.astro";
+import { categoryMeta, getTool, tools } from "../../tools/registry";
+import { getCategoryCrossLinks } from "../../content/internal-links";
+import type { ToolCategory } from "../../tools/types";
+
+interface Props {
+  category?: ToolCategory;
+}
+
+const { category } = Astro.props;
+const selectedCategory = category ?? "all";
+const selectedMeta = category ? categoryMeta[category] : null;
+const visibleTools = category ? tools.filter((tool) => tool.category === category) : tools;
+const categories = Object.keys(categoryMeta) as ToolCategory[];
+const catalogGroups = category
+  ? [{ category, groups: selectedMeta?.groups ?? [] }]
+  : categories.map((item) => ({
+    category: item,
+    groups: [{
+      key: item,
+      label: categoryMeta[item].label,
+      description: categoryMeta[item].description,
+      toolSlugs: tools.filter((tool) => tool.category === item).map((tool) => tool.slug),
+    }],
+  }));
+const resolveGroupTools = (slugs: string[]) => slugs
+  .map((slug) => getTool(slug))
+  .filter((tool): tool is (typeof tools)[number] => Boolean(tool));
+const categoryCrossKicker = category === "image" ? "Image to PDF" : "Continue the workflow";
+const categoryCrossTitle = category === "image" ? "Turn images into PDF pages" : "Related file workflows";
+---
+
+<div class="container tools-page" data-tool-catalog data-initial-category={selectedCategory}>
+  <Breadcrumbs category={category} allTools={!category} />
+  <div class="page-intro">
+    <div>
+      <p class="section-kicker" data-catalog-eyebrow>{selectedMeta?.label ?? "Tool library"}</p>
+      <h1 data-catalog-title>{selectedMeta ? selectedMeta.label + " tools." : "All the useful file tools."}</h1>
+      <p data-catalog-description>{selectedMeta?.description ?? "Pick a production-ready tool and move from select to download in a few clear steps; any temporary server processing is disclosed clearly."}</p>
+    </div>
+    <a class="button button--secondary" href="/">Back home</a>
+  </div>
+
+  {selectedMeta && (
+    <section class="category-context" aria-labelledby="categoryContextTitle">
+      <div class="category-context-copy">
+        <p class="section-kicker">What this category handles</p>
+        <h2 id="categoryContextTitle">{selectedMeta.content.heading}</h2>
+        <p>{selectedMeta.content.body}</p>
+      </div>
+      <dl class="category-context-facts">
+        <div>
+          <dt>Formats</dt>
+          <dd>{selectedMeta.content.formats}</dd>
+        </div>
+        <div>
+          <dt>Common tasks</dt>
+          <dd>{selectedMeta.content.intents}</dd>
+        </div>
+        <div>
+          <dt>Processing</dt>
+          <dd>{selectedMeta.content.processing}</dd>
+        </div>
+      </dl>
+    </section>
+  )}
+
+  <div class="client-side-banner" role="note"><strong>Private by design</strong><p>{selectedMeta?.content.processing ?? "Browser tools keep selected files on your device; any temporary server processing is disclosed before it starts and deleted automatically."}</p></div>
+
+  <div class="tools-controls">
+    <SearchBox variant="catalog" id="catalogSearchInput" />
+    {!category && (
+      <div class="filter-row" role="group" aria-label="Filter tools by category" data-category-filters>
+        <button class:list={["filter-button", selectedCategory === "all" && "is-active"]} type="button" data-category="all">All tools</button>
+        {categories.map((item) => <button class:list={["filter-button", selectedCategory === item && "is-active"]} type="button" data-category={item}>{categoryMeta[item].label.replace(" & Document", "")}</button>)}
+      </div>
+    )}
+  </div>
+  <p class="catalog-count" aria-live="polite" data-catalog-count>{visibleTools.length} {visibleTools.length === 1 ? "tool" : "tools"}</p>
+  <div class="tool-catalog-groups" data-catalog-grid>
+    {catalogGroups.map(({ category: groupCategory, groups }) => groups.map((group) => {
+      const groupTools = resolveGroupTools(group.toolSlugs);
+      return (
+        <section class:list={["tool-group", !category && "tool-group--library"]} data-catalog-group aria-labelledby={groupCategory + "-" + group.key + "-title"}>
+          <div class="tool-group-heading">
+            <div>
+              <p class="section-kicker">{category ? "Tool group" : "Category " + categoryMeta[groupCategory].number}</p>
+              <h2 id={groupCategory + "-" + group.key + "-title"}>{!category ? <a href={"/" + groupCategory + "/"}>{group.label} tools</a> : group.label}</h2>
+              <p>{group.description}</p>
+            </div>
+            {!category && <a class="text-link" href={"/" + groupCategory + "/"}>View {categoryMeta[groupCategory].label} hub</a>}
+          </div>
+          <div class="tool-grid tool-grid--catalog">
+            {groupTools.map((tool) => <div data-catalog-item data-tool-category={tool.category} data-tool-slug={tool.slug}><ToolCard tool={tool} /></div>)}
+          </div>
+        </section>
+      );
+    }))}
+    <div class="empty-catalog" hidden>
+      <strong>No tools match that search.</strong>
+      <p>Try a task or format like PNG to PDF.</p>
+    </div>
+  </div>
+
+  {category && (
+    <ContextualToolLinks
+      links={getCategoryCrossLinks(category)}
+      kicker={categoryCrossKicker}
+      title={categoryCrossTitle}
+    />
+  )}
+</div>
+
+<script>
+  import { initToolCatalog } from "../../scripts/tool-catalog";
+
+  initToolCatalog();
+</script>

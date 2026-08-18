@@ -1,0 +1,38 @@
+{
+  "name": "domyfile",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "check": "astro check",
+    "typecheck": "astro check",
+    "lint": "eslint .",
+    "verify:seo": "node scripts/verify-seo.mjs",
+    "verify:phase2a": "node scripts/verify-phase2a.mjs",
+    "verify:phase2b": "node scripts/verify-phase2b.mjs",
+    "verify:phase3": "node scripts/verify-phase3.mjs",
+    "verify:phase6": "node scripts/verify-phase6.mjs",
+    "test": "vitest run --passWithNoTests --exclude tests/e2e/** --exclude .build/**",
+    "test:e2e": "playwright test"
+  },
+  "dependencies": {
+    "@ffmpeg/ffmpeg": "0.12.15",
+    "@ffmpeg/util": "0.12.2",
+    "astro": "^7.2.2",
+    "heic-to": "1.5.2",
+    "pdf-lib": "^1.17.1",
+    "pdfjs-dist": "^6.2.108"
+  },
+  "devDependencies": {
+    "@astrojs/check": "^0.9.10",
+    "@playwright/test": "1.62.1",
+    "@types/node": "26.2.0",
+    "eslint": "^10.8.1",
+    "eslint-plugin-astro": "^3.1.0",
+    "typescript": "^5.9.2",
+    "typescript-eslint": "^8.67.0",
+    "vitest": "^4.1.10"
+  }
+}

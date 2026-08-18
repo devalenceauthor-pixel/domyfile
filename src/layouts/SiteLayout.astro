@@ -1,0 +1,52 @@
+---
+import "../styles/global.css";
+import SiteHeader from "../components/layout/SiteHeader.astro";
+import SiteFooter from "../components/layout/SiteFooter.astro";
+import { getCanonicalUrl, serializeJsonLd } from "../lib/seo";
+import type { JsonLd } from "../lib/seo";
+
+interface Props {
+  title: string;
+  description: string;
+  ogType?: "website" | "article";
+  indexable?: boolean;
+  structuredData?: JsonLd[];
+}
+
+const { title, description, ogType = "website", indexable = true, structuredData = [] } = Astro.props;
+const canonicalUrl = getCanonicalUrl(Astro.url.pathname);
+const ogImageUrl = Astro.site ? new URL("/assets/domyfile-logo.png", Astro.site).href : "/assets/domyfile-logo.png";
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+    <meta name="description" content={description} />
+    <meta name="robots" content={indexable ? "index, follow" : "noindex, nofollow"} />
+    <meta name="theme-color" content="#eff6ff" />
+    <meta property="og:type" content={ogType} />
+    <meta property="og:site_name" content="DoMyFile" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    {indexable && <meta property="og:url" content={canonicalUrl} />}
+    <meta property="og:image" content={ogImageUrl} />
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={ogImageUrl} />
+    {indexable && <link rel="canonical" href={canonicalUrl} />}
+    <link rel="icon" href="/assets/domyfile-logo-128.png" type="image/png" />
+    <title>{title}</title>
+    {structuredData.map((schema) => <script type="application/ld+json" is:inline set:html={serializeJsonLd(schema)} />)}
+  </head>
+  <body>
+    <a class="skip-link" href="#main-content">Skip to content</a>
+    <div class="site-shell">
+      <SiteHeader />
+      <slot />
+      <SiteFooter />
+    </div>
+  </body>
+</html>

@@ -1,0 +1,73 @@
+---
+import TrustPage from "../components/layout/TrustPage.astro";
+import { getTrustPageStructuredData } from "../lib/seo";
+
+const label = "About DoMyFile";
+---
+
+<TrustPage
+  title="About DoMyFile — browser-first file tools"
+  description="Learn what DoMyFile does, which file categories it supports, and how its browser-local and temporary server workflows work."
+  label={label}
+  intro="DoMyFile is a browser-first file toolkit for common image, PDF, audio, and video tasks, with a clear select-to-download workflow."
+  structuredData={getTrustPageStructuredData(label, "/about/")}
+>
+  <section class="info-section" aria-labelledby="about-product-title">
+    <p class="section-kicker">The product</p>
+    <h2 id="about-product-title">Simple file tools that just work.</h2>
+    <p>
+      DoMyFile helps people fix common file problems without installing dedicated software or creating an account. The current production set covers image editing and conversion, PDF page and document workflows, audio editing and conversion, and focused video workflows.
+    </p>
+    <p>
+      The canonical website is <a class="inline-link" href="https://domyfile.web.id">https://domyfile.web.id</a>. The public site and tool pages are statically generated so the task explanation, supported formats, limitations, and privacy behavior are available before the interactive processor loads.
+    </p>
+  </section>
+
+  <section class="info-section" aria-labelledby="about-categories-title">
+    <p class="section-kicker">What it handles</p>
+    <h2 id="about-categories-title">Four focused file categories.</h2>
+    <div class="info-grid">
+      <article class="info-card">
+        <h3><a class="inline-link" href="/image/">Image</a></h3>
+        <p>Compress, resize, crop, or convert supported JPG, PNG, WebP, and HEIC/HEIF images.</p>
+      </article>
+      <article class="info-card">
+        <h3><a class="inline-link" href="/pdf/">PDF &amp; Document</a></h3>
+        <p>Merge, split, organize, rotate, watermark, compress, and convert supported document workflows.</p>
+      </article>
+      <article class="info-card">
+        <h3><a class="inline-link" href="/audio/">Audio</a></h3>
+        <p>Trim, merge, convert, and compress the verified common audio formats.</p>
+      </article>
+      <article class="info-card">
+        <h3><a class="inline-link" href="/video/">Video</a></h3>
+        <p>Trim verified video, extract MP3 audio, remux supported MP4/MOV containers, or use temporary compression.</p>
+      </article>
+    </div>
+  </section>
+
+  <section class="info-section" aria-labelledby="about-processing-title">
+    <p class="section-kicker">Processing model</p>
+    <h2 id="about-processing-title">Local by default, transparent when a server is needed.</h2>
+    <div class="info-grid info-grid--two">
+      <article class="info-card">
+        <h3>Browser-local tools</h3>
+        <p>Most tools process selected files in the browser. The file bytes stay on the device, and the result is prepared for a local download.</p>
+      </article>
+      <article class="info-card">
+        <h3>Temporary server tools</h3>
+        <p>Compress PDF and Compress Video use temporary server processing because their current compression engines require it. The upload and automatic deletion are disclosed before processing.</p>
+      </article>
+    </div>
+    <p class="info-note">DoMyFile does not present unsupported formats as successful results, and the individual tool pages describe important compatibility limits.</p>
+  </section>
+
+  <section class="info-callout" aria-labelledby="about-privacy-title">
+    <div>
+      <p class="section-kicker">Privacy model</p>
+      <h2 id="about-privacy-title">Files are handled according to the selected tool.</h2>
+      <p>Read the full distinction between browser-local processing and temporary server processing on the <a class="inline-link" href="/privacy/">Privacy page</a>.</p>
+    </div>
+    <a class="button button--secondary" href="/tools/">Browse all tools</a>
+  </section>
+</TrustPage>

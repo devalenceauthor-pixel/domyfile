@@ -1,0 +1,111 @@
+---
+import ToolOptions from "./ToolOptions.astro";
+import Breadcrumbs from "./Breadcrumbs.astro";
+import type { ToolPageContent } from "../../content/tool-content";
+import type { ToolDefinition } from "../../tools/types";
+import { getProcessingBoundary, getToolAvailability } from "../../tools/registry";
+
+interface Props {
+  tool: ToolDefinition;
+  page: ToolPageContent;
+}
+
+const { tool, page } = Astro.props;
+const availability = getToolAvailability(tool);
+const isServerFallback = getProcessingBoundary(tool) === "server";
+const isDeferred = availability !== "production-ready";
+const statusReason = tool.statusReason ?? "This route is not enabled for V1 processing.";
+const fallbackUrl = import.meta.env.PUBLIC_FALLBACK_URL ?? "/__server-fallback";
+---
+
+<section class="tool-workspace" data-workspace data-tool-slug={tool.slug} data-tool-category={tool.category} data-tool-availability={availability} data-minimum-files={tool.minimumFiles ?? 1} data-batch={tool.batch ? "true" : "false"} data-deferred={isDeferred ? "true" : "false"} data-server-fallback={isServerFallback ? "true" : "false"} data-server-fallback-url={isServerFallback ? fallbackUrl : undefined}>
+  <div class="workspace-topbar">
+    <Breadcrumbs tool={tool} />
+    <span class="workspace-local-note">{isServerFallback ? "Temporary upload · deleted automatically" : "Private by design · nothing is uploaded or stored"}</span>
+  </div>
+
+  <div class="workspace-heading">
+    <p class="section-kicker">{tool.category === "pdf" ? "PDF & Document" : tool.category[0].toUpperCase() + tool.category.slice(1)} tool</p>
+    <h1>{page.h1}</h1>
+    <p>{page.intro}</p>
+  </div>
+
+  {isDeferred && (
+    <div class="tool-availability-banner" role="status">
+      <strong>Deferred for V1 — no files are processed on this route.</strong>
+      <span>{statusReason}</span>
+    </div>
+  )}
+
+  {isServerFallback && (
+    <div class="tool-availability-banner tool-availability-banner--server" role="status">
+      <strong>Temporary upload for processing.</strong>
+      <span>{tool.serverDisclosure ?? "This file is temporarily uploaded for processing and deleted automatically after the job."}</span>
+    </div>
+  )}
+
+  <div class="workspace-layout">
+    <section class="workspace-card upload-card" aria-labelledby="uploadHeading">
+      <div class="workspace-card-heading">
+        <div>
+          <p class="section-kicker">01 <span>Choose your file</span></p>
+          <h2 id="uploadHeading">{isDeferred ? "Processing is not enabled" : "Add files to get started"}</h2>
+        </div>
+        <span class="step-status" data-upload-step-status>Waiting for a file</span>
+      </div>
+
+      <div class="upload-zone" tabindex={isDeferred ? -1 : 0} role="button" aria-disabled={isDeferred ? "true" : "false"} aria-controls="fileInput" aria-label={isDeferred ? "Processing deferred for V1" : "Choose files or drop them here"} data-upload-zone>
+        <input id="fileInput" type="file" tabindex="-1" hidden disabled={isDeferred} accept={tool.input.extensions.map((extension) => `.${extension}`).join(",")} {...(tool.batch ? { multiple: true } : {})} data-file-input />
+        <h3 data-upload-title>{isDeferred ? "This route is not available yet" : "Drop files here"}</h3>
+        <p data-upload-subtitle>{isDeferred ? "Choose a production-ready tool from the related links below." : "or choose files from your device"}</p>
+        <button class="button button--primary" type="button" disabled={isDeferred} data-choose-files>{isDeferred ? "Processing deferred" : "Choose files"}</button>
+        <p class="supported-formats">{isDeferred ? "Planned formats: " : ""}{tool.input.formats.join(" · ")}</p>
+        <p class="upload-privacy">{isServerFallback ? "Uploaded temporarily for processing · deleted automatically" : "Private by design · nothing is uploaded or stored"}</p>
+      </div>
+
+      <div class="file-list-wrap" hidden data-file-list-wrap>
+        <div class="file-list-heading"><h3>Selected files</h3><span data-file-count>0 files</span></div>
+        <ul class="file-list" data-file-list></ul>
+        <div class="workspace-preview-region" hidden data-workspace-preview></div>
+        <button class="add-more-button" type="button" data-add-more><span aria-hidden="true">+</span> Add more files</button>
+      </div>
+      <p class="inline-error" role="alert" hidden data-file-error></p>
+    </section>
+
+    <aside class="workspace-card options-card" aria-labelledby="optionsHeading">
+      <div class="workspace-card-heading">
+        <div>
+          <p class="section-kicker">02 <span>Configure</span></p>
+          <h2 id="optionsHeading">Set your preferences</h2>
+        </div>
+        <span class="optional-label">Optional</span>
+      </div>
+      <div id="optionsContent"><ToolOptions tool={tool} /></div>
+      <div class="options-footer">
+        <div class="processing-note"><span data-processing-note>{isServerFallback ? "This file is uploaded temporarily, processed, and deleted automatically." : "Your files stay on this device. This workspace does not upload or store them."}</span></div>
+        <div class="processing-progress" hidden data-processing-progress>
+          <div class="processing-progress-heading"><span>Processing</span><span data-processing-progress-label>Working…</span></div>
+          <progress max="100" value="0" aria-label="File processing progress" data-processing-progress-bar></progress>
+        </div>
+        <button class="button button--primary button--wide" type="button" disabled={isDeferred} data-process-button>{tool.action}</button>
+        <p class="status-message" role="status" aria-live="polite" hidden data-workspace-status></p>
+      </div>
+    </aside>
+  </div>
+
+  <section class="result-card" aria-labelledby="resultTitle" hidden data-result-card>
+    <div class="result-heading"><p class="section-kicker">03 <span>Result</span></p><h2 id="resultTitle">Ready to download</h2></div>
+    <p class="result-summary" data-result-summary></p>
+    <div class="result-list" data-result-list></div>
+    <div class="result-actions">
+      <button class="button button--primary" type="button" data-download-all>Download files</button>
+      <button class="button button--secondary" type="button" data-process-another>Process another</button>
+    </div>
+  </section>
+</section>
+
+<script>
+  import { initToolWorkspace } from "../../scripts/tool-workspace";
+
+  initToolWorkspace();
+</script>

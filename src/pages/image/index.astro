@@ -1,0 +1,17 @@
+---
+import SiteLayout from "../../layouts/SiteLayout.astro";
+import ToolCatalog from "../../components/tools/ToolCatalog.astro";
+import RelatedCategories from "../../components/tools/RelatedCategories.astro";
+import { getCategoryStructuredData } from "../../lib/seo";
+---
+
+<SiteLayout
+  title="Image tools — DoMyFile"
+  description="Resize, compress, crop, and convert JPG, PNG, WebP, and supported HEIC images directly on your device with DoMyFile."
+  structuredData={getCategoryStructuredData("image")}
+>
+  <main id="main-content">
+    <ToolCatalog category="image" />
+    <div class="container category-related-wrap"><RelatedCategories current="image" /></div>
+  </main>
+</SiteLayout>

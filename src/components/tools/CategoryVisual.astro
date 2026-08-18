@@ -1,0 +1,19 @@
+---
+import type { ToolCategory } from "../../tools/types";
+import { categoryMeta } from "../../tools/registry";
+
+interface Props {
+  category: ToolCategory;
+}
+
+const { category } = Astro.props;
+const meta = categoryMeta[category];
+---
+
+<img
+  class="category-visual-svg"
+  src={`/assets/graphics/${category}-workflow.svg`}
+  alt={`${meta.label} local workflow`}
+  loading="lazy"
+  decoding="async"
+/> 

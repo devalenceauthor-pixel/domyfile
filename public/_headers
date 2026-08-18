@@ -1,0 +1,11 @@
+/_astro/*
+  Cache-Control: public, max-age=31556952, immutable
+
+/assets/domyfile-logo-128.png
+  Cache-Control: public, max-age=31556952, immutable
+
+/runtime/ffmpeg-core-lgpl-5.1.4/*
+  Cache-Control: public, max-age=31556952, immutable
+
+/runtime/heic-to-1.5.2/*
+  Cache-Control: public, max-age=31556952, immutable

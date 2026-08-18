@@ -1,0 +1,23 @@
+---
+import ToolIcon from "./ToolIcon.astro";
+import type { ToolDefinition } from "../../tools/types";
+import { getToolAvailability, getToolPath } from "../../tools/registry";
+
+interface Props {
+  tool: ToolDefinition;
+}
+
+const { tool } = Astro.props;
+const isDeferred = getToolAvailability(tool) !== "production-ready";
+---
+
+<a class="tool-card" href={getToolPath(tool)} data-tool-slug={tool.slug}>
+  <div class="tool-card-top">
+    <span class="tool-card-icon"><ToolIcon slug={tool.slug} /></span>
+  </div>
+  <div>
+    <h3 class="tool-card-title">{tool.title}</h3>
+    <p class="tool-card-description">{tool.description}</p>
+    <div class="tool-card-meta"><span>{tool.input.formats.slice(0, 3).join(" · ")}</span>{isDeferred && <span class="availability-badge">Deferred</span>}</div>
+  </div>
+</a>

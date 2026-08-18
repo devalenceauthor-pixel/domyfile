@@ -1,0 +1,29 @@
+---
+interface Props {
+  slug: string;
+  size?: number;
+}
+
+const { slug, size = 54 } = Astro.props;
+const iconAliases: Record<string, string> = {
+  "jpg-to-webp": "webp-converter",
+  "png-to-webp": "webp-converter",
+  "webp-to-jpg": "png-to-jpg",
+  "webp-to-png": "jpg-to-png",
+  "jpg-to-pdf": "images-to-pdf",
+  "png-to-pdf": "images-to-pdf",
+  "webp-to-pdf": "images-to-pdf",
+};
+const iconSlug = iconAliases[slug] ?? slug;
+---
+
+<img
+  class="tool-icon-svg"
+  src={`/assets/icons/${iconSlug}.svg`}
+  alt=""
+  width={size}
+  height={size}
+  aria-hidden="true"
+  loading="lazy"
+  decoding="async"
+/> 

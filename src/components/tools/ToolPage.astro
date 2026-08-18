@@ -1,0 +1,125 @@
+---
+import ToolCard from "../ui/ToolCard.astro";
+import ToolWorkspace from "./ToolWorkspace.astro";
+import ContextualToolLinks from "./ContextualToolLinks.astro";
+import { categoryMeta, getTool, getToolAvailability } from "../../tools/registry";
+import { getToolContent } from "../../content/tool-content";
+import { getToolCrossLinks } from "../../content/internal-links";
+import type { ToolDefinition } from "../../tools/types";
+
+interface Props {
+  tool: ToolDefinition;
+}
+
+const { tool } = Astro.props;
+const content = getToolContent(tool);
+const relatedTools = content.relatedTools
+  .map((slug) => getTool(slug))
+  .filter((candidate): candidate is ToolDefinition => Boolean(candidate && candidate.slug !== tool.slug));
+const categoryLabel = categoryMeta[tool.category].label;
+const availability = getToolAvailability(tool);
+const isDeferred = availability !== "production-ready";
+const crossLinks = getToolCrossLinks(tool.slug, content.relatedTools);
+const batchLabel = content.batchBehavior.supported
+  ? content.batchBehavior.minimumFiles
+    ? "Batch input · " + content.batchBehavior.minimumFiles + "+ files"
+    : "Batch input supported"
+  : "One file per job";
+---
+
+<main id="main-content">
+  <div class="container workspace-page">
+    <ToolWorkspace tool={tool} page={content.page} />
+
+    <section class="tool-seo" aria-labelledby="howItWorksTitle">
+      <div class="tool-seo-copy">
+        <p class="section-kicker">Primary task</p>
+        {isDeferred && <div class="tool-page-status" data-availability="deferred">Deferred for V1</div>}
+        <h2 id="howItWorksTitle">How {tool.title.toLowerCase()} works</h2>
+        <p>{content.page.summary}</p>
+      </div>
+      <div class="tool-seo-steps">
+        {content.page.steps.map((step, index) => (
+          <div>
+            <span>0{index + 1}</span>
+            <strong>{step.title}</strong>
+            <p>{step.body}</p>
+          </div>
+        ))}
+      </div>
+    </section>
+
+    <section class="tool-info-grid" aria-label="Tool details">
+      <div class="tool-info-card">
+        <p class="section-kicker">Input and output</p>
+        <h2>{content.acceptedInput.formats.join(" · ")} → {content.output.formats.join(" · ")}</h2>
+        <p>Accepted extensions: {content.acceptedInput.extensions.map((extension) => "." + extension).join(", ")}.</p>
+        <p>{content.output.behavior}</p>
+      </div>
+      <div class="tool-info-card">
+        <p class="section-kicker">Controls and batch</p>
+        <h2>{batchLabel}</h2>
+        <ul class="tool-fact-list">
+          {content.keyControls.map((control) => <li>{control}</li>)}
+          <li>{content.batchBehavior.description}</li>
+        </ul>
+      </div>
+      <div class="tool-info-card">
+        <p class="section-kicker">Quality and compatibility</p>
+        <h2>What the result keeps</h2>
+        <ul class="tool-fact-list">
+          {content.qualityCompatibility.map((fact) => <li>{fact}</li>)}
+        </ul>
+      </div>
+      <div class="tool-info-card">
+        <p class="section-kicker">Important limitations</p>
+        <h2>Check before processing</h2>
+        <ul class="tool-fact-list">
+          {content.importantLimitations.map((limitation) => <li>{limitation}</li>)}
+        </ul>
+      </div>
+      <div class="tool-info-card">
+        <p class="section-kicker">Result and privacy</p>
+        <h2>{content.processingMode === "temporary-server" ? "Temporary result flow" : "Local result flow"}</h2>
+        <p>{content.resultDownload}</p>
+        <p>{content.page.privacy}</p>
+      </div>
+    </section>
+
+    <section class="faq-section" aria-labelledby="faqTitle">
+      <div class="section-heading-row">
+        <div>
+          <p class="section-kicker">Questions for this tool</p>
+          <h2 id="faqTitle">Frequently asked questions</h2>
+        </div>
+      </div>
+      <div class="faq-list">
+        {content.faqContent.map((faq, index) => (
+          <details open={index === 0}>
+            <summary>{faq.question}</summary>
+            <p>{faq.answer}</p>
+          </details>
+        ))}
+      </div>
+    </section>
+
+    <ContextualToolLinks
+      links={crossLinks}
+      kicker="Next workflow"
+      title="Continue with a related file task"
+    />
+
+    <section class="related-section" aria-labelledby="relatedToolsTitle">
+      <div class="section-heading-row">
+        <div>
+          <p class="section-kicker">Related {categoryLabel.toLowerCase()} workflows</p>
+          <h2 id="relatedToolsTitle">Next useful step</h2>
+        </div>
+        <a class="text-link" href={"/" + tool.category + "/"}>View all {categoryLabel} tools</a>
+      </div>
+      <div class="tool-grid related-tool-grid">
+        {relatedTools.map((relatedTool) => <ToolCard tool={relatedTool} />)}
+      </div>
+    </section>
+  </div>
+</main>

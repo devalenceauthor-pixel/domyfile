@@ -1,0 +1,29 @@
+---
+import { categoryMeta } from "../../tools/registry";
+import type { ToolCategory } from "../../tools/types";
+
+interface Props {
+  current: ToolCategory;
+}
+
+const { current } = Astro.props;
+const categories = (Object.keys(categoryMeta) as ToolCategory[]).filter((category) => category !== current);
+---
+
+<section class="related-section" aria-labelledby="relatedCategoriesTitle">
+  <div class="section-heading-row">
+    <div>
+      <p class="section-kicker">Keep exploring</p>
+      <h2 id="relatedCategoriesTitle">Other file fixes</h2>
+    </div>
+  </div>
+  <div class="related-category-grid">
+    {categories.map((category) => (
+      <a class="related-category-link" href={`/${category}/`}>
+        <span>{categoryMeta[category].number}</span>
+        <strong>{categoryMeta[category].label}</strong>
+        <small>{categoryMeta[category].description}</small>
+      </a>
+    ))}
+  </div>
+</section>

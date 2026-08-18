@@ -1,0 +1,39 @@
+---
+import { categoryMeta } from "../../tools/registry";
+import type { ToolCategory, ToolDefinition } from "../../tools/types";
+
+interface Props {
+  category?: ToolCategory;
+  tool?: Pick<ToolDefinition, "category" | "slug" | "title">;
+  allTools?: boolean;
+}
+
+const { category, tool, allTools = false } = Astro.props;
+const currentCategory = tool?.category ?? category;
+---
+
+<nav class="breadcrumbs" aria-label="Breadcrumb">
+  <ol>
+    <li>
+      <a href="/">Home</a>
+    </li>
+    {currentCategory && (
+      <li>
+        <span class="breadcrumb-separator" aria-hidden="true">›</span>
+        {tool ? <a href={`/${currentCategory}/`}>{categoryMeta[currentCategory].label}</a> : <span aria-current="page">{categoryMeta[currentCategory].label}</span>}
+      </li>
+    )}
+    {tool && (
+      <li>
+        <span class="breadcrumb-separator" aria-hidden="true">›</span>
+        <span aria-current="page">{tool.title}</span>
+      </li>
+    )}
+    {!currentCategory && allTools && (
+      <li>
+        <span class="breadcrumb-separator" aria-hidden="true">›</span>
+        <span aria-current="page">All tools</span>
+      </li>
+    )}
+  </ol>
+</nav>

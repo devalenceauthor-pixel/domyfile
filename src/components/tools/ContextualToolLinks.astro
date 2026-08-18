@@ -1,0 +1,37 @@
+---
+import { getTool, getToolPath } from "../../tools/registry";
+import type { ToolDefinition } from "../../tools/types";
+import type { ContextualToolLink } from "../../content/internal-links";
+
+interface Props {
+  links: ContextualToolLink[];
+  kicker: string;
+  title: string;
+}
+
+const { links, kicker, title } = Astro.props;
+const resolvedLinks = links
+  .map((link) => ({ link, tool: getTool(link.slug) }))
+  .filter((entry): entry is { link: ContextualToolLink; tool: ToolDefinition } => Boolean(entry.tool));
+---
+
+{resolvedLinks.length > 0 && (
+  <section class="contextual-links-section" aria-labelledby="contextualLinksTitle">
+    <div class="section-heading-row">
+      <div>
+        <p class="section-kicker">{kicker}</p>
+        <h2 id="contextualLinksTitle">{title}</h2>
+      </div>
+    </div>
+    <ul class="contextual-link-list">
+      {resolvedLinks.map(({ link, tool }) => (
+        <li>
+          <a href={getToolPath(tool)}>
+            <strong>{link.anchor}</strong>
+            <span>{link.description}</span>
+          </a>
+        </li>
+      ))}
+    </ul>
+  </section>
+)}

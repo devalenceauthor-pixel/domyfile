@@ -1,0 +1,14 @@
+---
+import SiteLayout from "../layouts/SiteLayout.astro";
+---
+
+<SiteLayout title="Page not found — DoMyFile" description="That DoMyFile page could not be found." indexable={false}>
+  <main id="main-content">
+    <div class="container tools-page not-found-page">
+      <p class="section-kicker">404 · Not found</p>
+      <h1>That page isn’t here.</h1>
+      <p>Try the tool library to find the file fix you need.</p>
+      <a class="button button--primary" href="/tools/">Browse all tools</a>
+    </div>
+  </main>
+</SiteLayout>

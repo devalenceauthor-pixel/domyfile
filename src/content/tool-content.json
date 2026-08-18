@@ -1,0 +1,1075 @@
+[
+  {
+    "slug": "compress-image",
+    "title": "Compress Image",
+    "category": "image",
+    "primarySearchIntent": "Make a JPG, PNG, or WebP image smaller without changing its dimensions by default.",
+    "acceptedInput": { "formats": ["JPG", "PNG", "WebP"], "extensions": ["jpg", "jpeg", "png", "webp"] },
+    "output": { "formats": ["JPG", "PNG", "WebP"], "behavior": "Keep the original format or choose a verified image output format." },
+    "processingMode": "browser-local",
+    "keyControls": ["Quality from 35% to 100%", "Keep the original format or choose JPG, PNG, or WebP"],
+    "batchBehavior": { "supported": true, "description": "Select multiple images and receive one result for each successful input." },
+    "importantLimitations": ["It changes encoding and quality; it is not a pixel-dimension resize tool.", "Unsupported image formats are rejected before processing."],
+    "qualityCompatibility": ["Dimensions are preserved by default.", "PNG output remains lossless; JPG and WebP can trade quality for smaller files.", "Decoded orientation and browser color behavior remain subject to the shared Image Engine."],
+    "resultDownload": "Each successful image receives a deterministic optimized filename and is available through the shared download action.",
+    "faqTopics": ["Can I compress JPG, PNG, and WebP together?", "Does compression change image dimensions?", "Can I choose JPG or WebP output?", "Are my images uploaded?"],
+    "relatedTools": ["resize-image", "jpg-to-webp", "png-to-webp"],
+    "primaryLongTailOpportunity": "compress JPG PNG or WebP without resizing",
+    "canonicalDecision": "Keep this as the self-canonical broad image-size workflow; do not merge it with Resize Image or a directional format route.",
+    "page": {
+      "title": "Compress Image - JPG, PNG & WebP | DoMyFile",
+      "metaDescription": "Compress JPG, PNG, and WebP images without changing dimensions by default. Choose quality and output format, then download each result locally.",
+      "h1": "Compress JPG, PNG, and WebP images",
+      "intro": "Reduce image encoding size while keeping the original dimensions by default. Choose quality and a verified output format for each result.",
+      "summary": "Compress Image is for smaller files, not smaller pixels: it changes encoding quality while preserving dimensions by default. JPG and WebP can trade detail for size; PNG output remains lossless.",
+      "steps": [
+        { "title": "Add images", "body": "Select one or more supported JPG, PNG, or WebP files." },
+        { "title": "Set compression", "body": "Choose 35% to 100% quality and keep the format or select JPG, PNG, or WebP output." },
+        { "title": "Download optimized files", "body": "Review each validated result and download the successful files." }
+      ],
+      "privacy": "Images are processed locally in your browser and are not uploaded or stored by this workflow."
+    },
+    "faqContent": [
+      { "question": "Can I compress JPG, PNG, and WebP together?", "answer": "Yes. The batch workspace accepts supported JPG, PNG, and WebP files and creates one result for each successful input." },
+      { "question": "Does compression change image dimensions?", "answer": "No. Compress Image preserves dimensions by default. Use Resize Image when the pixel dimensions need to change." },
+      { "question": "Can I choose JPG or WebP output?", "answer": "Yes. Keep the original format or choose JPG, PNG, or WebP when the selected output path supports it." },
+      { "question": "Are my images uploaded?", "answer": "No. This browser-local workflow processes the selected images on your device." }
+    ]
+  },
+  {
+    "slug": "resize-image",
+    "title": "Resize Image",
+    "category": "image",
+    "primarySearchIntent": "Change image dimensions by percentage while preserving the original aspect ratio by default.",
+    "acceptedInput": { "formats": ["JPG", "PNG", "WebP"], "extensions": ["jpg", "jpeg", "png", "webp"] },
+    "output": { "formats": ["JPG", "PNG", "WebP"], "behavior": "Keeps the decoded input image format." },
+    "processingMode": "browser-local",
+    "keyControls": ["Scale from 10% to 200%", "Keep the original aspect ratio checkbox"],
+    "batchBehavior": { "supported": true, "description": "Select multiple images and apply the same scale settings to each successful input." },
+    "importantLimitations": ["The control is percentage-based rather than a separate width-and-height editor.", "It changes dimensions, not just file encoding size."],
+    "qualityCompatibility": ["Dimensions are calculated after local decoding.", "The original aspect ratio is enabled by default.", "Output quality depends on the selected raster format and browser encoding."],
+    "resultDownload": "Each resized image is validated and offered through the shared multi-file download flow.",
+    "faqTopics": ["Can I resize several images at once?", "What percentage range is available?", "Will the aspect ratio stay intact?", "Does resizing also compress the image?"],
+    "relatedTools": ["compress-image", "crop-image", "jpg-to-webp"],
+    "primaryLongTailOpportunity": "resize JPG PNG or WebP images by percentage",
+    "canonicalDecision": "Keep this as the self-canonical dimensions workflow; compression and cropping remain separate intents.",
+    "page": {
+      "title": "Resize Image by Percentage - JPG, PNG & WebP | DoMyFile",
+      "metaDescription": "Resize JPG, PNG, or WebP images by 10%-200% while keeping aspect ratio by default. Apply one scale to multiple files in your browser.",
+      "h1": "Resize JPG, PNG, and WebP images by percentage",
+      "intro": "Change image dimensions with a 10%-200% scale control while keeping the aspect ratio by default.",
+      "summary": "Resize Image changes pixel dimensions; it is not the same as Compress Image, which targets encoding size. The same percentage and aspect-ratio setting can be applied to each successful batch item.",
+      "steps": [
+        { "title": "Choose images", "body": "Select one or more supported JPG, PNG, or WebP files." },
+        { "title": "Set the scale", "body": "Choose a percentage from 10% to 200% and keep or release the aspect-ratio setting." },
+        { "title": "Download resized files", "body": "Each validated image is available through the multi-file result download." }
+      ],
+      "privacy": "Images are decoded and resized locally in your browser; the workflow does not upload or store them."
+    },
+    "faqContent": [
+      { "question": "Can I resize several images at once?", "answer": "Yes. Batch support applies the same scale settings to each successful JPG, PNG, or WebP input." },
+      { "question": "What percentage range is available?", "answer": "The scale control runs from 10% to 200%." },
+      { "question": "Will the aspect ratio stay intact?", "answer": "The keep-aspect-ratio option is enabled by default. The output dimensions are calculated after local decoding." },
+      { "question": "Does resizing also compress the image?", "answer": "Resize Image changes dimensions. Output quality still depends on the raster format and browser encoding, but file-size reduction is not the primary control." }
+    ]
+  },
+  {
+    "slug": "crop-image",
+    "title": "Crop Image",
+    "category": "image",
+    "primarySearchIntent": "Crop a JPG, PNG, or WebP image to a freeform or common aspect ratio.",
+    "acceptedInput": { "formats": ["JPG", "PNG", "WebP"], "extensions": ["jpg", "jpeg", "png", "webp"] },
+    "output": { "formats": ["JPG", "PNG", "WebP"], "behavior": "Choose a verified raster output format after framing the crop." },
+    "processingMode": "browser-local",
+    "keyControls": ["Freeform, 1:1, 4:3, 16:9, or 3:4 crop ratio", "Drag and resize the crop frame", "Arrow-key movement and Shift resize", "JPG, PNG, or WebP output"],
+    "batchBehavior": { "supported": false, "description": "The visual crop workspace processes one image at a time." },
+    "importantLimitations": ["The crop is a raster export, not a non-destructive editor project.", "The output contains the selected frame and does not retain the discarded pixels."],
+    "qualityCompatibility": ["A live local preview shows the crop area before processing.", "Common ratios are centered when a ratio is selected; freeform framing remains available.", "The shared Image Engine controls raster decoding and encoding."],
+    "resultDownload": "The cropped raster result is validated and offered as one downloadable file.",
+    "faqTopics": ["Which crop ratios are available?", "Can I move the crop with the keyboard?", "Can I choose PNG or WebP output?", "Does Crop Image support batches?"],
+    "relatedTools": ["resize-image", "compress-image", "png-to-jpg"],
+    "primaryLongTailOpportunity": "crop image to 1:1 4:3 or 16:9 online",
+    "canonicalDecision": "Keep this as the self-canonical visual framing workflow; do not fold it into Resize Image or Compress Image.",
+    "page": {
+      "title": "Crop Image to Common Ratios - JPG, PNG & WebP | DoMyFile",
+      "metaDescription": "Crop JPG, PNG, or WebP images with freeform, 1:1, 4:3, 16:9, or 3:4 framing. Move the crop with mouse or keyboard.",
+      "h1": "Crop JPG, PNG, and WebP images",
+      "intro": "Frame a raster image with a freeform or common aspect ratio, then export the selected area as JPG, PNG, or WebP.",
+      "summary": "Crop Image exports the selected frame from one image at a time. Pixels outside the frame are discarded from the raster result, so use Resize Image for dimension changes without framing and Compress Image for encoding-size work.",
+      "steps": [
+        { "title": "Choose one image", "body": "Add a supported JPG, PNG, or WebP file to the visual crop workspace." },
+        { "title": "Frame the crop", "body": "Use freeform, 1:1, 4:3, 16:9, or 3:4, then move or resize the frame with pointer or keyboard controls." },
+        { "title": "Export the frame", "body": "Choose JPG, PNG, or WebP output and download the validated raster result." }
+      ],
+      "privacy": "The crop preview and export run locally in your browser; the selected image is not uploaded or stored."
+    },
+    "faqContent": [
+      { "question": "Which crop ratios are available?", "answer": "You can use freeform framing or the 1:1, 4:3, 16:9, and 3:4 ratios." },
+      { "question": "Can I move the crop with the keyboard?", "answer": "Yes. The crop frame supports arrow-key movement and Shift-based resizing." },
+      { "question": "Can I choose PNG or WebP output?", "answer": "Yes. The output selector supports JPG, PNG, and WebP." },
+      { "question": "Does Crop Image support batches?", "answer": "No. The visual crop workspace processes one image at a time." }
+    ]
+  },
+  {
+    "slug": "png-to-jpg",
+    "title": "PNG to JPG",
+    "category": "image",
+    "primarySearchIntent": "Convert PNG images to fixed-output JPG files and choose a background for transparency.",
+    "acceptedInput": { "formats": ["PNG"], "extensions": ["png"] },
+    "output": { "formats": ["JPG"], "behavior": "Always produces JPG; transparent pixels are flattened to the selected background color." },
+    "processingMode": "browser-local",
+    "keyControls": ["Transparent-pixel background color", "JPG quality from 45% to 100%"],
+    "batchBehavior": { "supported": true, "description": "Convert multiple PNG files in one job with one JPG result per successful input." },
+    "importantLimitations": ["PNG is the only accepted source format.", "JPG cannot retain transparency, so transparent pixels require a background color."],
+    "qualityCompatibility": ["The default background is white for broad compatibility.", "Decoded dimensions are retained.", "JPG quality is adjustable, so file size and visual detail can change."],
+    "resultDownload": "Each converted PNG receives a deterministic JPG filename and is included in the shared download flow.",
+    "faqTopics": ["What happens to transparent PNG pixels?", "Can I convert multiple PNG files?", "Are image dimensions preserved?", "Can I control JPG quality?"],
+    "relatedTools": ["png-to-webp", "jpg-to-png", "jpg-to-pdf"],
+    "primaryLongTailOpportunity": "convert PNG to JPG with a white background",
+    "canonicalDecision": "Keep this focused PNG-to-JPG URL self-canonical; it is a directional format intent, not the broad image converter.",
+    "page": {
+      "title": "Convert PNG to JPG with Background Control | DoMyFile",
+      "metaDescription": "Convert PNG images to JPG locally with adjustable quality and a background color for transparent pixels. Batch multiple files and download JPG results.",
+      "h1": "Convert PNG images to JPG",
+      "intro": "Turn PNG files into fixed-output JPG images while choosing what replaces transparent pixels and how much JPG quality to keep.",
+      "summary": "PNG to JPG is a directional format conversion. It preserves decoded dimensions, but JPG cannot retain transparency, so transparent pixels use the selected background color, white by default.",
+      "steps": [
+        { "title": "Select PNG files", "body": "Add one or more PNG images to the local batch workspace." },
+        { "title": "Choose background and quality", "body": "Set the background for transparent pixels and choose JPG quality from 45% to 100%." },
+        { "title": "Download JPG results", "body": "Each successful conversion is validated and included in the shared download flow." }
+      ],
+      "privacy": "PNG files are decoded, converted, and downloaded locally in your browser without an upload."
+    },
+    "faqContent": [
+      { "question": "What happens to transparent PNG pixels?", "answer": "JPG cannot store transparency, so transparent pixels are flattened against the selected background color. White is the default." },
+      { "question": "Can I convert multiple PNG files?", "answer": "Yes. Batch conversion creates one JPG result for each successful PNG input." },
+      { "question": "Are image dimensions preserved?", "answer": "The decoded input dimensions are retained in the JPG result." },
+      { "question": "Can I control JPG quality?", "answer": "Yes. The JPG quality control runs from 45% to 100%, changing the size and visual-detail tradeoff." }
+    ]
+  },
+  {
+    "slug": "jpg-to-png",
+    "title": "JPG to PNG",
+    "category": "image",
+    "primarySearchIntent": "Convert JPG or JPEG images to fixed-output PNG while keeping decoded dimensions.",
+    "acceptedInput": { "formats": ["JPG"], "extensions": ["jpg", "jpeg"] },
+    "output": { "formats": ["PNG"], "behavior": "Always produces PNG with no output-format selector." },
+    "processingMode": "browser-local",
+    "keyControls": ["No format control; the output is fixed to PNG"],
+    "batchBehavior": { "supported": true, "description": "Convert multiple JPG or JPEG files in one job with one PNG result per successful input." },
+    "importantLimitations": ["JPG and JPEG are the only accepted source formats.", "Converting JPG to PNG does not restore detail or transparency that was absent from the source."],
+    "qualityCompatibility": ["Decoded width and height are preserved.", "PNG is a lossless output container, but source JPG compression remains part of the image content.", "Processing stays in the browser."],
+    "resultDownload": "Each JPG input produces a validated PNG download with a deterministic filename.",
+    "faqTopics": ["Does JPG to PNG restore quality?", "Are dimensions preserved?", "Can I convert JPEG files too?", "Can I process a batch?"],
+    "relatedTools": ["png-to-jpg", "jpg-to-webp", "heic-to-jpg"],
+    "primaryLongTailOpportunity": "convert JPEG to PNG without changing dimensions",
+    "canonicalDecision": "Keep this focused JPG-to-PNG URL self-canonical; its fixed direction and input format are materially different from other conversion routes.",
+    "page": {
+      "title": "Convert JPG to PNG - Preserve Image Dimensions | DoMyFile",
+      "metaDescription": "Convert JPG or JPEG images to PNG without changing decoded dimensions. Process multiple files locally; the output format is fixed to PNG.",
+      "h1": "Convert JPG or JPEG to PNG",
+      "intro": "Convert JPG and JPEG files to fixed-output PNG while keeping their decoded width and height.",
+      "summary": "JPG to PNG changes the container and encoding direction; it does not restore detail or transparency that was absent from the JPG source. PNG is the lossless output container, and batch conversion is supported.",
+      "steps": [
+        { "title": "Choose JPG files", "body": "Select one or more JPG or JPEG images from your device." },
+        { "title": "Convert to fixed PNG", "body": "The local image path preserves decoded dimensions and does not expose an output-format selector." },
+        { "title": "Download PNG files", "body": "Each successful input produces a validated PNG with a deterministic filename." }
+      ],
+      "privacy": "JPG and JPEG files are converted locally in the browser and are not uploaded or stored."
+    },
+    "faqContent": [
+      { "question": "Does JPG to PNG restore quality?", "answer": "No. PNG is a lossless output container, but it cannot restore detail or transparency that the source JPG did not contain." },
+      { "question": "Are dimensions preserved?", "answer": "Yes. The decoded width and height are preserved by the implemented conversion path." },
+      { "question": "Can I convert JPEG files too?", "answer": "Yes. The route accepts both JPG and JPEG extensions." },
+      { "question": "Can I process a batch?", "answer": "Yes. Each successful JPG or JPEG input becomes one PNG result." }
+    ]
+  },
+  {
+    "slug": "jpg-to-webp",
+    "title": "JPG to WebP",
+    "category": "image",
+    "primarySearchIntent": "Convert JPG or JPEG images to WebP for web-ready output.",
+    "acceptedInput": { "formats": ["JPG"], "extensions": ["jpg", "jpeg"] },
+    "output": { "formats": ["WebP"], "behavior": "Always produces WebP and keeps decoded dimensions." },
+    "processingMode": "browser-local",
+    "keyControls": ["WebP quality from 40% to 100%", "Fixed WebP output"],
+    "batchBehavior": { "supported": true, "description": "Convert multiple JPG or JPEG files in one browser job." },
+    "importantLimitations": ["JPG and JPEG are the only accepted source formats.", "WebP output quality is adjustable; the route is not a dimension-resize tool."],
+    "qualityCompatibility": ["Dimensions are preserved.", "WebP quality changes the size/detail tradeoff.", "The shared Image Engine performs the conversion locally."],
+    "resultDownload": "Each source image receives a validated WebP result and deterministic download name.",
+    "faqTopics": ["Why convert JPG to WebP?", "Can I choose WebP quality?", "Are JPEG extensions accepted?", "Can I convert multiple JPG files?"],
+    "relatedTools": ["jpg-to-png", "compress-image", "heic-to-jpg"],
+    "primaryLongTailOpportunity": "convert JPG to WebP for a website",
+    "canonicalDecision": "Keep this focused JPG-to-WebP URL self-canonical; it should not compete with broad compression or the generic converter.",
+    "page": {
+      "title": "Convert JPG to WebP for Websites | DoMyFile",
+      "metaDescription": "Convert JPG or JPEG images to WebP for web-ready output. Choose WebP quality, keep dimensions, and process multiple files in your browser.",
+      "h1": "Convert JPG or JPEG to WebP",
+      "intro": "Create fixed-output WebP files from JPG or JPEG images while preserving decoded dimensions and choosing the quality tradeoff.",
+      "summary": "JPG to WebP is a format-direction workflow for web-ready output, not a general image compressor or resizer. WebP quality can change size and detail, while dimensions remain unchanged.",
+      "steps": [
+        { "title": "Add JPG images", "body": "Select one or more JPG or JPEG files for local conversion." },
+        { "title": "Set WebP quality", "body": "Choose WebP quality from 40% to 100%; the output format remains WebP." },
+        { "title": "Download WebP files", "body": "Review the validated results and download each converted image." }
+      ],
+      "privacy": "The JPG-to-WebP conversion runs in your browser; source files are not uploaded or stored."
+    },
+    "faqContent": [
+      { "question": "Why convert JPG to WebP?", "answer": "WebP is the fixed output for this route and can provide a web-oriented size and detail tradeoff through its quality control." },
+      { "question": "Can I choose WebP quality?", "answer": "Yes. The quality control runs from 40% to 100%." },
+      { "question": "Are JPEG extensions accepted?", "answer": "Yes. Both JPG and JPEG inputs are supported." },
+      { "question": "Can I convert multiple JPG files?", "answer": "Yes. Batch conversion provides one WebP result for each successful input." }
+    ]
+  },
+  {
+    "slug": "png-to-webp",
+    "title": "PNG to WebP",
+    "category": "image",
+    "primarySearchIntent": "Convert PNG images to WebP while keeping decoded dimensions.",
+    "acceptedInput": { "formats": ["PNG"], "extensions": ["png"] },
+    "output": { "formats": ["WebP"], "behavior": "Always produces WebP with fixed output format." },
+    "processingMode": "browser-local",
+    "keyControls": ["WebP quality from 40% to 100%", "Fixed WebP output"],
+    "batchBehavior": { "supported": true, "description": "Convert multiple PNG files with one WebP result per successful input." },
+    "importantLimitations": ["PNG is the only accepted source format.", "The route changes format and encoding; it does not change dimensions."],
+    "qualityCompatibility": ["Decoded dimensions are retained.", "WebP quality is adjustable.", "The local image workflow can retain supported image content while changing the container."],
+    "resultDownload": "Each PNG produces one validated WebP download in the shared batch result flow.",
+    "faqTopics": ["Does PNG to WebP preserve dimensions?", "Can I convert several PNG files?", "Can WebP quality be adjusted?", "Is the output always WebP?"],
+    "relatedTools": ["png-to-jpg", "webp-to-png", "png-to-pdf"],
+    "primaryLongTailOpportunity": "convert PNG to WebP while preserving dimensions",
+    "canonicalDecision": "Keep this focused PNG-to-WebP URL self-canonical; it is distinct from PNG-to-JPG and from compression by input/output direction.",
+    "page": {
+      "title": "Convert PNG to WebP with Quality Control | DoMyFile",
+      "metaDescription": "Convert PNG images to WebP while preserving decoded dimensions. Choose WebP quality, process multiple files locally, and download validated results.",
+      "h1": "Convert PNG images to WebP",
+      "intro": "Change PNG images to fixed-output WebP while keeping their decoded dimensions and selecting the WebP quality setting.",
+      "summary": "PNG to WebP changes format and encoding without changing dimensions. The quality control sets the size and visual-detail tradeoff; the route accepts PNG input only.",
+      "steps": [
+        { "title": "Select PNG images", "body": "Add one or more PNG files to the browser-local conversion workspace." },
+        { "title": "Choose WebP quality", "body": "Set the 40% to 100% quality value; WebP remains the fixed output." },
+        { "title": "Download converted files", "body": "Each validated PNG-to-WebP result is ready through the shared batch download." }
+      ],
+      "privacy": "PNG-to-WebP conversion happens locally in your browser without uploading the selected files."
+    },
+    "faqContent": [
+      { "question": "Does PNG to WebP preserve dimensions?", "answer": "Yes. Decoded dimensions are retained by the implemented conversion path." },
+      { "question": "Can I convert several PNG files?", "answer": "Yes. Each successful PNG input produces one WebP result." },
+      { "question": "Can WebP quality be adjusted?", "answer": "Yes. The quality control runs from 40% to 100%." },
+      { "question": "Is the output always WebP?", "answer": "Yes. This focused route has a fixed WebP output rather than an output-format selector." }
+    ]
+  },
+  {
+    "slug": "webp-to-jpg",
+    "title": "WebP to JPG",
+    "category": "image",
+    "primarySearchIntent": "Convert WebP images to JPG for broader JPEG compatibility.",
+    "acceptedInput": { "formats": ["WebP"], "extensions": ["webp"] },
+    "output": { "formats": ["JPG"], "behavior": "Always produces JPG and flattens transparency to a background color." },
+    "processingMode": "browser-local",
+    "keyControls": ["Transparent-pixel background color", "JPG quality from 45% to 100%"],
+    "batchBehavior": { "supported": true, "description": "Convert multiple WebP files in one local job." },
+    "importantLimitations": ["WebP is the only accepted source format.", "JPG cannot retain transparency; transparent pixels use the selected background."],
+    "qualityCompatibility": ["The default background is white.", "Decoded dimensions are retained.", "JPG quality controls the size/detail tradeoff."],
+    "resultDownload": "Each WebP input produces a validated JPG result in the shared download flow.",
+    "faqTopics": ["Why convert WebP to JPG?", "How is WebP transparency handled?", "Can I change JPG quality?", "Does batch conversion work?"],
+    "relatedTools": ["webp-to-png", "jpg-to-webp", "heic-to-jpg"],
+    "primaryLongTailOpportunity": "convert WebP to JPG with a white background",
+    "canonicalDecision": "Keep this focused WebP-to-JPG URL self-canonical; the source format and compatibility intent are not duplicates of other JPG routes.",
+    "page": {
+      "title": "Convert WebP to JPG with Background Control | DoMyFile",
+      "metaDescription": "Convert WebP images to JPG for broader JPEG compatibility. Choose a background for transparency, adjust JPG quality, and process batches locally.",
+      "h1": "Convert WebP images to JPG",
+      "intro": "Create fixed-output JPG files from WebP images with a chosen background for transparent pixels and adjustable JPG quality.",
+      "summary": "WebP to JPG is a compatibility conversion. It preserves decoded dimensions, but JPG cannot retain transparency, so transparent pixels are flattened against the selected color, white by default.",
+      "steps": [
+        { "title": "Choose WebP files", "body": "Select one or more WebP images for the local conversion batch." },
+        { "title": "Set background and quality", "body": "Choose the transparent-pixel background and JPG quality from 45% to 100%." },
+        { "title": "Download JPG results", "body": "Each successful WebP input becomes a validated JPG download." }
+      ],
+      "privacy": "WebP files are decoded and converted locally in the browser; they are not uploaded or stored."
+    },
+    "faqContent": [
+      { "question": "Why convert WebP to JPG?", "answer": "JPG output provides a broadly compatible JPEG-style result for workflows that do not accept WebP." },
+      { "question": "How is WebP transparency handled?", "answer": "Transparent pixels are flattened against the selected background color because JPG does not retain transparency. White is the default." },
+      { "question": "Can I change JPG quality?", "answer": "Yes. JPG quality can be set from 45% to 100%." },
+      { "question": "Does batch conversion work?", "answer": "Yes. The local batch workspace creates one JPG result for each successful WebP input." }
+    ]
+  },
+  {
+    "slug": "webp-to-png",
+    "title": "WebP to PNG",
+    "category": "image",
+    "primarySearchIntent": "Convert WebP images to PNG while preserving decoded dimensions.",
+    "acceptedInput": { "formats": ["WebP"], "extensions": ["webp"] },
+    "output": { "formats": ["PNG"], "behavior": "Always produces PNG with fixed output format." },
+    "processingMode": "browser-local",
+    "keyControls": ["No format control; the output is fixed to PNG"],
+    "batchBehavior": { "supported": true, "description": "Convert multiple WebP files with one PNG result per successful input." },
+    "importantLimitations": ["WebP is the only accepted source format.", "The route changes format; it does not restore source detail or resize the image."],
+    "qualityCompatibility": ["Decoded dimensions remain unchanged.", "PNG output is lossless as a container, subject to the source image content.", "Processing remains local in the browser."],
+    "resultDownload": "Each WebP input produces one validated PNG download.",
+    "faqTopics": ["Does WebP to PNG preserve dimensions?", "Can I process multiple WebP files?", "Is the output fixed to PNG?", "Does conversion restore original quality?"],
+    "relatedTools": ["webp-to-jpg", "png-to-webp", "webp-to-pdf"],
+    "primaryLongTailOpportunity": "convert WebP to PNG without changing dimensions",
+    "canonicalDecision": "Keep this focused WebP-to-PNG URL self-canonical; it is the directional PNG compatibility route for WebP input.",
+    "page": {
+      "title": "Convert WebP to PNG without Resizing | DoMyFile",
+      "metaDescription": "Convert WebP images to PNG while preserving decoded dimensions. The output is fixed to PNG, and multiple files can be processed locally.",
+      "h1": "Convert WebP images to PNG",
+      "intro": "Change WebP images to fixed-output PNG without changing their decoded width and height.",
+      "summary": "WebP to PNG is a directional format conversion, not a quality-restoration or resizing tool. PNG is lossless as an output container, but it cannot restore detail absent from the WebP source.",
+      "steps": [
+        { "title": "Add WebP images", "body": "Select one or more WebP files from your device." },
+        { "title": "Use fixed PNG output", "body": "The local converter preserves decoded dimensions and does not expose a format selector." },
+        { "title": "Download PNG results", "body": "Each successful WebP input produces one validated PNG file." }
+      ],
+      "privacy": "The WebP-to-PNG workflow runs locally in your browser without uploading or storing source files."
+    },
+    "faqContent": [
+      { "question": "Does WebP to PNG preserve dimensions?", "answer": "Yes. Decoded dimensions remain unchanged in the PNG result." },
+      { "question": "Can I process multiple WebP files?", "answer": "Yes. Batch support creates one PNG result for each successful WebP input." },
+      { "question": "Is the output fixed to PNG?", "answer": "Yes. This focused route always produces PNG." },
+      { "question": "Does conversion restore original quality?", "answer": "No. Changing the container cannot restore detail that was already absent from the WebP source." }
+    ]
+  },
+  {
+    "slug": "heic-to-jpg",
+    "title": "HEIC to JPG",
+    "category": "image",
+    "primarySearchIntent": "Convert supported HEIC or HEIF photos to broadly compatible JPG files.",
+    "acceptedInput": { "formats": ["HEIC", "HEIF"], "extensions": ["heic", "heif"] },
+    "output": { "formats": ["JPG"], "behavior": "Always produces JPG through the HEIC adapter." },
+    "processingMode": "browser-local",
+    "keyControls": ["No output selector; JPG is fixed", "The HEIC decoder loads when processing starts"],
+    "batchBehavior": { "supported": true, "description": "Select supported HEIC or HEIF images for local batch conversion." },
+    "importantLimitations": ["Only supported HEIC/HEIF files are accepted; decoder compatibility can vary by source profile and browser.", "The route outputs JPG rather than retaining HEIC features."],
+    "qualityCompatibility": ["Orientation and decoded dimensions are retained by the implemented adapter path.", "JPG is chosen for broad compatibility.", "The decoder is lazy-loaded only when processing starts."],
+    "resultDownload": "Each supported HEIC or HEIF input produces a validated JPG download.",
+    "faqTopics": ["Which HEIC and HEIF files are supported?", "Are orientation and dimensions retained?", "Does conversion happen locally?", "Can multiple iPhone photos be converted?"],
+    "relatedTools": ["jpg-to-png", "jpg-to-webp", "webp-to-jpg"],
+    "primaryLongTailOpportunity": "convert iPhone HEIC photos to JPG locally",
+    "canonicalDecision": "Keep this as the self-canonical HEIC compatibility route; it is not a keyword variant of the JPG conversion routes.",
+    "page": {
+      "title": "Convert HEIC to JPG Locally | DoMyFile",
+      "metaDescription": "Convert supported HEIC and HEIF photos to broadly compatible JPG files in your browser. Preserve orientation and dimensions through the local adapter.",
+      "h1": "Convert HEIC and HEIF photos to JPG",
+      "intro": "Use the local HEIC adapter to turn supported HEIC or HEIF images into fixed-output JPG files.",
+      "summary": "HEIC to JPG is the compatibility route for supported HEIC and HEIF photos. The adapter retains orientation and decoded dimensions, while decoder support can vary with the source profile and browser.",
+      "steps": [
+        { "title": "Select HEIC photos", "body": "Add one or more supported HEIC or HEIF files." },
+        { "title": "Let the adapter decode", "body": "The HEIC decoder loads when processing starts and produces the fixed JPG output." },
+        { "title": "Download JPG files", "body": "Each supported input is validated and offered as a deterministic JPG download." }
+      ],
+      "privacy": "Supported HEIC and HEIF files are decoded and converted locally in your browser; they are not uploaded or stored."
+    },
+    "faqContent": [
+      { "question": "Which HEIC and HEIF files are supported?", "answer": "The route accepts supported HEIC and HEIF files. Decoder compatibility can vary by source profile and browser." },
+      { "question": "Are orientation and dimensions retained?", "answer": "The implemented adapter path retains decoded orientation and dimensions." },
+      { "question": "Does conversion happen locally?", "answer": "Yes. The HEIC decoder and JPG conversion run locally in the browser." },
+      { "question": "Can multiple iPhone photos be converted?", "answer": "Yes, when the selected HEIC or HEIF photos are supported by the decoder." }
+    ]
+  },
+  {
+    "slug": "compress-pdf",
+    "title": "Compress PDF",
+    "category": "pdf",
+    "primarySearchIntent": "Reduce PDF file size while keeping selectable text, vector content, and page structure where possible.",
+    "acceptedInput": { "formats": ["PDF"], "extensions": ["pdf"] },
+    "output": { "formats": ["PDF"], "behavior": "Offers a validated compressed PDF only when the server profile achieves useful reduction." },
+    "processingMode": "temporary-server",
+    "keyControls": ["Quality, balanced, or smaller-file compression preset", "Temporary upload disclosure before processing"],
+    "batchBehavior": { "supported": false, "description": "One PDF is submitted per temporary compression job." },
+    "importantLimitations": ["The file is temporarily uploaded for processing and deleted automatically.", "No result is offered when the profile cannot produce useful reduction.", "Password-protected or unsupported PDFs are rejected."],
+    "qualityCompatibility": ["The approved native profile selectively optimizes embedded images instead of rasterizing every page by default.", "Page count, selectable text, vector content, and relevant structure are validated.", "Final commercial codec/deployment compliance remains a release gate for public fallback traffic."],
+    "resultDownload": "A validated compressed PDF is offered through the short-lived server result flow and the original is not modified.",
+    "faqTopics": ["Are PDF text and vector elements preserved?", "Why is Compress PDF temporarily uploaded?", "What happens if no useful reduction is possible?", "Are encrypted PDFs supported?"],
+    "relatedTools": ["merge-pdf", "split-pdf", "pdf-to-jpg"],
+    "primaryLongTailOpportunity": "compress PDF while preserving selectable text",
+    "canonicalDecision": "Keep this self-canonical as the structural PDF-size workflow; it is distinct from image rendering and page organization.",
+    "page": {
+      "title": "Compress PDF while Preserving Structure | DoMyFile",
+      "metaDescription": "Compress a PDF with quality presets while validating page count, selectable text, vector content, and useful size reduction in a temporary job.",
+      "h1": "Compress PDF with structural safeguards",
+      "intro": "Submit one PDF to a temporary compression job that seeks useful size reduction while checking page structure and output validity.",
+      "summary": "Compress PDF targets file size without making rasterization the default. The approved profile selectively optimizes embedded images, validates page count, selectable text, vector content, and relevant structure, and offers no result when reduction is not useful.",
+      "steps": [
+        { "title": "Choose one PDF", "body": "Select a supported PDF and review the temporary-upload disclosure before starting." },
+        { "title": "Pick a compression preset", "body": "Choose the quality, balanced, or smaller-file setting for the temporary processing job." },
+        { "title": "Download the validated result", "body": "Download the compressed PDF only when the profile produces useful reduction and passes validation." }
+      ],
+      "privacy": "The PDF is temporarily uploaded only for this compression job and deleted automatically; it is not stored as a user file."
+    },
+    "faqContent": [
+      { "question": "Are PDF text and vector elements preserved?", "answer": "The approved profile validates selectable text, vector content, page count, and relevant structure instead of rasterizing every page by default." },
+      { "question": "Why is Compress PDF temporarily uploaded?", "answer": "The structural compressor runs in the approved temporary server job because the current browser path does not provide the required reliable reduction." },
+      { "question": "What happens if no useful reduction is possible?", "answer": "No compressed result is offered when the profile cannot make a useful reduction." },
+      { "question": "Are encrypted PDFs supported?", "answer": "Password-protected or otherwise unsupported PDFs are rejected by the current PDF processing path." }
+    ]
+  },
+  {
+    "slug": "merge-pdf",
+    "title": "Merge PDF",
+    "category": "pdf",
+    "primarySearchIntent": "Combine two or more PDF files into one document in a chosen file order.",
+    "acceptedInput": { "formats": ["PDF", "2+ files"], "extensions": ["pdf"] },
+    "output": { "formats": ["PDF"], "behavior": "Creates one merged PDF while preserving each input's page order." },
+    "processingMode": "browser-local",
+    "keyControls": ["Select at least two PDFs", "Move selected files before merging"],
+    "batchBehavior": { "supported": true, "minimumFiles": 2, "description": "The batch is the ordered set of PDFs that becomes one output document." },
+    "importantLimitations": ["At least two PDF inputs are required.", "Unsupported or encrypted PDFs are rejected according to the PDF engine support matrix."],
+    "qualityCompatibility": ["Page order within each source is preserved.", "The shared PDF Engine performs the merge locally.", "The original input files remain unchanged."],
+    "resultDownload": "One validated merged PDF is offered through the shared result download action.",
+    "faqTopics": ["How many PDFs can I merge?", "Can I reorder PDFs before merging?", "Is page order preserved?", "Are my PDFs uploaded?"],
+    "relatedTools": ["organize-pdf", "split-pdf", "compress-pdf"],
+    "primaryLongTailOpportunity": "merge multiple PDF files in order",
+    "canonicalDecision": "Keep this self-canonical as the multi-document combination workflow, separate from page-level organization.",
+    "page": {
+      "title": "Merge PDF Files in Order | DoMyFile",
+      "metaDescription": "Merge two or more PDF files into one document, reorder them before merging, and download a validated result from your browser.",
+      "h1": "Merge two or more PDF files in order",
+      "intro": "Combine at least two supported PDFs into one document and set the file order before the merge runs locally.",
+      "summary": "Merge PDF joins complete documents; it does not rearrange pages inside one document. Each source keeps its internal page order, while the selected file order determines the order of the combined output.",
+      "steps": [
+        { "title": "Add at least two PDFs", "body": "Select the source documents required for the merged file." },
+        { "title": "Set document order", "body": "Move the selected PDFs until the file sequence matches the intended output." },
+        { "title": "Download one PDF", "body": "The PDF Engine validates the combined document before offering one merged download." }
+      ],
+      "privacy": "Merge PDF runs locally in your browser; the selected documents are not uploaded or stored."
+    },
+    "faqContent": [
+      { "question": "How many PDFs can I merge?", "answer": "At least two supported PDFs are required. The practical limit is governed by the browser and the current PDF engine resource envelope." },
+      { "question": "Can I reorder PDFs before merging?", "answer": "Yes. Move the selected files into the order you want before starting the merge." },
+      { "question": "Is page order preserved?", "answer": "Yes. Each source document keeps its internal page order, and the documents appear in the selected file order." },
+      { "question": "Are my PDFs uploaded?", "answer": "No. The shared PDF Engine merges them on your device." }
+    ]
+  },
+  {
+    "slug": "split-pdf",
+    "title": "Split PDF",
+    "category": "pdf",
+    "primarySearchIntent": "Extract a selected page range from a PDF into a separate PDF result.",
+    "acceptedInput": { "formats": ["PDF"], "extensions": ["pdf"] },
+    "output": { "formats": ["PDF"], "behavior": "Creates a PDF from the selected 1-based page range." },
+    "processingMode": "browser-local",
+    "keyControls": ["From-page and to-page inputs", "1-based page range validation", "Preview of the range endpoints"],
+    "batchBehavior": { "supported": false, "description": "The focused workspace processes one source PDF and one selected range at a time." },
+    "importantLimitations": ["The current UI exposes one contiguous page range per job.", "Page numbers must be within the source document and start before the end page."],
+    "qualityCompatibility": ["Selected pages are copied structurally rather than rendered as images.", "Page count and source validity are checked before the result is offered.", "Encrypted or unsupported PDFs are rejected."],
+    "resultDownload": "The selected page range is offered as a validated PDF download with a split suffix.",
+    "faqTopics": ["Can I split out pages 1 to 3?", "Are page numbers 1-based?", "Does splitting rasterize pages?", "Can I extract a non-contiguous selection?"],
+    "relatedTools": ["merge-pdf", "organize-pdf", "pdf-to-jpg"],
+    "primaryLongTailOpportunity": "split PDF by page range into a new PDF",
+    "canonicalDecision": "Keep this self-canonical as the page-range extraction workflow; it is not interchangeable with Organize PDF.",
+    "page": {
+      "title": "Split PDF by Page Range | DoMyFile",
+      "metaDescription": "Split a PDF by one contiguous 1-based page range and download a validated PDF containing the selected pages without rasterizing them.",
+      "h1": "Split a PDF by page range",
+      "intro": "Extract one contiguous range from a supported PDF by entering its start and end page numbers.",
+      "summary": "Split PDF is a focused page-range extraction workflow. It copies selected pages structurally into a new PDF, while Organize PDF handles page order, duplication, and removal inside one document.",
+      "steps": [
+        { "title": "Choose a PDF", "body": "Add one supported PDF and wait for its page count to be checked." },
+        { "title": "Enter the page range", "body": "Use 1-based from-page and to-page values within the document." },
+        { "title": "Download the extracted PDF", "body": "The selected range is validated and offered as one PDF result." }
+      ],
+      "privacy": "The source PDF and extracted result stay in the browser during the local split workflow."
+    },
+    "faqContent": [
+      { "question": "Can I split out pages 1 to 3?", "answer": "Yes. Enter 1 as the start and 3 as the end when the document has at least three pages." },
+      { "question": "Are page numbers 1-based?", "answer": "Yes. The current controls use page numbers starting at 1." },
+      { "question": "Does splitting rasterize pages?", "answer": "No. Selected pages are copied structurally rather than rendered as images." },
+      { "question": "Can I extract a non-contiguous selection?", "answer": "No. The current UI exposes one contiguous page range per job." }
+    ]
+  },
+  {
+    "slug": "jpg-to-pdf",
+    "title": "JPG to PDF",
+    "category": "pdf",
+    "primarySearchIntent": "Turn one or more JPG or JPEG images into an ordered PDF.",
+    "acceptedInput": { "formats": ["JPG"], "extensions": ["jpg", "jpeg"] },
+    "output": { "formats": ["PDF"], "behavior": "Creates one PDF with one page per selected JPG image." },
+    "processingMode": "browser-local",
+    "keyControls": ["Reorder selected images", "Fit, A4, or Letter page size", "Auto, portrait, or landscape orientation"],
+    "batchBehavior": { "supported": true, "description": "Multiple JPG images become ordered PDF pages in one job." },
+    "importantLimitations": ["JPG and JPEG are the only source formats on this focused route.", "The output is a PDF, not a set of image files."],
+    "qualityCompatibility": ["Page layout is calculated locally from the image dimensions and selected page settings.", "The source images are placed on PDF pages; the workflow does not edit the original files.", "Page order follows the selected file order."],
+    "resultDownload": "One validated PDF is offered with a deterministic PDF filename.",
+    "faqTopics": ["Can I convert multiple JPG images to one PDF?", "Can I reorder image pages?", "What page sizes are available?", "Does the route accept JPEG files?"],
+    "relatedTools": ["png-to-pdf", "webp-to-pdf", "pdf-to-jpg"],
+    "primaryLongTailOpportunity": "convert multiple JPG images to one PDF",
+    "canonicalDecision": "Keep this focused JPG-to-PDF URL self-canonical; PNG-to-PDF and WebP-to-PDF remain separate input-format routes.",
+    "page": {
+      "title": "Convert JPG Images to PDF | DoMyFile",
+      "metaDescription": "Convert one or more JPG or JPEG images into an ordered PDF. Reorder pages and choose Fit, A4, Letter, portrait, landscape, or auto layout.",
+      "h1": "Convert JPG or JPEG images to PDF",
+      "intro": "Turn one or more JPG or JPEG images into a single ordered PDF with page-size and orientation controls.",
+      "summary": "JPG to PDF is the JPG-specific image-to-document route. Each successful image becomes one PDF page in the chosen order; the source images are placed on pages rather than edited in place.",
+      "steps": [
+        { "title": "Add JPG images", "body": "Select one or more JPG or JPEG files for the PDF batch." },
+        { "title": "Arrange the pages", "body": "Reorder the images and choose Fit, A4, or Letter with auto, portrait, or landscape orientation." },
+        { "title": "Download the PDF", "body": "The PDF Engine validates one page per successful input before download." }
+      ],
+      "privacy": "JPG and JPEG images are turned into a PDF locally in your browser without an upload."
+    },
+    "faqContent": [
+      { "question": "Can I convert multiple JPG images to one PDF?", "answer": "Yes. Each selected JPG or JPEG becomes one page in a single PDF." },
+      { "question": "Can I reorder image pages?", "answer": "Yes. Move the selected images before creating the PDF." },
+      { "question": "What page sizes are available?", "answer": "The page controls offer Fit, A4, and Letter, with auto, portrait, or landscape orientation." },
+      { "question": "Does the route accept JPEG files?", "answer": "Yes. JPG and JPEG extensions are accepted on this focused route." }
+    ]
+  },
+  {
+    "slug": "png-to-pdf",
+    "title": "PNG to PDF",
+    "category": "pdf",
+    "primarySearchIntent": "Turn one or more PNG images into an ordered PDF.",
+    "acceptedInput": { "formats": ["PNG"], "extensions": ["png"] },
+    "output": { "formats": ["PDF"], "behavior": "Creates one PDF with one page per selected PNG image." },
+    "processingMode": "browser-local",
+    "keyControls": ["Reorder selected images", "Fit, A4, or Letter page size", "Auto, portrait, or landscape orientation"],
+    "batchBehavior": { "supported": true, "description": "Multiple PNG images become ordered PDF pages in one local job." },
+    "importantLimitations": ["PNG is the only source format on this focused route.", "The output format is fixed to PDF."],
+    "qualityCompatibility": ["Page size and orientation are applied by the PDF Engine.", "The source PNG files are not modified.", "One successful input becomes one PDF page in the chosen order."],
+    "resultDownload": "One validated PDF is offered through the shared download action.",
+    "faqTopics": ["Can several PNG files become one PDF?", "Can I choose A4 or Letter?", "Can I change page order?", "Are PNG files processed locally?"],
+    "relatedTools": ["jpg-to-pdf", "webp-to-pdf", "pdf-to-jpg"],
+    "primaryLongTailOpportunity": "convert PNG images to a PDF with page order",
+    "canonicalDecision": "Keep this focused PNG-to-PDF URL self-canonical; its source-format intent is distinct from the other image-to-PDF routes.",
+    "page": {
+      "title": "Convert PNG Images to PDF | DoMyFile",
+      "metaDescription": "Convert one or more PNG images into an ordered PDF. Reorder pages and choose Fit, A4, Letter, portrait, landscape, or auto layout locally.",
+      "h1": "Convert PNG images to PDF",
+      "intro": "Create one ordered PDF from PNG images with page-size, orientation, and image-order controls.",
+      "summary": "PNG to PDF is the PNG-specific image-to-document route. One successful PNG becomes one PDF page in the selected order, and the source files remain unchanged.",
+      "steps": [
+        { "title": "Select PNG images", "body": "Add one or more PNG files to the local PDF batch." },
+        { "title": "Set page layout", "body": "Reorder images and choose Fit, A4, or Letter with auto, portrait, or landscape orientation." },
+        { "title": "Download one PDF", "body": "The generated document is validated before the shared download action becomes available." }
+      ],
+      "privacy": "PNG images are converted to PDF locally in your browser; the source files are not uploaded or stored."
+    },
+    "faqContent": [
+      { "question": "Can several PNG files become one PDF?", "answer": "Yes. Each successful PNG input becomes one page in the combined PDF." },
+      { "question": "Can I choose A4 or Letter?", "answer": "Yes. Fit, A4, and Letter page-size options are available." },
+      { "question": "Can I change page order?", "answer": "Yes. Reorder the selected PNG images before generating the PDF." },
+      { "question": "Are PNG files processed locally?", "answer": "Yes. The shared PDF Engine creates the document on your device." }
+    ]
+  },
+  {
+    "slug": "webp-to-pdf",
+    "title": "WebP to PDF",
+    "category": "pdf",
+    "primarySearchIntent": "Turn one or more WebP images into an ordered PDF.",
+    "acceptedInput": { "formats": ["WebP"], "extensions": ["webp"] },
+    "output": { "formats": ["PDF"], "behavior": "Creates one PDF with one page per selected WebP image." },
+    "processingMode": "browser-local",
+    "keyControls": ["Reorder selected images", "Fit, A4, or Letter page size", "Auto, portrait, or landscape orientation"],
+    "batchBehavior": { "supported": true, "description": "Multiple WebP images become ordered PDF pages in one browser job." },
+    "importantLimitations": ["WebP is the only source format on this focused route.", "The output is always a PDF."],
+    "qualityCompatibility": ["The selected page layout is applied locally.", "Input order becomes page order.", "WebP decoding and the resulting PDF image representation depend on the shared browser PDF path."],
+    "resultDownload": "One validated PDF is offered with a deterministic download name.",
+    "faqTopics": ["Can I turn a batch of WebP images into one PDF?", "Which page layouts are available?", "Can WebP pages be reordered?", "Are files uploaded?"],
+    "relatedTools": ["jpg-to-pdf", "png-to-pdf", "pdf-to-jpg"],
+    "primaryLongTailOpportunity": "convert WebP images to PDF with page controls",
+    "canonicalDecision": "Keep this focused WebP-to-PDF URL self-canonical; it serves a specific source-format conversion intent.",
+    "page": {
+      "title": "Convert WebP Images to PDF | DoMyFile",
+      "metaDescription": "Convert one or more WebP images into an ordered PDF. Reorder pages and choose Fit, A4, Letter, portrait, landscape, or auto layout in your browser.",
+      "h1": "Convert WebP images to PDF",
+      "intro": "Turn WebP images into a fixed-output PDF with selectable page order, page size, and orientation settings.",
+      "summary": "WebP to PDF owns the WebP-specific image-to-document intent. Each successful WebP becomes one page, and the chosen layout is calculated locally by the PDF Engine.",
+      "steps": [
+        { "title": "Choose WebP files", "body": "Select one or more WebP images for the document." },
+        { "title": "Arrange and size pages", "body": "Set the image order and choose Fit, A4, or Letter with auto, portrait, or landscape orientation." },
+        { "title": "Download the PDF", "body": "Download one validated PDF after the selected WebP inputs are placed as pages." }
+      ],
+      "privacy": "WebP images are converted to PDF locally in your browser without uploading or storing the source files."
+    },
+    "faqContent": [
+      { "question": "Can I turn a batch of WebP images into one PDF?", "answer": "Yes. Multiple WebP inputs become ordered pages in one PDF." },
+      { "question": "Which page layouts are available?", "answer": "You can choose Fit, A4, or Letter page size and auto, portrait, or landscape orientation." },
+      { "question": "Can WebP pages be reordered?", "answer": "Yes. The selected image order becomes the PDF page order." },
+      { "question": "Are files uploaded?", "answer": "No. The WebP-to-PDF workflow runs locally in your browser." }
+    ]
+  },
+  {
+    "slug": "pdf-to-jpg",
+    "title": "PDF to JPG",
+    "category": "pdf",
+    "primarySearchIntent": "Render selected PDF pages as broadly compatible JPG images.",
+    "acceptedInput": { "formats": ["PDF"], "extensions": ["pdf"] },
+    "output": { "formats": ["JPG"], "behavior": "Creates one JPG download for each selected page." },
+    "processingMode": "browser-local",
+    "keyControls": ["All pages or a 1-based page selection such as 1-3, 5", "Standard, detailed, or large render scale", "JPG quality from 55% to 100%"],
+    "batchBehavior": { "supported": false, "description": "One PDF is rendered per job; multiple selected pages become multiple results." },
+    "importantLimitations": ["The route renders pages to raster JPGs; it does not preserve editable PDF structure in the output.", "Encrypted or unsupported PDFs are rejected."],
+    "qualityCompatibility": ["Render scale affects output dimensions and detail.", "JPG quality affects encoding size and visual detail.", "Rendering is performed locally with the PDF preview path."],
+    "resultDownload": "Selected pages are validated as JPGs and made available through the combined download action.",
+    "faqTopics": ["Can I convert only selected PDF pages?", "What does render scale change?", "Can every page be downloaded together?", "Does PDF to JPG preserve selectable text?"],
+    "relatedTools": ["jpg-to-pdf", "split-pdf", "compress-image"],
+    "primaryLongTailOpportunity": "convert selected PDF pages to JPG images",
+    "canonicalDecision": "Keep this self-canonical as the PDF-to-raster workflow; image-to-PDF routes have the opposite intent.",
+    "page": {
+      "title": "Convert Selected PDF Pages to JPG | DoMyFile",
+      "metaDescription": "Convert selected or all PDF pages to JPG images with render-scale and quality controls. Download validated page images from your browser.",
+      "h1": "Convert PDF pages to JPG",
+      "intro": "Render all or selected pages from a PDF as JPG images, with controls for render scale and output quality.",
+      "summary": "PDF to JPG creates raster images, not editable PDF structure. Choose a 1-based page selection, set standard, detailed, or large render scale, and adjust JPG quality from 55% to 100%.",
+      "steps": [
+        { "title": "Select a PDF", "body": "Add one supported PDF and let the local preview path read its page count." },
+        { "title": "Choose pages and quality", "body": "Render all pages or a selection such as 1-3, 5, then choose scale and JPG quality." },
+        { "title": "Download page images", "body": "Each selected page becomes a validated JPG in the combined download flow." }
+      ],
+      "privacy": "PDF pages are rendered to JPG locally in your browser; the source document is not uploaded or stored."
+    },
+    "faqContent": [
+      { "question": "Can I convert only selected PDF pages?", "answer": "Yes. Choose all pages or a 1-based selection such as 1-3, 5." },
+      { "question": "What does render scale change?", "answer": "Standard, detailed, and large render scales change the dimensions and detail of the JPG output." },
+      { "question": "Can every page be downloaded together?", "answer": "Yes. Selected page results are available through the combined download action." },
+      { "question": "Does PDF to JPG preserve selectable text?", "answer": "No. The result is a set of raster JPG images, so PDF text is rendered as pixels." }
+    ]
+  },
+  {
+    "slug": "organize-pdf",
+    "title": "Organize PDF",
+    "category": "pdf",
+    "primarySearchIntent": "Reorder, duplicate, or remove PDF pages in one workspace.",
+    "acceptedInput": { "formats": ["PDF"], "extensions": ["pdf"] },
+    "output": { "formats": ["PDF"], "behavior": "Creates one PDF using the edited page order." },
+    "processingMode": "browser-local",
+    "keyControls": ["Move pages", "Duplicate pages", "Remove pages", "Review generated page controls after selecting a PDF"],
+    "batchBehavior": { "supported": false, "description": "The page organizer edits one PDF at a time." },
+    "importantLimitations": ["It changes page arrangement and membership, not text content inside pages.", "Encrypted or unsupported PDFs are rejected."],
+    "qualityCompatibility": ["Pages are copied structurally with the PDF Engine.", "The original page content remains in the selected page order unless removed.", "The original input file is not changed."],
+    "resultDownload": "The edited PDF is validated and offered as one downloadable result.",
+    "faqTopics": ["Can I delete PDF pages?", "Can I duplicate a page?", "How is Organize PDF different from Merge PDF?", "Are pages rendered as images?"],
+    "relatedTools": ["merge-pdf", "split-pdf", "rotate-pdf"],
+    "primaryLongTailOpportunity": "reorder delete or duplicate PDF pages",
+    "canonicalDecision": "Keep this self-canonical as the single-document page-arrangement workflow; do not merge it with Merge, Split, or Rotate PDF.",
+    "page": {
+      "title": "Organize PDF Pages - Reorder, Duplicate & Remove | DoMyFile",
+      "metaDescription": "Reorder, duplicate, or remove pages in one PDF workspace. Create a validated PDF locally without changing text inside the pages.",
+      "h1": "Organize, duplicate, and remove PDF pages",
+      "intro": "Edit the order and membership of one PDF's pages by moving, duplicating, or removing page entries in the workspace.",
+      "summary": "Organize PDF changes which pages appear and in what order; it does not merge separate documents, extract a page range, rotate pages, or edit text inside a page. The PDF Engine keeps page content structural.",
+      "steps": [
+        { "title": "Open one PDF", "body": "Select a supported PDF and review the generated page controls." },
+        { "title": "Arrange page entries", "body": "Move pages, duplicate a page when needed, or remove pages from the output." },
+        { "title": "Download the organized PDF", "body": "Review the edited page sequence and download the validated document." }
+      ],
+      "privacy": "The PDF page arrangement is performed locally in your browser; the source is not uploaded or stored."
+    },
+    "faqContent": [
+      { "question": "Can I delete PDF pages?", "answer": "Yes. Remove page entries from the workspace before generating the output." },
+      { "question": "Can I duplicate a page?", "answer": "Yes. The page controls include duplication for the selected page." },
+      { "question": "How is Organize PDF different from Merge PDF?", "answer": "Organize PDF edits the pages of one source document. Merge PDF combines two or more separate PDF files." },
+      { "question": "Are pages rendered as images?", "answer": "No. The PDF Engine copies the page structure rather than rasterizing the document." }
+    ]
+  },
+  {
+    "slug": "rotate-pdf",
+    "title": "Rotate PDF",
+    "category": "pdf",
+    "primarySearchIntent": "Rotate all or selected PDF pages by a supported right-angle increment.",
+    "acceptedInput": { "formats": ["PDF"], "extensions": ["pdf"] },
+    "output": { "formats": ["PDF"], "behavior": "Creates one PDF with the selected page rotations applied." },
+    "processingMode": "browser-local",
+    "keyControls": ["90°, 180°, or 270° clockwise rotation", "All pages or page selections such as 1-3, 5"],
+    "batchBehavior": { "supported": false, "description": "The rotation workspace processes one PDF per job." },
+    "importantLimitations": ["Only right-angle rotations are exposed.", "The route rotates page geometry; it does not edit page content or reorder pages."],
+    "qualityCompatibility": ["Rotation is applied structurally without rasterizing the document.", "Selected page ranges are validated against the PDF page count.", "The original file remains unchanged."],
+    "resultDownload": "One validated rotated PDF is offered through the shared result action.",
+    "faqTopics": ["Can I rotate only some PDF pages?", "Which rotation angles are supported?", "Does rotation reduce PDF quality?", "Can I rotate and reorder pages together?"],
+    "relatedTools": ["organize-pdf", "watermark-pdf", "merge-pdf"],
+    "primaryLongTailOpportunity": "rotate selected PDF pages 90 degrees",
+    "canonicalDecision": "Keep this self-canonical as the page-orientation workflow; page order and overlays remain separate intents.",
+    "page": {
+      "title": "Rotate PDF Pages by 90 Degrees | DoMyFile",
+      "metaDescription": "Rotate all or selected PDF pages by 90, 180, or 270 degrees. Apply structural page rotation locally and download a validated PDF.",
+      "h1": "Rotate selected PDF pages",
+      "intro": "Apply a supported right-angle rotation to every page or to selected page ranges in one PDF.",
+      "summary": "Rotate PDF changes page orientation without changing page order or editing page content. Select all pages or ranges such as 1-3, 5, then apply 90, 180, or 270 degrees clockwise.",
+      "steps": [
+        { "title": "Choose a PDF", "body": "Add one supported document and wait for its page count to be checked." },
+        { "title": "Choose pages and angle", "body": "Select all pages or page ranges, then choose 90, 180, or 270 degrees clockwise." },
+        { "title": "Download the rotated PDF", "body": "The structural rotation is validated before the output is offered." }
+      ],
+      "privacy": "PDF rotation runs locally in your browser; the document is not uploaded or stored."
+    },
+    "faqContent": [
+      { "question": "Can I rotate only some PDF pages?", "answer": "Yes. Choose page selections such as 1-3, 5 instead of applying the rotation to all pages." },
+      { "question": "Which rotation angles are supported?", "answer": "The controls support 90, 180, and 270 degrees clockwise." },
+      { "question": "Does rotation reduce PDF quality?", "answer": "No raster export is used for the rotation; the PDF Engine applies page geometry structurally." },
+      { "question": "Can I rotate and reorder pages together?", "answer": "No. Rotate PDF handles page orientation. Use Organize PDF when page order or page membership must change." }
+    ]
+  },
+  {
+    "slug": "watermark-pdf",
+    "title": "Watermark PDF",
+    "category": "pdf",
+    "primarySearchIntent": "Add a visible text or image watermark to PDF pages with simple placement controls.",
+    "acceptedInput": { "formats": ["PDF", "JPG/PNG/WebP watermark image"], "extensions": ["pdf"] },
+    "output": { "formats": ["PDF"], "behavior": "Creates one PDF with the configured text or image overlay." },
+    "processingMode": "browser-local",
+    "keyControls": ["Text or image watermark", "Text up to 120 characters", "Center or corner placement", "Scale from 5% to 100%", "Opacity from 5% to 100%", "Text color"],
+    "batchBehavior": { "supported": false, "description": "One PDF and its optional watermark image are processed per job." },
+    "importantLimitations": ["The watermark is a visible overlay; it is not an access-control or encryption feature.", "The source PDF must be supported by the PDF Engine."],
+    "qualityCompatibility": ["Text watermarks use the built-in PDF font path.", "Image watermark placement is calculated relative to each page.", "The PDF is edited structurally and the original remains unchanged."],
+    "resultDownload": "One validated watermarked PDF is offered through the shared download action.",
+    "faqTopics": ["Can I use text or an image as a watermark?", "Can I change opacity and placement?", "How long can watermark text be?", "Does the watermark alter the original PDF?"],
+    "relatedTools": ["rotate-pdf", "organize-pdf", "compress-pdf"],
+    "primaryLongTailOpportunity": "add a text or image watermark to a PDF",
+    "canonicalDecision": "Keep this self-canonical as the PDF overlay workflow; do not combine it with page organization or compression.",
+    "page": {
+      "title": "Add a Text or Image Watermark to PDF | DoMyFile",
+      "metaDescription": "Add a visible text or image watermark to PDF pages with placement, opacity, scale, and color controls. Create the result locally.",
+      "h1": "Add a text or image watermark to PDF",
+      "intro": "Apply a visible text or image overlay to PDF pages and control where it appears, how large it is, and how opaque it looks.",
+      "summary": "Watermark PDF is an overlay workflow, not access control or encryption. Use text up to 120 characters or a JPG, PNG, or WebP image, then set placement, scale, opacity, and text color.",
+      "steps": [
+        { "title": "Choose a PDF and watermark", "body": "Select one PDF and configure text or add a supported JPG, PNG, or WebP watermark image." },
+        { "title": "Set overlay controls", "body": "Choose center or corner placement, then adjust scale, opacity, and text color where applicable." },
+        { "title": "Download the watermarked PDF", "body": "The edited document is validated and offered as one downloadable PDF." }
+      ],
+      "privacy": "The PDF and optional watermark image are combined locally in your browser; neither is uploaded or stored."
+    },
+    "faqContent": [
+      { "question": "Can I use text or an image as a watermark?", "answer": "Yes. The route supports text up to 120 characters or a JPG, PNG, or WebP watermark image." },
+      { "question": "Can I change opacity and placement?", "answer": "Yes. Choose center or corner placement and set opacity from 5% to 100%; image scale runs from 5% to 100%." },
+      { "question": "How long can watermark text be?", "answer": "The text control accepts up to 120 characters." },
+      { "question": "Does the watermark alter the original PDF?", "answer": "No. The original remains unchanged; the configured overlay is written to a separate PDF result." }
+    ]
+  },
+  {
+    "slug": "trim-audio",
+    "title": "Trim Audio",
+    "category": "audio",
+    "primarySearchIntent": "Keep a selected start-to-end segment from a supported audio file.",
+    "acceptedInput": { "formats": ["MP3", "WAV", "M4A (AAC)", "AAC", "FLAC", "OGG (Vorbis)"], "extensions": ["mp3", "wav", "m4a", "aac", "flac", "ogg"] },
+    "output": { "formats": ["MP3", "WAV", "M4A", "FLAC", "OGG"], "behavior": "Exports the selected segment in a verified audio format based on the source and available options." },
+    "processingMode": "browser-local",
+    "keyControls": ["Start time in seconds", "End time in seconds", "End at 0 uses the full duration"],
+    "batchBehavior": { "supported": false, "description": "The trim timeline processes one audio file per job." },
+    "importantLimitations": ["Start must be before end and the end must be within the probed duration.", "Exact cuts may require encoding; whole-file compatible paths can use stream copy."],
+    "qualityCompatibility": ["The shipped audio runtime verifies the supported input and output codec matrix.", "Duration is checked before processing.", "Processing stays on the device."],
+    "resultDownload": "The selected segment is validated and offered as one downloadable audio file.",
+    "faqTopics": ["Can I trim MP3, WAV, or M4A files?", "Are start and end values measured in seconds?", "What does end at 0 mean?", "Does trimming re-encode audio?"],
+    "relatedTools": ["audio-converter", "compress-audio", "merge-audio"],
+    "primaryLongTailOpportunity": "trim an MP3 or M4A audio file by seconds",
+    "canonicalDecision": "Keep this self-canonical as the time-range editing workflow; conversion, merging, and compression address different jobs.",
+    "page": {
+      "title": "Trim MP3, WAV & M4A Audio by Time | DoMyFile",
+      "metaDescription": "Trim supported MP3, WAV, M4A, AAC, FLAC, or OGG audio by start and end seconds. Export the selected segment locally.",
+      "h1": "Trim audio by start and end time",
+      "intro": "Keep a selected segment of a supported audio file by entering its start and end positions in seconds.",
+      "summary": "Trim Audio focuses on time-range editing. It validates the duration and exports the selected segment; an end value of 0 means the full duration, and compatible whole-file paths may use stream copy.",
+      "steps": [
+        { "title": "Choose one audio file", "body": "Add a supported MP3, WAV, M4A, AAC, FLAC, or OGG file." },
+        { "title": "Set the time range", "body": "Enter start and end seconds; start must be before end, and end at 0 uses the full duration." },
+        { "title": "Download the segment", "body": "The selected audio range is validated and offered as one downloadable result." }
+      ],
+      "privacy": "Audio is probed and trimmed locally in your browser without uploading or storing the source file."
+    },
+    "faqContent": [
+      { "question": "Can I trim MP3, WAV, or M4A files?", "answer": "Yes. The supported input matrix also includes AAC, FLAC, and OGG (Vorbis)." },
+      { "question": "Are start and end values measured in seconds?", "answer": "Yes. The trim controls use seconds and validate the range against the probed duration." },
+      { "question": "What does end at 0 mean?", "answer": "An end value of 0 uses the full source duration as the end of the selected range." },
+      { "question": "Does trimming re-encode audio?", "answer": "Exact cuts may use the verified encoder path; compatible whole-file paths can use stream copy." }
+    ]
+  },
+  {
+    "slug": "audio-converter",
+    "title": "Audio Converter",
+    "category": "audio",
+    "primarySearchIntent": "Convert supported audio files between verified common formats.",
+    "acceptedInput": { "formats": ["MP3", "WAV", "M4A (AAC)", "AAC", "FLAC", "OGG (Vorbis)"], "extensions": ["mp3", "wav", "m4a", "aac", "flac", "ogg"] },
+    "output": { "formats": ["MP3", "WAV", "M4A", "FLAC", "OGG"], "behavior": "Choose a verified audio output container and codec." },
+    "processingMode": "browser-local",
+    "keyControls": ["MP3, WAV, M4A, FLAC, or OGG output", "Smaller, balanced, or higher quality for lossy output"],
+    "batchBehavior": { "supported": true, "description": "Convert multiple supported audio files with one result per successful input." },
+    "importantLimitations": ["Only the shipped six-input/five-output audio matrix is supported.", "Unsupported codecs or malformed files are rejected before the expensive processing step."],
+    "qualityCompatibility": ["Lossless formats do not use a bitrate quality choice.", "Compatible source/output stream shapes may use stream copy; other conversions use the verified encoder path.", "The exact FFmpeg/WASM runtime defines compatibility."],
+    "resultDownload": "Each converted file is validated and included in the shared multi-file download flow.",
+    "faqTopics": ["Which audio formats can be converted?", "Can I convert several files together?", "When does quality affect the result?", "Are the files processed locally?"],
+    "relatedTools": ["trim-audio", "compress-audio", "merge-audio"],
+    "primaryLongTailOpportunity": "convert MP3 WAV M4A FLAC or OGG locally",
+    "canonicalDecision": "Keep this self-canonical as the broad verified audio-format workflow; do not collapse it into trimming, merging, or compression.",
+    "page": {
+      "title": "Convert MP3, WAV, M4A, FLAC & OGG | DoMyFile",
+      "metaDescription": "Convert supported MP3, WAV, M4A, AAC, FLAC, and OGG files to verified audio formats. Choose output and quality, then download locally.",
+      "h1": "Convert audio between supported formats",
+      "intro": "Convert supported audio files between the shipped common formats with an explicit output choice and quality setting for lossy results.",
+      "summary": "Audio Converter is the broad format workflow: it accepts six verified input families and offers MP3, WAV, M4A, FLAC, or OGG output. It is for changing format, not for joining tracks, trimming time, or specifically reducing size.",
+      "steps": [
+        { "title": "Select audio files", "body": "Add one or more supported MP3, WAV, M4A, AAC, FLAC, or OGG files." },
+        { "title": "Choose output settings", "body": "Select a verified output format and use smaller, balanced, or higher quality for lossy output." },
+        { "title": "Download converted audio", "body": "Each successful file is validated and included in the multi-file result download." }
+      ],
+      "privacy": "Audio conversion is performed locally in your browser; source files and results are not uploaded or stored."
+    },
+    "faqContent": [
+      { "question": "Which audio formats can be converted?", "answer": "The input matrix includes MP3, WAV, M4A (AAC), AAC, FLAC, and OGG (Vorbis). Verified outputs include MP3, WAV, M4A, FLAC, and OGG." },
+      { "question": "Can I convert several files together?", "answer": "Yes. Batch conversion creates one result for each successful input." },
+      { "question": "When does quality affect the result?", "answer": "Smaller, balanced, or higher quality applies to lossy output. Lossless formats do not use the same bitrate quality choice." },
+      { "question": "Are the files processed locally?", "answer": "Yes. The approved audio runtime processes the conversion on your device." }
+    ]
+  },
+  {
+    "slug": "merge-audio",
+    "title": "Merge Audio",
+    "category": "audio",
+    "primarySearchIntent": "Join two or more supported audio files into one continuous track.",
+    "acceptedInput": { "formats": ["MP3", "WAV", "M4A (AAC)", "AAC", "FLAC", "OGG (Vorbis)", "2+ files"], "extensions": ["mp3", "wav", "m4a", "aac", "flac", "ogg"] },
+    "output": { "formats": ["MP3", "WAV", "M4A", "FLAC", "OGG"], "behavior": "Creates one continuous output in a verified selected format." },
+    "processingMode": "browser-local",
+    "keyControls": ["Select at least two tracks", "Move tracks into the final order", "Choose output format", "Choose lossy quality preset"],
+    "batchBehavior": { "supported": true, "minimumFiles": 2, "description": "The ordered input batch becomes one continuous output track." },
+    "importantLimitations": ["At least two audio files are required.", "Different source settings may be normalized before tracks are joined.", "Unsupported codecs are rejected by the shipped runtime."],
+    "qualityCompatibility": ["Compatible tracks can use stream copy; incompatible stream shapes use the tested normalization path.", "The output codec and container are validated before download.", "Processing remains local."],
+    "resultDownload": "One validated continuous audio file is offered through the result download action.",
+    "faqTopics": ["How many audio files can I merge?", "Can I reorder tracks before joining them?", "What output formats are available?", "Are different source settings normalized?"],
+    "relatedTools": ["trim-audio", "audio-converter", "compress-audio"],
+    "primaryLongTailOpportunity": "merge multiple audio files into one track",
+    "canonicalDecision": "Keep this self-canonical as the multi-track joining workflow; it is not a synonym for audio conversion or compression.",
+    "page": {
+      "title": "Merge Audio Files into One Track | DoMyFile",
+      "metaDescription": "Merge two or more supported audio files into one continuous track. Reorder inputs, choose output format and quality, and process locally.",
+      "h1": "Merge two or more audio files into one track",
+      "intro": "Join at least two supported audio files into one continuous output, with input order and output settings under your control.",
+      "summary": "Merge Audio is for joining tracks, not changing one file's format or bitrate. The selected batch becomes one continuous result, and different source settings may be normalized before the tracks are joined.",
+      "steps": [
+        { "title": "Add two or more tracks", "body": "Select the supported audio files that should become one output." },
+        { "title": "Set the track order", "body": "Move the tracks into their final sequence and choose output format and lossy quality." },
+        { "title": "Download one continuous file", "body": "The output codec and container are validated before the combined audio is offered." }
+      ],
+      "privacy": "Tracks are normalized and merged locally in your browser without uploading or storing the source files."
+    },
+    "faqContent": [
+      { "question": "How many audio files can I merge?", "answer": "At least two supported audio files are required. The practical limit depends on the browser and the current runtime resource envelope." },
+      { "question": "Can I reorder tracks before joining them?", "answer": "Yes. Move the selected tracks into the order used for the continuous output." },
+      { "question": "What output formats are available?", "answer": "Verified output choices include MP3, WAV, M4A, FLAC, and OGG." },
+      { "question": "Are different source settings normalized?", "answer": "They may be normalized before tracks are joined when source stream settings differ." }
+    ]
+  },
+  {
+    "slug": "compress-audio",
+    "title": "Compress Audio",
+    "category": "audio",
+    "primarySearchIntent": "Reduce supported audio bitrate and file size using a clear quality preset.",
+    "acceptedInput": { "formats": ["MP3", "WAV", "M4A (AAC)", "AAC", "FLAC", "OGG (Vorbis)"], "extensions": ["mp3", "wav", "m4a", "aac", "flac", "ogg"] },
+    "output": { "formats": ["MP3", "M4A"], "behavior": "Uses MP3 for MP3 input by default and M4A for other input unless the user chooses the verified lossy output." },
+    "processingMode": "browser-local",
+    "keyControls": ["96, 128, or 192 kbps quality preset", "MP3 or M4A output"],
+    "batchBehavior": { "supported": true, "description": "Compress multiple supported audio files with the same quality/output settings." },
+    "importantLimitations": ["The route targets lossy MP3 or M4A output.", "A result is not marked complete unless it is meaningfully smaller and retains its duration.", "Unsupported codecs are rejected."],
+    "qualityCompatibility": ["Quality presets map to tested bitrate choices.", "Duration is checked against the source.", "The audio runtime processes files locally and validates the output."],
+    "resultDownload": "Each successful smaller audio result is validated and offered through the shared batch download flow.",
+    "faqTopics": ["Which bitrate presets are available?", "Does compression keep audio duration?", "Can I choose MP3 or M4A?", "What happens if the result is not smaller?"],
+    "relatedTools": ["audio-converter", "trim-audio", "merge-audio"],
+    "primaryLongTailOpportunity": "compress MP3 or WAV audio to a smaller file",
+    "canonicalDecision": "Keep this self-canonical as the audio-size workflow; changing format or selecting a time range remains separate.",
+    "page": {
+      "title": "Compress Audio with Bitrate Presets | DoMyFile",
+      "metaDescription": "Compress supported audio with 96, 128, or 192 kbps presets. Choose MP3 or M4A output and download a validated smaller result locally.",
+      "h1": "Compress audio with bitrate presets",
+      "intro": "Reduce supported audio bitrate and file size with clear presets while checking that the result stays the same duration and is meaningfully smaller.",
+      "summary": "Compress Audio targets file size through lossy MP3 or M4A output. It is separate from Audio Converter's broad format changes and Trim Audio's time-range editing; no result is marked complete when it is not meaningfully smaller.",
+      "steps": [
+        { "title": "Select audio files", "body": "Add one or more supported audio inputs for the local batch job." },
+        { "title": "Choose bitrate and output", "body": "Pick 96, 128, or 192 kbps and choose MP3 or M4A output." },
+        { "title": "Download smaller results", "body": "Only validated results that retain duration and are meaningfully smaller are offered." }
+      ],
+      "privacy": "Audio compression runs locally in your browser; source files and generated results are not uploaded or stored."
+    },
+    "faqContent": [
+      { "question": "Which bitrate presets are available?", "answer": "The controls offer 96, 128, and 192 kbps presets." },
+      { "question": "Does compression keep audio duration?", "answer": "Yes. The result is checked against the source duration before it is offered." },
+      { "question": "Can I choose MP3 or M4A?", "answer": "Yes. The lossy output selector supports MP3 and M4A." },
+      { "question": "What happens if the result is not smaller?", "answer": "The route does not mark the job complete or offer a compressed result when the output is not meaningfully smaller." }
+    ]
+  },
+  {
+    "slug": "compress-video",
+    "title": "Compress Video",
+    "category": "video",
+    "primarySearchIntent": "Reduce supported video size with a quality preset and an explicit temporary processing disclosure.",
+    "acceptedInput": { "formats": ["MP4 or MOV · H.264 or MPEG-4 Part 2 · AAC audio optional"], "extensions": ["mp4", "mov"] },
+    "output": { "formats": ["WebM · VP9", "Opus audio optional"], "behavior": "Produces a validated WebM compression result with unchanged dimensions when the server profile succeeds." },
+    "processingMode": "temporary-server",
+    "keyControls": ["Quality, balanced, or smaller-file preset", "Temporary upload disclosure and automatic deletion"],
+    "batchBehavior": { "supported": false, "description": "One video is uploaded for each temporary compression job." },
+    "importantLimitations": ["The file is temporarily uploaded and deleted automatically after processing.", "The server profile supports the declared MP4/MOV and codec matrix; unsupported video is rejected.", "Compression changes the output container to WebM rather than preserving MP4 or MOV."],
+    "qualityCompatibility": ["The profile uses VP9 video and optional Opus audio.", "Dimensions remain unchanged according to the implemented route contract.", "Compression quality and output size are tradeoffs, not guaranteed ratios."],
+    "resultDownload": "A validated WebM result is offered through the short-lived server download flow; the source remains untouched.",
+    "faqTopics": ["Why is Compress Video temporarily uploaded?", "What output format does it create?", "Do dimensions stay the same?", "Which MP4 and MOV codecs are accepted?"],
+    "relatedTools": ["trim-video", "video-converter", "video-to-mp3"],
+    "primaryLongTailOpportunity": "compress MP4 or MOV video to WebM",
+    "canonicalDecision": "Keep this self-canonical as the size-reduction workflow; it is not the same intent as container conversion or trimming.",
+    "page": {
+      "title": "Compress MP4 or MOV Video to WebM | DoMyFile",
+      "metaDescription": "Compress supported MP4 or MOV video with quality presets and unchanged dimensions. A temporary job creates validated WebM output and deletes the upload.",
+      "h1": "Compress supported video to WebM",
+      "intro": "Reduce a supported MP4 or MOV video with a quality preset while keeping its dimensions unchanged when the temporary server profile succeeds.",
+      "summary": "Compress Video is the video-size workflow: it accepts the declared MP4 or MOV codec matrix, outputs WebM with VP9 and optional Opus audio, and does not promise a fixed compression ratio. The upload is temporary and deleted automatically.",
+      "steps": [
+        { "title": "Choose one video", "body": "Select a supported MP4 or MOV file and read the temporary-upload disclosure." },
+        { "title": "Pick a size preset", "body": "Choose quality, balanced, or smaller-file processing for the temporary compression job." },
+        { "title": "Download WebM output", "body": "Download the validated WebM result when the profile succeeds; source dimensions remain unchanged by contract." }
+      ],
+      "privacy": "The video is temporarily uploaded only for this compression job and deleted automatically after processing; it is not stored as a user file."
+    },
+    "faqContent": [
+      { "question": "Why is Compress Video temporarily uploaded?", "answer": "The current video compression profile uses a temporary server job for re-encoding; the upload is deleted automatically after processing." },
+      { "question": "What output format does it create?", "answer": "Successful jobs produce validated WebM with VP9 video and optional Opus audio." },
+      { "question": "Do dimensions stay the same?", "answer": "Yes. Unchanged dimensions are part of the implemented route contract." },
+      { "question": "Which MP4 and MOV codecs are accepted?", "answer": "The declared matrix accepts supported MP4 or MOV input with H.264 or MPEG-4 Part 2 video and optional AAC audio." }
+    ]
+  },
+  {
+    "slug": "trim-video",
+    "title": "Trim Video",
+    "category": "video",
+    "primarySearchIntent": "Trim a verified H.264 MP4 or MOV at a keyframe-aligned start without re-encoding video.",
+    "acceptedInput": { "formats": ["MP4 · H.264", "MOV · H.264", "AAC audio optional"], "extensions": ["mp4", "mov"] },
+    "output": { "formats": ["MP4"], "behavior": "Stream-copies the selected range to MP4." },
+    "processingMode": "browser-local",
+    "keyControls": ["Start and end time in seconds", "Keyframe-aligned start validation", "End at 0 uses the full duration"],
+    "batchBehavior": { "supported": false, "description": "The local trim workspace processes one verified video per job." },
+    "importantLimitations": ["The start must match a verified video keyframe.", "Non-keyframe starts are rejected rather than approximated or re-encoded.", "Only one H.264 video stream and optional AAC audio are supported."],
+    "qualityCompatibility": ["Video and supported audio streams are copied rather than re-encoded.", "The route preserves dimensions and supported audio when present.", "MP4 and QuickTime MOV signatures and streams are probed locally before processing."],
+    "resultDownload": "A validated MP4 clip is offered as one local download with a trimmed suffix.",
+    "faqTopics": ["Why must the trim start be a keyframe?", "Does Trim Video re-encode?", "Can I trim MOV files?", "What happens to AAC audio?"],
+    "relatedTools": ["video-converter", "compress-video", "mov-to-mp4"],
+    "primaryLongTailOpportunity": "trim H.264 MP4 or MOV video without re-encoding",
+    "canonicalDecision": "Keep this self-canonical as the keyframe-aware time-range workflow; it is intentionally narrower than Video Converter.",
+    "page": {
+      "title": "Trim H.264 MP4 or MOV Video without Re-encoding | DoMyFile",
+      "metaDescription": "Trim verified H.264 MP4 or MOV video by start and end time locally. Starts must align to keyframes; the selected range is stream-copied to MP4.",
+      "h1": "Trim H.264 MP4 or MOV video",
+      "intro": "Select a time range from a verified H.264 MP4 or MOV file and export it to MP4 without re-encoding the video stream.",
+      "summary": "Trim Video owns the time-range intent. It validates a keyframe-aligned start, preserves dimensions and supported AAC audio through stream copy, and rejects non-keyframe starts instead of approximating them with a re-encode.",
+      "steps": [
+        { "title": "Choose one verified video", "body": "Add an MP4 or MOV with one H.264 video stream and optional AAC audio." },
+        { "title": "Set start and end seconds", "body": "Enter a keyframe-aligned start and valid end; an end of 0 uses the full duration." },
+        { "title": "Download the MP4 clip", "body": "The selected range is stream-copied, validated, and offered as one MP4 result." }
+      ],
+      "privacy": "The video is probed and trimmed locally in your browser; it is not uploaded or stored."
+    },
+    "faqContent": [
+      { "question": "Why must the trim start be a keyframe?", "answer": "The local stream-copy path can begin reliably only at a verified video keyframe, so non-keyframe starts are rejected." },
+      { "question": "Does Trim Video re-encode?", "answer": "No video re-encode is attempted. The selected range uses stream copy." },
+      { "question": "Can I trim MOV files?", "answer": "Yes, when the MOV has the supported H.264 stream and optional AAC audio." },
+      { "question": "What happens to AAC audio?", "answer": "Supported AAC audio is preserved when it is present in the verified source stream." }
+    ]
+  },
+  {
+    "slug": "video-to-mp3",
+    "title": "Video to MP3",
+    "category": "video",
+    "primarySearchIntent": "Extract the verified AAC audio stream from an H.264 MP4 or MOV video and encode it as MP3.",
+    "acceptedInput": { "formats": ["MP4 · H.264 + AAC", "MOV · H.264 + AAC"], "extensions": ["mp4", "mov"] },
+    "output": { "formats": ["MP3"], "behavior": "Always produces MP3 audio." },
+    "processingMode": "browser-local",
+    "keyControls": ["96, 128, or 192 kbps MP3 quality preset", "Fixed MP3 output"],
+    "batchBehavior": { "supported": false, "description": "One verified video is inspected and extracted per job." },
+    "importantLimitations": ["Exactly one H.264 video stream and one AAC audio stream are required.", "Video is not re-encoded; files without the required audio stream are rejected.", "WebM and other unsupported containers are rejected."],
+    "qualityCompatibility": ["The video stream is inspected locally and discarded from the output.", "Only the verified AAC audio stream is transcoded to MP3.", "The shipped audio/video runtime defines the accepted stream matrix."],
+    "resultDownload": "One validated MP3 result is offered as a local download with an audio suffix.",
+    "faqTopics": ["Which video codecs and audio streams are accepted?", "Is the video stream re-encoded?", "Can I choose MP3 bitrate?", "Does Video to MP3 support WebM?"],
+    "relatedTools": ["trim-video", "mov-to-mp4", "video-converter"],
+    "primaryLongTailOpportunity": "extract MP3 from H.264 MP4 or MOV video",
+    "canonicalDecision": "Keep this self-canonical as an audio-extraction workflow; it is distinct from trimming, remuxing, and compression.",
+    "page": {
+      "title": "Extract MP3 from H.264 MP4 or MOV | DoMyFile",
+      "metaDescription": "Extract the AAC audio stream from verified H.264 MP4 or MOV video and encode it to MP3 with 96, 128, or 192 kbps quality choices locally.",
+      "h1": "Extract MP3 audio from MP4 or MOV video",
+      "intro": "Take the verified AAC audio stream from a compatible H.264 MP4 or MOV file and export it as fixed-output MP3.",
+      "summary": "Video to MP3 is an audio-extraction workflow, not video conversion or trimming. It requires one H.264 video stream and one AAC audio stream, discards the video stream, and encodes only the audio locally.",
+      "steps": [
+        { "title": "Choose one verified video", "body": "Add an MP4 or MOV containing the required H.264 video and AAC audio streams." },
+        { "title": "Choose MP3 quality", "body": "Select the 96, 128, or 192 kbps preset; MP3 remains the fixed output." },
+        { "title": "Download the audio", "body": "The extracted MP3 is validated and offered as one local download." }
+      ],
+      "privacy": "The compatible video is inspected and converted locally in your browser; it is not uploaded or stored."
+    },
+    "faqContent": [
+      { "question": "Which video codecs and audio streams are accepted?", "answer": "The route requires exactly one H.264 video stream and one AAC audio stream in a supported MP4 or MOV container." },
+      { "question": "Is the video stream re-encoded?", "answer": "No. The video stream is inspected locally and discarded; only the AAC audio is encoded to MP3." },
+      { "question": "Can I choose MP3 bitrate?", "answer": "Yes. The available presets are 96, 128, and 192 kbps." },
+      { "question": "Does Video to MP3 support WebM?", "answer": "No. WebM and other unsupported containers are rejected by the released stream matrix." }
+    ]
+  },
+  {
+    "slug": "mov-to-mp4",
+    "title": "MOV to MP4",
+    "category": "video",
+    "primarySearchIntent": "Remux a compatible MOV file into MP4 without re-encoding its supported streams.",
+    "acceptedInput": { "formats": ["MOV · H.264 video", "AAC audio optional"], "extensions": ["mov"] },
+    "output": { "formats": ["MP4"], "behavior": "Always produces MP4 through stream copy for the verified MOV matrix." },
+    "processingMode": "browser-local",
+    "keyControls": ["Fixed MP4 output", "No quality or codec selector; compatible streams are copied"],
+    "batchBehavior": { "supported": false, "description": "One compatible MOV file is remuxed per job." },
+    "importantLimitations": ["The source must contain one H.264 video stream and zero or one AAC audio stream.", "Unsupported codecs and extra stream types are rejected.", "This is a container remux, not a general codec conversion."],
+    "qualityCompatibility": ["Supported video and audio streams are preserved without re-encoding.", "Dimensions and duration remain tied to the source streams.", "The MOV signature and stream matrix are verified locally."],
+    "resultDownload": "One validated MP4 result is offered as a local download with an MP4 suffix.",
+    "faqTopics": ["Does MOV to MP4 re-encode video?", "Which MOV codecs are supported?", "Is AAC audio preserved?", "How is this different from Video Converter?"],
+    "relatedTools": ["video-converter", "video-to-mp3", "trim-video"],
+    "primaryLongTailOpportunity": "convert H.264 MOV to MP4 without re-encoding",
+    "canonicalDecision": "Keep this as the directional MOV-to-MP4 self-canonical route; it owns the one-way compatibility intent.",
+    "page": {
+      "title": "Convert H.264 MOV to MP4 without Re-encoding | DoMyFile",
+      "metaDescription": "Convert compatible H.264 MOV files to MP4 locally through stream copy. Preserve supported audio, dimensions, and duration without re-encoding.",
+      "h1": "Convert compatible MOV files to MP4",
+      "intro": "Remux one compatible QuickTime MOV into fixed-output MP4 while copying its supported H.264 video and optional AAC audio streams.",
+      "summary": "MOV to MP4 owns the directional one-way intent. It is a container remux for one H.264 video stream with zero or one AAC audio stream, not a general codec converter and not the broader MP4/MOV workflow.",
+      "steps": [
+        { "title": "Choose one MOV file", "body": "Add a QuickTime MOV with the supported H.264 and optional AAC stream combination." },
+        { "title": "Use fixed MP4 output", "body": "There is no quality or codec selector because compatible streams are copied rather than re-encoded." },
+        { "title": "Download the remuxed file", "body": "The validated MP4 result preserves supported stream data, dimensions, and duration." }
+      ],
+      "privacy": "The MOV is probed and remuxed locally in your browser without uploading or storing the source file."
+    },
+    "faqContent": [
+      { "question": "Does MOV to MP4 re-encode video?", "answer": "No. The verified MOV-to-MP4 path uses stream copy for compatible streams." },
+      { "question": "Which MOV codecs are supported?", "answer": "The source must contain one H.264 video stream and zero or one AAC audio stream; incompatible codecs or extra stream types are rejected." },
+      { "question": "Is AAC audio preserved?", "answer": "Supported AAC audio is copied into the MP4 result when present." },
+      { "question": "How is this different from Video Converter?", "answer": "MOV to MP4 is the directional one-way route. Video Converter is the broader verified MP4/MOV workflow with a selectable MP4 or MOV output." }
+    ]
+  },
+  {
+    "slug": "video-converter",
+    "title": "Video Converter",
+    "category": "video",
+    "primarySearchIntent": "Remux a verified H.264 MP4 or MOV between the supported MP4 and MOV containers.",
+    "acceptedInput": { "formats": ["MP4 · H.264", "MOV · H.264", "AAC audio optional"], "extensions": ["mp4", "mov"] },
+    "output": { "formats": ["MP4", "MOV"], "behavior": "Choose MP4 or MOV output; supported streams are copied into the selected container." },
+    "processingMode": "browser-local",
+    "keyControls": ["Choose MP4 or MOV output", "Fixed H.264/AAC stream-copy workflow"],
+    "batchBehavior": { "supported": false, "description": "One verified MP4 or MOV file is converted per job." },
+    "importantLimitations": ["Only MP4 and QuickTime MOV with one H.264 video stream and optional AAC audio are accepted.", "WebM, MKV, AVI, incompatible codecs, and broad cross-codec conversion are rejected.", "The route remuxes containers rather than re-encoding video."],
+    "qualityCompatibility": ["Supported video/audio streams, dimensions, and duration are preserved by stream copy.", "Output container choice is validated before download.", "The exact local media runtime defines compatibility."],
+    "resultDownload": "One validated MP4 or MOV result is offered as a local download with a converted suffix.",
+    "faqTopics": ["Can Video Converter change MOV to MP4?", "Can it change MP4 to MOV?", "Which codecs are accepted?", "Does it re-encode video?"],
+    "relatedTools": ["mov-to-mp4", "trim-video", "compress-video"],
+    "primaryLongTailOpportunity": "convert H.264 MP4 to MOV or MOV to MP4 locally",
+    "canonicalDecision": "Keep this broader MP4/MOV self-canonical route; MOV to MP4 remains the directional one-way intent and is not merged into this URL.",
+    "page": {
+      "title": "Convert H.264 MP4 and MOV Containers | DoMyFile",
+      "metaDescription": "Convert verified H.264 MP4 or MOV files between the supported MP4 and MOV containers. Choose the output container and process locally.",
+      "h1": "Convert verified MP4 and MOV video containers",
+      "intro": "Remux a supported H.264 MP4 or MOV file into a chosen MP4 or MOV container using the verified stream-copy workflow.",
+      "summary": "Video Converter is the broader two-way MP4/MOV workflow: choose MP4 or MOV output, while the supported H.264 video and optional AAC audio streams, dimensions, and duration are copied. It rejects broad cross-codec conversion.",
+      "steps": [
+        { "title": "Choose one MP4 or MOV", "body": "Add a verified container with one H.264 video stream and optional AAC audio." },
+        { "title": "Select the output container", "body": "Choose MP4 or MOV; the route remuxes compatible streams instead of re-encoding them." },
+        { "title": "Download the converted container", "body": "The selected output is validated before one local MP4 or MOV result is offered." }
+      ],
+      "privacy": "Video Converter probes and remuxes the selected file locally in your browser without uploading or storing it."
+    },
+    "faqContent": [
+      { "question": "Can Video Converter change MOV to MP4?", "answer": "Yes. Choose MP4 output for a supported H.264 MOV source." },
+      { "question": "Can it change MP4 to MOV?", "answer": "Yes. Choose MOV output for a supported H.264 MP4 source." },
+      { "question": "Which codecs are accepted?", "answer": "The route accepts MP4 or QuickTime MOV with one H.264 video stream and optional AAC audio. WebM, MKV, AVI, and incompatible codecs are rejected." },
+      { "question": "Does it re-encode video?", "answer": "No. Compatible video and audio streams are remuxed with stream copy." }
+    ]
+  }
+]

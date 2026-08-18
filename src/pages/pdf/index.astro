@@ -1,0 +1,17 @@
+---
+import SiteLayout from "../../layouts/SiteLayout.astro";
+import ToolCatalog from "../../components/tools/ToolCatalog.astro";
+import RelatedCategories from "../../components/tools/RelatedCategories.astro";
+import { getCategoryStructuredData } from "../../lib/seo";
+---
+
+<SiteLayout
+  title="PDF and document tools — DoMyFile"
+  description="Merge, split, rotate, watermark, organize PDFs, and convert JPG, PNG, or WebP images to PDF in a browser-first DoMyFile workspace."
+  structuredData={getCategoryStructuredData("pdf")}
+>
+  <main id="main-content">
+    <ToolCatalog category="pdf" />
+    <div class="container category-related-wrap"><RelatedCategories current="pdf" /></div>
+  </main>
+</SiteLayout>

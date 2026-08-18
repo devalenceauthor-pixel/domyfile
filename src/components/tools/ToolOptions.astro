@@ -1,0 +1,272 @@
+---
+import type { ToolDefinition } from "../../tools/types";
+import { getToolAvailability } from "../../tools/registry";
+
+interface Props {
+  tool: ToolDefinition;
+}
+
+const { tool } = Astro.props;
+const isDeferred = getToolAvailability(tool) !== "production-ready";
+const statusReason = tool.statusReason ?? "This route is not enabled for V1 processing.";
+const configuredOptions = ["compress-image", "resize-image", "crop-image", "jpg-to-pdf", "png-to-pdf", "webp-to-pdf", "png-to-jpg", "jpg-to-png", "jpg-to-webp", "png-to-webp", "webp-to-jpg", "webp-to-png", "heic-to-jpg", "compress-pdf", "merge-pdf", "split-pdf", "organize-pdf", "rotate-pdf", "pdf-to-jpg", "watermark-pdf", "trim-audio", "trim-video", "audio-converter", "merge-audio", "compress-audio", "compress-video", "video-to-mp3", "mov-to-mp4", "video-converter"].includes(tool.slug);
+---
+
+{tool.slug === "compress-image" && (
+  <>
+    <div class="option-group">
+      <div class="option-label-row"><label class="option-label" for="qualityRange">Quality</label><span class="option-value" data-range-output="qualityRange">78%</span></div>
+      <input class="range-input" id="qualityRange" type="range" min="35" max="100" value="78" />
+      <div class="range-scale"><span>Smaller file</span><span>Higher quality</span></div>
+    </div>
+    <div class="option-group">
+      <div class="option-label-row"><label class="option-label" for="outputFormat">Output format</label><span class="option-value">Optional</span></div>
+      <select class="select-input" id="outputFormat"><option value="original">Keep original</option><option value="image/jpeg">JPG</option><option value="image/webp">WebP</option><option value="image/png">PNG</option></select>
+      <p class="option-help">PNG stays lossless. JPG or WebP can usually make a smaller file.</p>
+    </div>
+  </>
+)}
+
+{tool.slug === "resize-image" && (
+  <>
+    <div class="option-group">
+      <div class="option-label-row"><label class="option-label" for="scaleRange">Scale</label><span class="option-value" data-range-output="scaleRange">80%</span></div>
+      <input class="range-input" id="scaleRange" type="range" min="10" max="200" value="80" />
+      <div class="range-scale"><span>10%</span><span>200%</span></div>
+    </div>
+    <div class="option-group"><label class="checkbox-row"><input id="keepRatio" type="checkbox" checked /><span>Keep the original aspect ratio</span></label><p class="option-help">Dimensions are calculated on your device after the file is decoded.</p></div>
+  </>
+)}
+
+{!isDeferred && tool.slug === "crop-image" && (
+  <>
+  <div class="option-group">
+    <div class="option-label-row"><label class="option-label" for="cropRatio">Aspect ratio</label><span class="option-value">Drag to frame</span></div>
+    <select class="select-input" id="cropRatio"><option value="free">Freeform</option><option value="1">Square · 1:1</option><option value="1.333333">Landscape · 4:3</option><option value="1.777778">Widescreen · 16:9</option><option value="0.75">Portrait · 3:4</option></select>
+    <p class="option-help">Drag the frame to move it and use the handles to resize. Arrow keys move it; hold Shift to resize.</p>
+  </div>
+  <div class="option-group">
+    <div class="option-label-row"><label class="option-label" for="cropOutputFormat">Output format</label><span class="option-value">Verified raster</span></div>
+    <select class="select-input" id="cropOutputFormat"><option value="image/jpeg">JPG</option><option value="image/png">PNG</option><option value="image/webp">WebP</option></select>
+  </div>
+  <div class="option-group crop-editor" data-crop-editor hidden>
+    <div class="option-label-row"><span class="option-label">Crop area</span><span class="option-value" data-crop-size>Choose an image to start</span></div>
+    <div class="crop-editor-stage" data-crop-stage>
+      <canvas class="crop-editor-image" data-crop-image width="1" height="1" role="img" aria-label="Image crop preview"></canvas>
+      <div class="crop-selection" data-crop-selection role="group" tabindex="0" aria-label="Crop area. Use arrow keys to move; hold Shift to resize.">
+        <span class="crop-handle crop-handle--n" data-crop-handle="n" aria-hidden="true"></span>
+        <span class="crop-handle crop-handle--ne" data-crop-handle="ne" aria-hidden="true"></span>
+        <span class="crop-handle crop-handle--e" data-crop-handle="e" aria-hidden="true"></span>
+        <span class="crop-handle crop-handle--se" data-crop-handle="se" aria-hidden="true"></span>
+        <span class="crop-handle crop-handle--s" data-crop-handle="s" aria-hidden="true"></span>
+        <span class="crop-handle crop-handle--sw" data-crop-handle="sw" aria-hidden="true"></span>
+        <span class="crop-handle crop-handle--w" data-crop-handle="w" aria-hidden="true"></span>
+        <span class="crop-handle crop-handle--nw" data-crop-handle="nw" aria-hidden="true"></span>
+      </div>
+    </div>
+    <div class="crop-editor-preview">
+      <div class="crop-editor-preview-heading"><span>Live preview</span><span data-crop-preview-size>Choose an image to start</span></div>
+      <canvas class="crop-preview" data-crop-preview width="1" height="1" role="img" aria-label="Cropped image live preview"></canvas>
+    </div>
+    <p class="option-help" data-crop-error hidden></p>
+  </div>
+  </>
+)}
+
+{["jpg-to-pdf", "png-to-pdf", "webp-to-pdf"].includes(tool.slug) && (
+  <>
+    <div class="option-group"><div class="option-label-row"><label class="option-label" for="pageSize">Page size</label><span class="option-value">Recommended</span></div><select class="select-input" id="pageSize"><option value="fit">Fit to image</option><option value="a4">A4</option><option value="letter">Letter</option></select></div>
+    <div class="option-group"><div class="option-label-row"><label class="option-label" for="pageOrientation">Orientation</label><span class="option-value">Auto</span></div><select class="select-input" id="pageOrientation"><option value="auto">Auto</option><option value="portrait">Portrait</option><option value="landscape">Landscape</option></select><p class="option-help">The selected {tool.input.formats.join(" or ")} files become PDF pages in the chosen order.</p></div>
+  </>
+)}
+
+{tool.slug === "merge-pdf" && (
+  <div class="frontend-placeholder"><strong>Reorder before merging.</strong><p>Use the move controls beside each selected file to set the final page order.</p><code>output: application/pdf</code></div>
+)}
+
+{tool.slug === "split-pdf" && (
+  <div class="option-group">
+    <div class="option-label-row"><span class="option-label">Page range</span><span class="option-value">1-based</span></div>
+    <div class="split-pdf-range" aria-label="Split page range">
+      <label class="split-pdf-range-field" for="splitStartPage"><span>From page</span><input class="number-input" id="splitStartPage" type="number" min="1" step="1" value="1" inputmode="numeric" /></label>
+      <span class="split-pdf-range-separator" aria-hidden="true">to</span>
+      <label class="split-pdf-range-field" for="splitEndPage"><span>To page</span><input class="number-input" id="splitEndPage" type="number" min="1" step="1" value="2" inputmode="numeric" /></label>
+    </div>
+    <input id="pageSelection" type="hidden" value="1-2" />
+    <p class="option-help">Choose the first and last page for one split range. The preview shows only its start and end pages.</p>
+  </div>
+)}
+
+{tool.slug === "organize-pdf" && (
+  <div class="option-group">
+    <div class="option-label-row"><span class="option-label">Page order</span><span class="option-value">Edit below</span></div>
+    <div class="pdf-page-controls" data-pdf-page-controls><p class="option-help">Choose a PDF to load its page controls.</p></div>
+    <p class="option-help">Move pages, duplicate them, or remove them before processing.</p>
+  </div>
+)}
+
+{tool.slug === "rotate-pdf" && (
+  <>
+    <div class="option-group"><div class="option-label-row"><label class="option-label" for="rotationAngle">Rotation</label><span class="option-value">Right angle</span></div><select class="select-input" id="rotationAngle"><option value="90">90° clockwise</option><option value="180">180°</option><option value="270">270° clockwise</option></select></div>
+    <div class="option-group"><div class="option-label-row"><label class="option-label" for="pageSelection">Pages</label><span class="option-value">Optional</span></div><input class="text-input" id="pageSelection" type="text" value="all" placeholder="all or 1-3, 5" autocomplete="off" /><p class="option-help">Leave as all, or choose pages such as 1-3, 5.</p></div>
+  </>
+)}
+
+{tool.slug === "pdf-to-jpg" && (
+  <>
+    <div class="option-group"><div class="option-label-row"><label class="option-label" for="pageSelection">Pages to render</label><span class="option-value">1-based</span></div><input class="text-input" id="pageSelection" type="text" value="all" placeholder="all or 1-3, 5" autocomplete="off" /><p class="option-help">Each selected page becomes a JPG download.</p></div>
+    <div class="option-group"><div class="option-label-row"><label class="option-label" for="pdfJpgScale">Render scale</label><span class="option-value">Quality</span></div><select class="select-input" id="pdfJpgScale"><option value="1">Standard</option><option value="1.5" selected>Detailed</option><option value="2">Large</option></select></div>
+    <div class="option-group"><div class="option-label-row"><label class="option-label" for="pdfJpgQualityRange">JPG quality</label><span class="option-value" data-range-output="pdfJpgQualityRange">88%</span></div><input class="range-input" id="pdfJpgQualityRange" type="range" min="55" max="100" value="88" /></div>
+  </>
+)}
+
+{tool.slug === "watermark-pdf" && (
+  <>
+    <div class="option-group"><div class="option-label-row"><label class="option-label" for="watermarkMode">Watermark type</label><span class="option-value">Choose one</span></div><select class="select-input" id="watermarkMode"><option value="text">Text</option><option value="image">Image</option></select></div>
+    <div class="option-group" data-watermark-text-group><div class="option-label-row"><label class="option-label" for="watermarkText">Watermark text</label><span class="option-value">Required</span></div><input class="text-input" id="watermarkText" type="text" value="DoMyFile" maxlength="120" /><p class="option-help">Keep it short so it stays readable on every page.</p></div>
+    <div class="option-group" data-watermark-image-group hidden><div class="option-label-row"><label class="option-label" for="watermarkImage">Watermark image</label><span class="option-value">JPG · PNG · WebP</span></div><input class="file-input" id="watermarkImage" type="file" accept=".jpg,.jpeg,.png,.webp" /><p class="option-help" data-watermark-image-name>No watermark image selected.</p></div>
+    <div class="option-group"><div class="option-label-row"><label class="option-label" for="watermarkPlacement">Placement</label><span class="option-value">Page-relative</span></div><select class="select-input" id="watermarkPlacement"><option value="center">Center</option><option value="top-left">Top left</option><option value="top-right">Top right</option><option value="bottom-left">Bottom left</option><option value="bottom-right">Bottom right</option></select></div>
+    <div class="option-group"><div class="option-label-row"><label class="option-label" for="watermarkScaleRange">Scale</label><span class="option-value" data-range-output="watermarkScaleRange">35%</span></div><input class="range-input" id="watermarkScaleRange" type="range" min="5" max="100" value="35" /></div>
+    <div class="option-group"><div class="option-label-row"><label class="option-label" for="watermarkOpacityRange">Opacity</label><span class="option-value" data-range-output="watermarkOpacityRange">35%</span></div><input class="range-input" id="watermarkOpacityRange" type="range" min="5" max="100" value="35" /></div>
+    <div class="option-group"><div class="option-label-row"><label class="option-label" for="watermarkColor">Color</label><span class="option-value">Text only</span></div><input class="number-input" id="watermarkColor" type="color" value="#64748b" aria-label="Choose watermark text color" /></div>
+  </>
+)}
+
+{tool.slug === "trim-audio" && (
+  <>
+    <div class="option-group">
+      <div class="option-label-row"><label class="option-label" for="trimStartSeconds">Start</label><span class="option-value">Seconds</span></div>
+      <input class="number-input" id="trimStartSeconds" type="number" min="0" step="0.01" value="0" inputmode="decimal" />
+    </div>
+    <div class="option-group">
+      <div class="option-label-row"><label class="option-label" for="trimEndSeconds">End</label><span class="option-value">Seconds</span></div>
+      <input class="number-input" id="trimEndSeconds" type="number" min="0" step="0.01" value="0" inputmode="decimal" />
+      <p class="option-help" data-trim-duration>End at 0 uses the full audio duration. The exact duration is checked before processing.</p>
+    </div>
+    <div class="frontend-placeholder"><strong>Quality is preserved when safe.</strong><p>Exact cuts are encoded with a tested audio path; a full-file conversion can use stream copy.</p><code>output: verified audio format</code></div>
+  </>
+)}
+
+{tool.slug === "trim-video" && (
+  <>
+    <div class="option-group">
+      <div class="option-label-row"><label class="option-label" for="trimStartSeconds">Start</label><span class="option-value">Seconds</span></div>
+      <input class="number-input" id="trimStartSeconds" type="number" min="0" step="0.01" value="0" inputmode="decimal" />
+    </div>
+    <div class="option-group">
+      <div class="option-label-row"><label class="option-label" for="trimEndSeconds">End</label><span class="option-value">Seconds</span></div>
+      <input class="number-input" id="trimEndSeconds" type="number" min="0" step="0.01" value="0" inputmode="decimal" />
+      <p class="option-help" data-trim-duration>End at 0 uses the full video duration. The start must be a verified keyframe because this local version never re-encodes video.</p>
+    </div>
+    <div class="frontend-placeholder"><strong>H.264 streams are copied.</strong><p>MP4 and MOV files with one H.264 video stream and optional AAC audio are supported. Cuts between video keyframes are rejected instead of being approximated or re-encoded.</p><code>output: video/mp4 · stream copy</code></div>
+  </>
+)}
+
+{tool.slug === "audio-converter" && (
+  <>
+    <div class="option-group"><div class="option-label-row"><label class="option-label" for="mediaOutputFormat">Convert to</label><span class="option-value">Verified formats</span></div><select class="select-input" id="mediaOutputFormat"><option value="mp3">MP3</option><option value="wav">WAV</option><option value="m4a">M4A (AAC)</option><option value="flac">FLAC</option><option value="ogg">OGG (Vorbis)</option></select><p class="option-help">The output container and codec are checked before the result is offered.</p></div>
+    <div class="option-group"><div class="option-label-row"><label class="option-label" for="mediaQuality">Quality</label><span class="option-value">For lossy output</span></div><select class="select-input" id="mediaQuality"><option value="smaller">Smaller file</option><option value="balanced" selected>Balanced</option><option value="higher">Higher quality</option></select></div>
+  </>
+)}
+
+{tool.slug === "merge-audio" && (
+  <>
+    <div class="frontend-placeholder"><strong>Reorder before merging.</strong><p>Use the move controls beside each selected track to set the final order.</p><code>inputs: 2 or more audio files</code></div>
+    <div class="option-group"><div class="option-label-row"><label class="option-label" for="mediaOutputFormat">Output format</label><span class="option-value">Verified formats</span></div><select class="select-input" id="mediaOutputFormat"><option value="mp3">MP3 · compatible</option><option value="m4a">M4A (AAC)</option><option value="wav">WAV</option><option value="flac">FLAC</option><option value="ogg">OGG (Vorbis)</option></select><p class="option-help">Incompatible source settings are safely normalized before the tracks are joined.</p></div>
+    <div class="option-group"><div class="option-label-row"><label class="option-label" for="mediaQuality">Quality</label><span class="option-value">For lossy output</span></div><select class="select-input" id="mediaQuality"><option value="smaller">Smaller file</option><option value="balanced" selected>Balanced</option><option value="higher">Higher quality</option></select></div>
+  </>
+)}
+
+{tool.slug === "compress-audio" && (
+  <>
+    <div class="option-group"><div class="option-label-row"><label class="option-label" for="mediaQuality">Quality preset</label><span class="option-value">Choose a tradeoff</span></div><select class="select-input" id="mediaQuality"><option value="smaller">Smaller · 96 kbps</option><option value="balanced" selected>Balanced · 128 kbps</option><option value="higher">Higher quality · 192 kbps</option></select><p class="option-help">A result is only marked complete when it is meaningfully smaller and keeps its duration.</p></div>
+    <div class="option-group"><div class="option-label-row"><label class="option-label" for="mediaOutputFormat">Output format</label><span class="option-value">Lossy output</span></div><select class="select-input" id="mediaOutputFormat"><option value="mp3">MP3 · compatible</option><option value="m4a">M4A (AAC) · compact</option></select></div>
+  </>
+)}
+
+{tool.slug === "video-to-mp3" && (
+  <>
+    <div class="option-group"><div class="option-label-row"><label class="option-label" for="mediaQuality">MP3 quality</label><span class="option-value">Audio output</span></div><select class="select-input" id="mediaQuality"><option value="smaller">Smaller · 96 kbps</option><option value="balanced" selected>Balanced · 128 kbps</option><option value="higher">Higher quality · 192 kbps</option></select><p class="option-help">Only MP4 or MOV files with one H.264 video stream and one AAC audio stream are accepted.</p></div>
+    <div class="frontend-placeholder"><strong>Video is never re-encoded.</strong><p>The video stream is inspected locally and only the verified AAC audio stream is transcoded to MP3.</p><code>output: audio/mpeg</code></div>
+  </>
+)}
+
+{tool.slug === "mov-to-mp4" && (
+  <div class="frontend-placeholder"><strong>Compatible streams are copied.</strong><p>H.264 video and optional AAC audio are preserved in an MP4-compatible container. Other codecs and extra stream types are rejected before processing.</p><code>output: video/mp4 · stream copy</code></div>
+)}
+
+{tool.slug === "video-converter" && (
+  <>
+    <div class="option-group"><div class="option-label-row"><label class="option-label" for="mediaOutputFormat">Convert to</label><span class="option-value">Verified containers</span></div><select class="select-input" id="mediaOutputFormat"><option value="mp4">MP4 · H.264/AAC stream copy</option><option value="mov">MOV · H.264/AAC stream copy</option></select><p class="option-help">Only MP4 and QuickTime MOV files with one H.264 video stream and optional AAC audio are accepted.</p></div>
+    <div class="frontend-placeholder"><strong>Streams are copied, not re-encoded.</strong><p>Container changes preserve the supported video/audio streams, dimensions, and duration. WebM, MKV, AVI, and incompatible codecs are rejected.</p><code>output: MP4 or MOV · stream copy</code></div>
+  </>
+)}
+
+{tool.slug === "png-to-jpg" && (
+  <>
+    <div class="option-group"><div class="option-label-row"><label class="option-label" for="backgroundColor">Transparent background</label><span class="option-value">JPG needs a color</span></div><div class="input-with-unit"><input class="number-input" id="backgroundColor" type="color" value="#ffffff" aria-label="Choose JPG background color" /></div><p class="option-help">White is the default so transparent pixels remain broadly compatible.</p></div>
+    <div class="option-group"><div class="option-label-row"><label class="option-label" for="pngQualityRange">Quality</label><span class="option-value" data-range-output="pngQualityRange">88%</span></div><input class="range-input" id="pngQualityRange" type="range" min="45" max="100" value="88" /></div>
+  </>
+)}
+
+{tool.slug === "jpg-to-png" && (
+  <div class="frontend-placeholder"><strong>Dimensions stay unchanged.</strong><p>The selected JPG will be exported as PNG on your device.</p><code>output: image/png</code></div>
+)}
+
+{(tool.slug === "jpg-to-webp" || tool.slug === "png-to-webp") && (
+  <>
+    <div class="option-group"><div class="option-label-row"><label class="option-label" for="webpQualityRange">Quality</label><span class="option-value" data-range-output="webpQualityRange">82%</span></div><input class="range-input" id="webpQualityRange" type="range" min="40" max="100" value="82" /></div>
+    <div class="frontend-placeholder"><strong>WebP output is fixed.</strong><p>The selected {tool.input.formats.join(" or ")} files are exported as WebP with their original dimensions.</p><code>output: image/webp</code></div>
+  </>
+)}
+
+{tool.slug === "webp-to-jpg" && (
+  <>
+    <div class="option-group"><div class="option-label-row"><label class="option-label" for="backgroundColor">Transparent background</label><span class="option-value">JPG needs a color</span></div><div class="input-with-unit"><input class="number-input" id="backgroundColor" type="color" value="#ffffff" aria-label="Choose JPG background color" /></div><p class="option-help">White is the default so transparent pixels remain broadly compatible.</p></div>
+    <div class="option-group"><div class="option-label-row"><label class="option-label" for="webpToJpgQualityRange">Quality</label><span class="option-value" data-range-output="webpToJpgQualityRange">88%</span></div><input class="range-input" id="webpToJpgQualityRange" type="range" min="45" max="100" value="88" /></div>
+  </>
+)}
+
+{tool.slug === "webp-to-png" && (
+  <div class="frontend-placeholder"><strong>Dimensions stay unchanged.</strong><p>The selected WebP image will be exported as PNG on your device.</p><code>output: image/png</code></div>
+)}
+
+{tool.slug === "heic-to-jpg" && (
+  <div class="frontend-placeholder"><strong>Orientation and dimensions are retained.</strong><p>Supported HEIC and HEIF files are decoded locally and exported as JPG. The decoder loads only when this route starts processing.</p><code>engine: image / HEIC adapter</code></div>
+)}
+
+{tool.slug === "compress-pdf" && (
+  <div class="option-group">
+    <div class="option-label-row"><label class="option-label" for="serverPreset">Compression preset</label><span class="option-value">Temporary processing</span></div>
+    <select class="select-input" id="serverPreset">
+      <option value="quality">Quality · lighter compression</option>
+      <option value="balanced" selected>Balanced · recommended</option>
+      <option value="smaller">Smaller file · stronger image compression</option>
+    </select>
+    <p class="option-help">Text and vector content stay structured. If no useful reduction is possible, no output is offered.</p>
+  </div>
+)}
+
+{tool.slug === "compress-video" && (
+  <div class="option-group">
+    <div class="option-label-row"><label class="option-label" for="serverPreset">Compression preset</label><span class="option-value">VP9 · WebM</span></div>
+    <select class="select-input" id="serverPreset">
+      <option value="quality">Quality · larger output</option>
+      <option value="balanced" selected>Balanced · recommended</option>
+      <option value="smaller">Smaller file · lower quality</option>
+    </select>
+    <p class="option-help">Output is WebM with VP9 video and Opus audio when the input contains supported AAC audio. Dimensions stay unchanged.</p>
+  </div>
+)}
+
+{isDeferred && tool.slug !== "compress-pdf" && (
+  <div class="frontend-placeholder frontend-placeholder--deferred"><strong>Processing is deferred for V1.</strong><p>{statusReason}</p><code>status: deferred</code></div>
+)}
+
+{!isDeferred && !configuredOptions && (
+  <div class="frontend-placeholder">
+    <strong>{tool.action} workspace ready.</strong>
+    <p>File selection, validation, responsive layout, and result states are connected to the shared browser engine.</p>
+    <code>engine: {tool.processor}</code>
+  </div>
+)}

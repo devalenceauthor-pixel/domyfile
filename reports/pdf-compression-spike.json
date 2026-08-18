@@ -1,0 +1,172 @@
+{
+  "generatedAt": "2026-08-17T14:39:48.492Z",
+  "note": "Raster proxy uses Poppler for benchmark-only page rasterization; the product's browser equivalent would use PDF.js canvas rendering. It is not a production dependency or shipped path.",
+  "fixtures": [
+    {
+      "name": "text-heavy",
+      "fileName": "compress-text-heavy.pdf",
+      "bytes": 23816
+    },
+    {
+      "name": "image-heavy",
+      "fileName": "compress-image-heavy.pdf",
+      "bytes": 490752
+    },
+    {
+      "name": "mixed-content",
+      "fileName": "compress-mixed-content.pdf",
+      "bytes": 656029
+    },
+    {
+      "name": "already-optimized",
+      "fileName": "compress-already-optimized.pdf",
+      "bytes": 130831
+    }
+  ],
+  "results": [
+    {
+      "fixture": "text-heavy",
+      "strategy": "pdf-lib rewrite / object streams",
+      "inputBytes": 23816,
+      "outputBytes": 23818,
+      "reductionPercent": -0.01,
+      "elapsedMs": 12,
+      "rssDeltaMb": 0.4,
+      "valid": true,
+      "pageCount": 12,
+      "textItems": 1512
+    },
+    {
+      "fixture": "text-heavy",
+      "strategy": "pdf-lib rewrite / no object streams",
+      "inputBytes": 23816,
+      "outputBytes": 42312,
+      "reductionPercent": -77.66,
+      "elapsedMs": 19.9,
+      "rssDeltaMb": 0,
+      "valid": true,
+      "pageCount": 12,
+      "textItems": 1512
+    },
+    {
+      "fixture": "text-heavy",
+      "strategy": "raster proxy / JPEG quality 75",
+      "inputBytes": 23816,
+      "outputBytes": 5586453,
+      "reductionPercent": -23356.72,
+      "elapsedMs": 434.2,
+      "rssDeltaMb": 12.6,
+      "valid": true,
+      "pageCount": 12,
+      "textItems": 0
+    },
+    {
+      "fixture": "image-heavy",
+      "strategy": "pdf-lib rewrite / object streams",
+      "inputBytes": 490752,
+      "outputBytes": 490752,
+      "reductionPercent": 0,
+      "elapsedMs": 3.9,
+      "rssDeltaMb": 2.6,
+      "valid": true,
+      "pageCount": 6,
+      "textItems": 0
+    },
+    {
+      "fixture": "image-heavy",
+      "strategy": "pdf-lib rewrite / no object streams",
+      "inputBytes": 490752,
+      "outputBytes": 492244,
+      "reductionPercent": -0.3,
+      "elapsedMs": 2,
+      "rssDeltaMb": 0.9,
+      "valid": true,
+      "pageCount": 6,
+      "textItems": 0
+    },
+    {
+      "fixture": "image-heavy",
+      "strategy": "raster proxy / JPEG quality 75",
+      "inputBytes": 490752,
+      "outputBytes": 241272,
+      "reductionPercent": 50.84,
+      "elapsedMs": 384.9,
+      "rssDeltaMb": 2.7,
+      "valid": true,
+      "pageCount": 6,
+      "textItems": 0
+    },
+    {
+      "fixture": "mixed-content",
+      "strategy": "pdf-lib rewrite / object streams",
+      "inputBytes": 656029,
+      "outputBytes": 656031,
+      "reductionPercent": 0,
+      "elapsedMs": 2.3,
+      "rssDeltaMb": 2.3,
+      "valid": true,
+      "pageCount": 8,
+      "textItems": 24
+    },
+    {
+      "fixture": "mixed-content",
+      "strategy": "pdf-lib rewrite / no object streams",
+      "inputBytes": 656029,
+      "outputBytes": 658349,
+      "reductionPercent": -0.35,
+      "elapsedMs": 9.1,
+      "rssDeltaMb": 1.8,
+      "valid": true,
+      "pageCount": 8,
+      "textItems": 24
+    },
+    {
+      "fixture": "mixed-content",
+      "strategy": "raster proxy / JPEG quality 75",
+      "inputBytes": 656029,
+      "outputBytes": 379912,
+      "reductionPercent": 42.09,
+      "elapsedMs": 647.9,
+      "rssDeltaMb": 3.6,
+      "valid": true,
+      "pageCount": 8,
+      "textItems": 0
+    },
+    {
+      "fixture": "already-optimized",
+      "strategy": "pdf-lib rewrite / object streams",
+      "inputBytes": 130831,
+      "outputBytes": 130833,
+      "reductionPercent": 0,
+      "elapsedMs": 0.9,
+      "rssDeltaMb": 0.5,
+      "valid": true,
+      "pageCount": 1,
+      "textItems": 3
+    },
+    {
+      "fixture": "already-optimized",
+      "strategy": "pdf-lib rewrite / no object streams",
+      "inputBytes": 130831,
+      "outputBytes": 131287,
+      "reductionPercent": -0.35,
+      "elapsedMs": 0.6,
+      "rssDeltaMb": 0.4,
+      "valid": true,
+      "pageCount": 1,
+      "textItems": 3
+    },
+    {
+      "fixture": "already-optimized",
+      "strategy": "raster proxy / JPEG quality 75",
+      "inputBytes": 130831,
+      "outputBytes": 56248,
+      "reductionPercent": 57.01,
+      "elapsedMs": 381,
+      "rssDeltaMb": -4.6,
+      "valid": true,
+      "pageCount": 1,
+      "textItems": 0
+    }
+  ]
+}

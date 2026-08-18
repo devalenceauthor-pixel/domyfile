@@ -1,0 +1,43 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Python caches
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# Astro and production build output
+dist/
+.astro/
+.build/
+
+# Cloudflare/Wrangler local state
+.wrangler/
+.dev.vars
+.dev.vars.*
+!.dev.vars.example
+
+# Local environment files
+.env
+.env.*
+!.env.example
+
+# Test, coverage, and browser reports
+test-results/
+playwright-report/
+blob-report/
+coverage/
+
+# Logs and local command output
+*.log
+npm-debug.log*
+pnpm-debug.log*
+-o
+
+# OS/editor metadata
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json

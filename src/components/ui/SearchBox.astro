@@ -1,0 +1,38 @@
+---
+interface Props {
+  variant: "hero" | "header" | "catalog";
+  id?: string;
+}
+
+const { variant, id } = Astro.props;
+const inputId = id ?? `${variant}-search-input`;
+const formId = `${variant}-search-form`;
+const resultsId = `${variant}-search-results`;
+---
+
+<div class:list={[`${variant}-search-wrap`, "tool-search-wrap"]} data-tool-search-wrap>
+  <form
+    class={variant === "hero" ? "hero-search" : variant === "header" ? "header-search" : "catalog-search"}
+    id={formId}
+    role="search"
+    data-tool-search={variant !== "catalog" ? "true" : undefined}
+    data-catalog-search={variant === "catalog" ? "true" : undefined}
+  >
+    <label class="sr-only" for={inputId}>{variant === "catalog" ? "Search the tool library" : "Search for a tool"}</label>
+    <input
+      id={inputId}
+      type="search"
+      placeholder={variant === "header" ? "Search tools" : variant === "catalog" ? "Search by task or format" : "Search for a tool or format..."}
+      autocomplete="off"
+      data-tool-search-input
+    />
+    {variant === "hero" && <kbd>/</kbd>}
+  </form>
+  <div
+    class:list={["search-results", variant === "header" && "search-results--header", variant === "hero" && "search-results--hero"]}
+    id={resultsId}
+    role="listbox"
+    hidden
+    data-tool-search-results
+  ></div>
+</div>

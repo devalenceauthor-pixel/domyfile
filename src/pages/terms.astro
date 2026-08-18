@@ -1,0 +1,52 @@
+---
+import TrustPage from "../components/layout/TrustPage.astro";
+import { getTrustPageStructuredData } from "../lib/seo";
+
+const label = "Terms of use";
+---
+
+<TrustPage
+  title="Terms of use — DoMyFile"
+  description="Read the concise DoMyFile terms covering lawful file use, temporary processing, resource limits, service availability, and unsupported files."
+  label={label}
+  intro="These concise product-use rules explain the responsibilities and limits that matter for DoMyFile's browser and temporary server workflows."
+  structuredData={getTrustPageStructuredData(label, "/terms/")}
+>
+  <section class="info-section" aria-labelledby="terms-lawful-title">
+    <p class="section-kicker">Use the service lawfully</p>
+    <h2 id="terms-lawful-title">Only process files you are allowed to use.</h2>
+    <ul class="info-list">
+      <li>You are responsible for having the rights and permissions needed for the files and content you submit or process.</li>
+      <li>Do not use DoMyFile to process unlawful content, malware, content intended to attack or disrupt the service, or content that violates another person's rights.</li>
+      <li>Do not attempt to bypass format checks, upload limits, rate limits, isolation, or other resource and security controls.</li>
+    </ul>
+  </section>
+
+  <section class="info-section" aria-labelledby="terms-processing-title">
+    <p class="section-kicker">Processing and temporary data</p>
+    <h2 id="terms-processing-title">The tool page tells you where processing occurs.</h2>
+    <ul class="info-list">
+      <li>Browser-local tools process files in the browser and do not upload them to the DoMyFile processing service.</li>
+      <li>Compress PDF and Compress Video temporarily upload files for the requested job. Temporary objects are deleted through the job cleanup lifecycle and a storage TTL backstop.</li>
+      <li>DoMyFile does not promise to retain files, provide file history, or recover a result after a temporary job expires.</li>
+    </ul>
+  </section>
+
+  <section class="info-section" aria-labelledby="terms-limits-title">
+    <p class="section-kicker">Availability and limits</p>
+    <h2 id="terms-limits-title">Results depend on the supported file matrix.</h2>
+    <ul class="info-list">
+      <li>Tools may be unavailable, rate-limited, changed, or temporarily interrupted.</li>
+      <li>Unsupported, corrupt, encrypted, oversized, or resource-intensive files may be rejected, and some files may not produce a useful reduction.</li>
+      <li>DoMyFile does not promise that every file will process successfully or that a compression result will meet a particular size target.</li>
+    </ul>
+  </section>
+
+  <section class="info-callout" aria-labelledby="terms-review-title">
+    <div>
+      <p class="section-kicker">Publication note</p>
+      <h2 id="terms-review-title">Professional legal review is still required.</h2>
+      <p>This page is a plain-language product summary, not a complete legal agreement. Notices can be sent to <a class="inline-link" href="mailto:support@domyfile.web.id">support@domyfile.web.id</a>; the wording still requires professional legal review for the jurisdictions and service model that apply.</p>
+    </div>
+  </section>
+</TrustPage>

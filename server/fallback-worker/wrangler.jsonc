@@ -1,0 +1,74 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "domyfile-fallback",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-08-18",
+  "compatibility_flags": ["nodejs_compat"],
+  "vars": {
+    "GATEWAY_PUBLIC_URL": "https://replace-with-your-fallback-worker.example",
+    "JOB_QUEUE_NAME": "domyfile-fallback-jobs",
+    "JOB_DLQ_NAME": "domyfile-fallback-dlq",
+    "CLEANUP_QUEUE_NAME": "domyfile-fallback-cleanup"
+  },
+  "r2_buckets": [
+    {
+      "binding": "TEMP_FILES",
+      "bucket_name": "domyfile-fallback-temp"
+    }
+  ],
+  "queues": {
+    "producers": [
+      { "binding": "JOB_QUEUE", "queue": "domyfile-fallback-jobs" },
+      { "binding": "CLEANUP_QUEUE", "queue": "domyfile-fallback-cleanup" }
+    ],
+    "consumers": [
+      {
+        "queue": "domyfile-fallback-jobs",
+        "max_batch_size": 1,
+        "max_batch_timeout": 5,
+        "max_retries": 2,
+        "max_concurrency": 2,
+        "dead_letter_queue": "domyfile-fallback-dlq"
+      },
+      {
+        "queue": "domyfile-fallback-dlq",
+        "max_batch_size": 1,
+        "max_batch_timeout": 5,
+        "max_retries": 0,
+        "max_concurrency": 1
+      },
+      {
+        "queue": "domyfile-fallback-cleanup",
+        "max_batch_size": 10,
+        "max_batch_timeout": 5,
+        "max_retries": 2,
+        "max_concurrency": 1
+      }
+    ]
+  },
+  "durable_objects": {
+    "bindings": [
+      { "name": "JOB_STATUS", "class_name": "JobStatus" },
+      { "name": "RATE_LIMITER", "class_name": "RateLimiter" },
+      { "name": "COMPRESSION_CONTAINER", "class_name": "CompressionContainer" }
+    ]
+  },
+  "migrations": [
+    {
+      "tag": "v1",
+      "new_sqlite_classes": ["JobStatus", "RateLimiter", "CompressionContainer"]
+    }
+  ],
+  "containers": [
+    {
+      "class_name": "CompressionContainer",
+      "image": "./container/Dockerfile",
+      "max_instances": 2,
+      "instance_type": {
+        "vcpu": 0.5,
+        "memory_mib": 4096,
+        "disk_mb": 8192
+      }
+    }
+  ]
+}

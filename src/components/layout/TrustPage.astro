@@ -1,0 +1,33 @@
+---
+import SiteLayout from "../../layouts/SiteLayout.astro";
+import PageBreadcrumbs from "./PageBreadcrumbs.astro";
+import type { JsonLd } from "../../lib/seo";
+
+interface Props {
+  title: string;
+  description: string;
+  label: string;
+  intro: string;
+  structuredData?: JsonLd[];
+}
+
+const { title, description, label, intro, structuredData = [] } = Astro.props;
+---
+
+<SiteLayout title={title} description={description} structuredData={structuredData}>
+  <main id="main-content">
+    <div class="container tools-page info-page">
+      <PageBreadcrumbs label={label} />
+      <header class="page-intro info-page-intro">
+        <div>
+          <p class="section-kicker">DoMyFile · {label}</p>
+          <h1>{label}</h1>
+          <p>{intro}</p>
+        </div>
+      </header>
+      <div class="info-page-content">
+        <slot />
+      </div>
+    </div>
+  </main>
+</SiteLayout>

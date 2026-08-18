@@ -1,0 +1,18 @@
+---
+import ToolIcon from "../ui/ToolIcon.astro";
+import type { ToolDefinition } from "../../tools/types";
+import { getToolAvailability, getToolPath } from "../../tools/registry";
+
+interface Props {
+  tool: ToolDefinition;
+}
+
+const { tool } = Astro.props;
+const isDeferred = getToolAvailability(tool) !== "production-ready";
+---
+
+<a class="category-tool-link" href={getToolPath(tool)}>
+  <span class="category-tool-link-top"><span class="category-tool-icon"><ToolIcon slug={tool.slug} size={45} /></span></span>
+  <strong>{tool.title}</strong>
+  <span>{isDeferred ? "Deferred for V1" : tool.input.formats.slice(0, 3).join(" · ")}</span>
+</a>

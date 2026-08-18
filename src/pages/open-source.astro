@@ -1,0 +1,72 @@
+---
+import TrustPage from "../components/layout/TrustPage.astro";
+import { getTrustPageStructuredData } from "../lib/seo";
+
+const label = "Open source and licenses";
+const ffmpegRuntime = "/runtime/ffmpeg-core-lgpl-5.1.4/";
+const heicRuntime = "/runtime/heic-to-1.5.2/";
+---
+
+<TrustPage
+  title="Open source and licenses — DoMyFile"
+  description="Find DoMyFile's browser runtime license texts, notices, source-offer records, HEIC decoder files, and server dependency information."
+  label={label}
+  intro="DoMyFile uses open-source runtimes and native fallback dependencies. This page points to the exact public notices and records currently available for the shipped components."
+  structuredData={getTrustPageStructuredData(label, "/open-source/")}
+>
+  <section class="info-section" aria-labelledby="licenses-browser-title">
+    <p class="section-kicker">Browser runtimes</p>
+    <h2 id="licenses-browser-title">Versioned files used by local tools.</h2>
+    <div class="info-grid info-grid--two">
+      <article class="info-card">
+        <h3>FFmpeg/WASM media runtime</h3>
+        <p>The browser audio and released narrow media paths use the versioned FFmpeg n5.1.4 runtime described as an LGPL v2.1-or-later build, with the MIT ffmpeg.wasm integration, LAME notices, and Emscripten notices.</p>
+        <ul class="link-list">
+          <li><a class="inline-link" href={`${ffmpegRuntime}THIRD-PARTY-NOTICES.md`}>Third-party notices</a></li>
+          <li><a class="inline-link" href={`${ffmpegRuntime}FFMPEG-LICENSE.md`}>FFmpeg license summary</a></li>
+          <li><a class="inline-link" href={`${ffmpegRuntime}COPYING.LGPLv2.1`}>LGPL v2.1 text</a></li>
+          <li><a class="inline-link" href={`${ffmpegRuntime}LAME-LICENSE`}>LAME license</a></li>
+          <li><a class="inline-link" href={`${ffmpegRuntime}EMSCRIPTEN-LICENSE`}>Emscripten notices</a></li>
+          <li><a class="inline-link" href={`${ffmpegRuntime}SOURCE-OFFER.md`}>Corresponding-source offer record</a></li>
+        </ul>
+      </article>
+      <article class="info-card">
+        <h3>HEIC decoder</h3>
+        <p>The HEIC to JPG route uses the versioned <code>heic-to@1.5.2</code> browser decoder under LGPL-3.0. Its exact public notice and source-offer files are kept beside the runtime.</p>
+        <ul class="link-list">
+          <li><a class="inline-link" href={`${heicRuntime}LICENSE`}>HEIC decoder license</a></li>
+          <li><a class="inline-link" href={`${heicRuntime}NOTICE.md`}>HEIC decoder notice</a></li>
+          <li><a class="inline-link" href={`${heicRuntime}SOURCE-OFFER.md`}>HEIC corresponding-source offer</a></li>
+        </ul>
+      </article>
+    </div>
+  </section>
+
+  <section class="info-section" aria-labelledby="licenses-server-title">
+    <p class="section-kicker">Temporary server dependencies</p>
+    <h2 id="licenses-server-title">Compress PDF and Compress Video.</h2>
+    <p>These two tools use the isolated fallback plane and are separate from the browser runtime. The current engineering inventory identifies the following pinned components:</p>
+    <ul class="info-list">
+      <li>Native FFmpeg 8.1.2: LGPL 2.1-or-later build, with libvpx 1.15.2 and libopus 1.5.2 under their recorded BSD-3-Clause classifications.</li>
+      <li>pikepdf 10.11.0: MPL-2.0; qpdf is a pinned wheel dependency with its Apache-2.0 and optional Artistic-2.0 notice recorded in the deployment inventory.</li>
+      <li>Pillow 12.3.0: HPND/PIL license; pypdf 6.16.1: BSD-3-Clause.</li>
+    </ul>
+    <ul class="link-list link-list--external">
+      <li><a class="inline-link" href="https://ffmpeg.org/releases/ffmpeg-8.1.2.tar.xz">FFmpeg 8.1.2 source</a></li>
+      <li><a class="inline-link" href="https://github.com/webmproject/libvpx/archive/refs/tags/v1.15.2.tar.gz">libvpx 1.15.2 source</a></li>
+      <li><a class="inline-link" href="https://github.com/xiph/opus/releases/tag/v1.5.2">libopus 1.5.2 source</a></li>
+      <li><a class="inline-link" href="https://github.com/pikepdf/pikepdf/tree/v10.11.0">pikepdf 10.11.0 source</a></li>
+      <li><a class="inline-link" href="https://github.com/python-pillow/Pillow/tree/12.3.0">Pillow 12.3.0 source</a></li>
+      <li><a class="inline-link" href="https://github.com/py-pdf/pypdf/tree/6.16.1">pypdf 6.16.1 source</a></li>
+    </ul>
+    <p class="info-note">The exact license texts, corresponding source archives, build inputs, and deployment hashes must remain tied to the deployed fallback image. Software-license classifications do not resolve codec patents or royalties; the required commercial and legal review remains outstanding.</p>
+  </section>
+
+  <section class="info-callout" aria-labelledby="licenses-note-title">
+    <div>
+      <p class="section-kicker">Reading the notices</p>
+      <h2 id="licenses-note-title">The exact license text governs.</h2>
+      <p>This page is a navigation summary. When a license or source-offer obligation applies, use the linked exact text and the release-specific compliance bundle rather than this summary.</p>
+    </div>
+  </section>
+</TrustPage>

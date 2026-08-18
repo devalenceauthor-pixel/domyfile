@@ -1,0 +1,70 @@
+---
+import TrustPage from "../components/layout/TrustPage.astro";
+import { getTrustPageStructuredData } from "../lib/seo";
+
+const label = "Privacy";
+---
+
+<TrustPage
+  title="Privacy — DoMyFile"
+  description="Understand which DoMyFile tools process files in your browser, which compression tools use temporary server processing, and how temporary data is deleted."
+  label={label}
+  intro="DoMyFile is local by default. Two compression tools use a temporary server workflow, and that difference is disclosed before upload."
+  structuredData={getTrustPageStructuredData(label, "/privacy/")}
+>
+  <section class="info-section" aria-labelledby="privacy-summary-title">
+    <p class="section-kicker">The short version</p>
+    <h2 id="privacy-summary-title">The selected tool determines the data path.</h2>
+    <p>DoMyFile does not require an account, does not provide file history, and does not permanently store user files. Browser-local tools keep selected files on the device. Compress PDF and Compress Video temporarily upload a file only for their requested compression job.</p>
+  </section>
+
+  <section class="info-section" aria-labelledby="privacy-local-title">
+    <p class="section-kicker">Browser-local processing</p>
+    <h2 id="privacy-local-title">Files stay on your device.</h2>
+    <div class="info-card">
+      <ul class="info-list">
+        <li>Image, PDF, audio, HEIC, and released browser-side video workflows process selected file bytes in the browser.</li>
+        <li>Those tools do not upload the selected file to a DoMyFile processing service or store it as a user file.</li>
+        <li>Generated results are held in browser memory and offered as local downloads; temporary browser object URLs are released by the workspace.</li>
+        <li>Browser limits, unsupported formats, corrupt files, and compatibility restrictions can prevent a result.</li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="info-section" aria-labelledby="privacy-server-title">
+    <p class="section-kicker">Temporary server processing</p>
+    <h2 id="privacy-server-title">Compress PDF and Compress Video use a short-lived job.</h2>
+    <div class="info-card">
+      <ul class="info-list">
+        <li>The file is uploaded only to create the requested compressed result. The upload disclosure appears before the upload/process action.</li>
+        <li>Temporary input and output objects use a private job workspace. The application targets a short job window, currently 15 minutes.</li>
+        <li>Input and output objects are deleted after successful processing/download and cleanup also runs for failure, cancellation, and expiry. A storage lifecycle rule is a backstop for delayed cleanup and is configured for no more than one day.</li>
+        <li>Temporary processing is not a file-storage, history, or account feature. The original file remains untouched on the user's device.</li>
+        <li>Unsupported, corrupt, encrypted, oversized, or resource-intensive inputs can be rejected without a result.</li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="info-section" aria-labelledby="privacy-operations-title">
+    <p class="section-kicker">Operational handling</p>
+    <h2 id="privacy-operations-title">Content is not used for analytics or training.</h2>
+    <div class="info-grid info-grid--two">
+      <article class="info-card">
+        <h3>File content</h3>
+        <p>DoMyFile does not send file contents, filenames, local paths, extracted text, media frames, or document content metadata to analytics, training systems, or third-party conversion services.</p>
+      </article>
+      <article class="info-card">
+        <h3>Operational records</h3>
+        <p>The temporary server plane may need non-content job and security metadata to validate, rate-limit, monitor, and clean up a request. Application logs are designed not to contain file bytes or content-derived data.</p>
+      </article>
+    </div>
+  </section>
+
+  <section class="info-callout" aria-labelledby="privacy-contact-title">
+    <div>
+      <p class="section-kicker">Privacy questions</p>
+      <h2 id="privacy-contact-title">Questions? Email DoMyFile support.</h2>
+      <p>For support, privacy questions, legal or licensing notices, and general feedback, email <a class="inline-link" href="mailto:support@domyfile.web.id">support@domyfile.web.id</a>. Cloudflare Email Routing forwards this address to the verified support inbox.</p>
+    </div>
+  </section>
+</TrustPage>
