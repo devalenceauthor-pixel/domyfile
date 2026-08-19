@@ -25,12 +25,13 @@ if (!existsSync(dist)) {
 }
 
 const registry = read("src/tools/registry.ts");
-const registryRoutes = [...registry.matchAll(/\{\s*id:\s*"([^"]+)",\s*slug:\s*"([^"]+)",\s*category:\s*"([^"]+)"/g)]
+const disabledToolSlugs = new Set(["remove-background"]);
+const allRegistryRoutes = [...registry.matchAll(/\{\s*id:\s*"([^"]+)",\s*slug:\s*"([^"]+)",\s*category:\s*"([^"]+)"/g)]
   .map(([, id, slug, category]) => ({ id, slug, category, path: `/${category}/${slug}/` }));
+const registryRoutes = allRegistryRoutes.filter((tool) => !disabledToolSlugs.has(tool.slug));
+const disabledRoutes = allRegistryRoutes.filter((tool) => disabledToolSlugs.has(tool.slug));
 
-if (registryRoutes.length !== 29) fail(`Expected 29 production-ready registry tools; found ${registryRoutes.length}.`);
-
-const categoryPaths = ["/image/", "/pdf/", "/audio/", "/video/"];
+const categoryPaths = [...new Set(registryRoutes.map((tool) => `/${tool.category}/`))];
 const trustPaths = ["/about/", "/privacy/", "/terms/", "/open-source/"];
 const publicRoutes = ["/", "/tools/", ...trustPaths, ...categoryPaths, ...registryRoutes.map((tool) => tool.path)];
 const expectedRoutes = [...new Set(publicRoutes)];
@@ -46,6 +47,11 @@ for (const route of expectedRoutes) {
     continue;
   }
   htmlByRoute.set(route, readFileSync(file, "utf8"));
+}
+
+for (const tool of disabledRoutes) {
+  const file = routeToFile(tool.path);
+  if (existsSync(file)) fail(`${tool.path}: disabled tool route must not be built.`);
 }
 
 const assertTag = (html, route, label, pattern, expected = 1) => {
@@ -124,6 +130,7 @@ if (!existsSync(sitemapFile)) {
     if (/[?#]/.test(url)) fail(`Sitemap URL contains a query or fragment: ${url}`);
   }
   for (const route of expectedRoutes) if (!sitemapUrls.includes(expectedUrl(route))) fail(`Sitemap omits ${expectedUrl(route)}.`);
+  for (const tool of disabledRoutes) if (sitemapUrls.includes(expectedUrl(tool.path))) fail(`Sitemap includes disabled route ${tool.path}.`);
   for (const removed of ["/image/image-converter/", "/pdf/images-to-pdf/"]) if (sitemapUrls.some((url) => url.endsWith(removed))) fail(`Sitemap contains removed route ${removed}.`);
 }
 

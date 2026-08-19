@@ -1,8 +1,8 @@
 # PRD - DoMyFile
 
 **Status:** Draft for implementation  
-**Version:** 1.4  
-**Last updated:** 2026-08-18  
+**Version:** 1.5
+**Last updated:** 2026-08-19
 **Source of truth for:** product scope, user behavior, functional requirements, and acceptance criteria.
 
 > Technical implementation belongs in `architecture.md`. Visual rules belong in `design.md`.
@@ -12,7 +12,7 @@
 **Product name:** DoMyFile  
 **Positioning:** Simple file tools that just work.
 
-DoMyFile is a fast, privacy-first web application for common image, PDF, audio, and video tasks.
+DoMyFile is a fast, privacy-first web application for common image, PDF, Word/document, audio, and video tasks.
 
 Users should be able to open a tool, select a file, process it, and download the result without creating an account or installing software.
 
@@ -37,7 +37,8 @@ The public product name must be written as **DoMyFile** in prose and metadata. A
 - Collaboration or document sharing.
 - AI media generation or AI video enhancement.
 - Professional timeline-based media editing.
-- OCR or layout-preserving PDF-to-Word conversion.
+- OCR for scanned PDFs. Text-based PDF-to-DOCX conversion is in scope, but exact
+  layout recovery is not guaranteed and image-only PDFs are rejected.
 - Server-side processing for current browser tools. Explicitly approved server-bound tools may use a temporary server fallback under the rules in Section 8.
 - Permanent storage of uploaded or generated files.
 - Tool-count growth for its own sake.
@@ -89,6 +90,23 @@ not create artificial tools merely to increase the count.
 | IMG-09 | PNG to WebP | PNG | WebP | Preserve dimensions and provide a fixed WebP output. |
 | IMG-10 | WebP to JPG | WebP | JPG | Replace transparency with a white background and provide a fixed JPG output. |
 | IMG-11 | WebP to PNG | WebP | PNG | Preserve dimensions and provide a fixed PNG output. |
+| IMG-12 | Remove Background | JPG/PNG/WebP | Transparent PNG | Run a local segmentation model on one image and expose original/result previews with honest edge-quality limits. |
+| IMG-13 | Image Upscaler | JPG/PNG/WebP | PNG | Run a fixed 3× ONNX super-resolution model on one image; do not substitute Canvas-only resizing. |
+
+### Word and Document
+
+| ID | Tool | Input | Output | Required behavior |
+|---|---|---|---|---|
+| DOC-01 | DOCX to TXT | DOCX | TXT | Extract readable paragraph text locally; reject legacy DOC, corrupt, empty, or unsupported documents. |
+| DOC-02 | DOCX to HTML | DOCX | HTML | Create a complete semantic HTML download from readable DOCX content; do not promise pixel-perfect Word layout. |
+| DOC-03 | TXT to DOCX | TXT | DOCX | Create a predictable DOCX with one paragraph per source line; do not infer headings or styling. |
+| DOC-04 | DOCX to PDF | DOCX | PDF | Use the isolated native document fallback for stronger pagination, text, table, and embedded-media fidelity than a browser snapshot. |
+| DOC-05 | PDF to DOCX | Text-based PDF | DOCX | Use native PDF import for editable structure where possible; reject encrypted/image-only PDFs because there is no OCR claim. |
+| DOC-06 | HTML to DOCX | HTML | DOCX | Convert a safe supported HTML subset locally, including headings, paragraphs, lists, tables, and links. |
+| DOC-07 | Merge DOCX | 2+ DOCX | DOCX | Merge compatible main-document content, styles, numbering, hyperlinks, and embedded raster images with page breaks between sources. |
+| DOC-08 | Compress DOCX | DOCX | DOCX | Recompress supported embedded JPEG media locally with explicit quality presets and offer output only when reduction is useful. |
+| DOC-09 | Extract Images from DOCX | DOCX | Images/ZIP | Extract embedded package media without transcoding; do not claim chart, shape, or icon extraction. |
+| DOC-10 | DOCX Metadata Cleaner | DOCX | DOCX | Remove supported core, application, and custom properties while disclosing metadata outside the supported scope. |
 
 ### Video
 
@@ -127,6 +145,18 @@ codec/patent and deployment-compliance review recorded in their reports.
 | VID-03 | Keep browser-side | Browser | Audio extraction can reuse the local audio encoding path with a narrow, explicitly verified video-container/audio-codec matrix and does not require video encoding. |
 | VID-04 | Keep browser-side | Browser | A narrow MOV-to-MP4 remux path can preserve compatible video/audio streams without re-encoding; unsupported source codecs are rejected instead of silently uploaded or converted. |
 | VID-05 | Keep browser-side | Browser | A narrow MP4/MOV H.264 remux path with optional AAC audio is useful and reliable with the current MOV muxer; broad cross-codec/container conversion remains unsupported and is rejected. |
+| IMG-12 | Keep browser-side | Browser | A quantized local segmentation model produces a transparent PNG from one JPG, PNG, or WebP input. The model/runtime loads only when processing starts; CPU/WASM is the baseline and fine hair, fur, translucent objects, shadows, and busy scenes can need cleanup. |
+| IMG-13 | Keep browser-side | Browser | A fixed 3× ONNX super-resolution model performs actual luminance enhancement on 224×224 tiles; WebAssembly is the compatibility fallback and WebGPU is opportunistic. The route has a tested source-size limit and does not promise recovered original detail. |
+| DOC-01 | Keep browser-side | Browser | Mammoth extracts readable DOCX text without requiring a server or promising layout preservation. |
+| DOC-02 | Keep browser-side | Browser | Mammoth creates readable semantic HTML with external file access disabled; complex Word layout may need cleanup. |
+| DOC-03 | Keep browser-side | Browser | The docx writer creates a simple DOCX from plain text with predictable one-line-per-paragraph output. |
+| DOC-04 | Use native server fallback | Server fallback | Browser rendering produced an insufficient document-fidelity bar. The isolated LibreOffice Writer conversion is used with strict limits, output validation, temporary deletion, and an explicit non-pixel-perfect disclosure. |
+| DOC-05 | Use native server fallback | Server fallback | Text-only extraction would materially disappoint normal PDF-to-Word expectations. Native PDF import can retain useful structure and images where supported; selectable text is required and OCR is not provided. |
+| DOC-06 | Keep browser-side | Browser | A restricted HTML whitelist can create an editable DOCX without executing scripts or claiming CSS/layout fidelity. |
+| DOC-07 | Keep browser-side | Browser | ZIP/XML relationship handling is bounded to compatible main-document content and embedded raster media; unsupported section-specific complexity is disclosed. |
+| DOC-08 | Keep browser-side | Browser | Recompressing only embedded JPEGs avoids rasterizing document text and offers a result only when the package becomes meaningfully smaller. |
+| DOC-09 | Keep browser-side | Browser | DOCX package media can be copied out reliably without a server or lossy transcoding. |
+| DOC-10 | Keep browser-side | Browser | Supported property parts can be cleaned without flattening the editable document, while unsupported hidden data remains disclosed. |
 
 No deferred route is currently classified as Hybrid. A hybrid route may be introduced only if a concrete local fast path and a server fallback share one explicit, tested support matrix and the added complexity has a measurable user benefit.
 
@@ -289,6 +319,9 @@ A tool must not be marked production-ready until:
 
 - **Compress PDF:** Do not ship a fake compressor that silently rasterizes every page by default or destroys selectable text merely to reduce file size. The selected pikepdf `JobBuilder` native/server optimizer passes the fixture gate for page count, selectable text, content structure, annotations, output validity, meaningful reduction, resource limits, and license inventory; qpdf alone is not sufficient for the required selective image optimization.
 - **HEIC to JPG:** Decoder choice must pass browser compatibility, output quality, bundle/runtime size, and license review.
+- **Remove Background:** Quality is evaluated on representative clean-object, portrait, hair/fur, soft-edge, busy-photo, textured-illustration, shadow, alpha-PNG, and high-resolution fixtures. The retained implementation uses the existing temporary fallback plane with a pinned BiRefNet-lite ONNX checkpoint and CPU ONNX Runtime; the former `@imgly/background-removal` AGPL package is not used. The public route is currently held: its static page is excluded and no upload/job is accepted until the container build, model hash, private lifecycle, resource limits, visual QA, measured runtime, security, and license/compliance gates pass.
+- **Image Upscaler:** The route must use the pinned ONNX super-resolution model and must not regress to Canvas-only interpolation. The fixed 3× result, model size, browser memory limit, and model-based quality limitation must remain disclosed.
+- **Word/document tools:** Browser DOCX routes remain content-focused and do not claim legacy `.doc` support or pixel-perfect Word layout. DOCX to PDF and PDF to DOCX use the separate native fallback contract; the former discloses application/font differences, and the latter requires selectable text and discloses that exact layout recovery and OCR are not guaranteed.
 - **Audio/Video tools:** Supported formats must match the actual FFmpeg/WASM
   build. The released video routes use the exact narrow matrix above; do not
   advertise unsupported codecs or imply general video conversion.

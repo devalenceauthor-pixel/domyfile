@@ -9,7 +9,7 @@ interface Props {
 const { tool } = Astro.props;
 const isDeferred = getToolAvailability(tool) !== "production-ready";
 const statusReason = tool.statusReason ?? "This route is not enabled for V1 processing.";
-const configuredOptions = ["compress-image", "resize-image", "crop-image", "jpg-to-pdf", "png-to-pdf", "webp-to-pdf", "png-to-jpg", "jpg-to-png", "jpg-to-webp", "png-to-webp", "webp-to-jpg", "webp-to-png", "heic-to-jpg", "compress-pdf", "merge-pdf", "split-pdf", "organize-pdf", "rotate-pdf", "pdf-to-jpg", "watermark-pdf", "trim-audio", "trim-video", "audio-converter", "merge-audio", "compress-audio", "compress-video", "video-to-mp3", "mov-to-mp4", "video-converter"].includes(tool.slug);
+const configuredOptions = ["compress-image", "resize-image", "crop-image", "jpg-to-pdf", "png-to-pdf", "webp-to-pdf", "png-to-jpg", "jpg-to-png", "jpg-to-webp", "png-to-webp", "webp-to-jpg", "webp-to-png", "heic-to-jpg", "compress-pdf", "merge-pdf", "split-pdf", "organize-pdf", "rotate-pdf", "pdf-to-jpg", "pdf-to-png", "pdf-to-webp", "extract-images-from-pdf", "add-page-numbers", "header-footer-pdf", "crop-pdf", "txt-to-pdf", "watermark-pdf", "trim-audio", "trim-video", "audio-converter", "merge-audio", "compress-audio", "compress-video", "video-to-mp3", "mov-to-mp4", "video-converter", "compress-docx"].includes(tool.slug);
 ---
 
 {tool.slug === "compress-image" && (
@@ -100,6 +100,7 @@ const configuredOptions = ["compress-image", "resize-image", "crop-image", "jpg-
 {tool.slug === "organize-pdf" && (
   <div class="option-group">
     <div class="option-label-row"><span class="option-label">Page order</span><span class="option-value">Edit below</span></div>
+    <button class="button button--secondary" type="button" data-pdf-reverse>Reverse current order</button>
     <div class="pdf-page-controls" data-pdf-page-controls><p class="option-help">Choose a PDF to load its page controls.</p></div>
     <p class="option-help">Move pages, duplicate them, or remove them before processing.</p>
   </div>
@@ -117,6 +118,49 @@ const configuredOptions = ["compress-image", "resize-image", "crop-image", "jpg-
     <div class="option-group"><div class="option-label-row"><label class="option-label" for="pageSelection">Pages to render</label><span class="option-value">1-based</span></div><input class="text-input" id="pageSelection" type="text" value="all" placeholder="all or 1-3, 5" autocomplete="off" /><p class="option-help">Each selected page becomes a JPG download.</p></div>
     <div class="option-group"><div class="option-label-row"><label class="option-label" for="pdfJpgScale">Render scale</label><span class="option-value">Quality</span></div><select class="select-input" id="pdfJpgScale"><option value="1">Standard</option><option value="1.5" selected>Detailed</option><option value="2">Large</option></select></div>
     <div class="option-group"><div class="option-label-row"><label class="option-label" for="pdfJpgQualityRange">JPG quality</label><span class="option-value" data-range-output="pdfJpgQualityRange">88%</span></div><input class="range-input" id="pdfJpgQualityRange" type="range" min="55" max="100" value="88" /></div>
+  </>
+)}
+
+{["pdf-to-png", "pdf-to-webp"].includes(tool.slug) && (
+  <>
+    <div class="option-group"><div class="option-label-row"><label class="option-label" for="pageSelection">Pages to render</label><span class="option-value">1-based</span></div><input class="text-input" id="pageSelection" type="text" value="all" placeholder="all or 1-3, 5" autocomplete="off" /><p class="option-help">Each selected page becomes a {tool.slug === "pdf-to-png" ? "PNG" : "WebP"} download. Rendering does not preserve selectable text.</p></div>
+    <div class="option-group"><div class="option-label-row"><label class="option-label" for="pdfJpgScale">Render scale</label><span class="option-value">Resolution</span></div><select class="select-input" id="pdfJpgScale"><option value="1">Standard</option><option value="1.5" selected>Detailed</option><option value="2">Large</option></select></div>
+    {tool.slug === "pdf-to-webp" && <div class="option-group"><div class="option-label-row"><label class="option-label" for="pdfJpgQualityRange">WebP quality</label><span class="option-value" data-range-output="pdfJpgQualityRange">88%</span></div><input class="range-input" id="pdfJpgQualityRange" type="range" min="55" max="100" value="88" /></div>}
+  </>
+)}
+
+{tool.slug === "extract-images-from-pdf" && (
+  <>
+    <div class="option-group"><div class="option-label-row"><label class="option-label" for="extractImageFormat">Output format</label><span class="option-value">Re-encoded raster</span></div><select class="select-input" id="extractImageFormat"><option value="png" selected>PNG</option><option value="webp">WebP</option></select><p class="option-help">Embedded raster images are decoded and re-encoded for consistent downloads. Vector drawings, page backgrounds, and annotations are not extracted.</p></div>
+    <div class="option-group"><div class="option-label-row"><label class="option-label" for="extractImageQualityRange">WebP quality</label><span class="option-value" data-range-output="extractImageQualityRange">92%</span></div><input class="range-input" id="extractImageQualityRange" type="range" min="60" max="100" value="92" /></div>
+  </>
+)}
+
+{tool.slug === "add-page-numbers" && (
+  <>
+    <div class="option-group"><div class="option-label-row"><label class="option-label" for="pageSelection">Pages</label><span class="option-value">Optional</span></div><input class="text-input" id="pageSelection" type="text" value="all" placeholder="all or 1-3, 5" autocomplete="off" /><p class="option-help">Number only the selected pages. The original page content stays selectable.</p></div>
+    <div class="option-group"><div class="option-label-row"><label class="option-label" for="pageNumberStart">Start number</label><span class="option-value">1-based</span></div><input class="number-input" id="pageNumberStart" type="number" min="1" max="1000000" step="1" value="1" inputmode="numeric" /></div>
+    <div class="option-group"><div class="option-label-row"><label class="option-label" for="pageNumberPlacement">Placement</label><span class="option-value">Page-relative</span></div><select class="select-input" id="pageNumberPlacement"><option value="bottom-right">Bottom right</option><option value="bottom-left">Bottom left</option><option value="center">Bottom center</option><option value="top-right">Top right</option><option value="top-left">Top left</option></select></div>
+  </>
+)}
+
+{tool.slug === "header-footer-pdf" && (
+  <>
+    <div class="option-group"><div class="option-label-row"><label class="option-label" for="headerText">Header text</label><span class="option-value">Optional</span></div><input class="text-input" id="headerText" type="text" maxlength="180" placeholder="Department report" /></div>
+    <div class="option-group"><div class="option-label-row"><label class="option-label" for="footerText">Footer text</label><span class="option-value">Optional</span></div><input class="text-input" id="footerText" type="text" maxlength="180" placeholder="Page &#123;&#123;page&#125;&#125; of &#123;&#123;pages&#125;&#125;" /><p class="option-help">Use &#123;&#123;page&#125;&#125; and &#123;&#123;pages&#125;&#125; for the current page number and total page count.</p></div>
+    <div class="option-group"><div class="option-label-row"><label class="option-label" for="headerFooterScope">Pages</label><span class="option-value">Optional</span></div><input class="text-input" id="headerFooterScope" type="text" value="all" placeholder="all or 1-3, 5" autocomplete="off" /></div>
+  </>
+)}
+
+{tool.slug === "crop-pdf" && (
+  <div class="option-group"><div class="option-label-row"><label class="option-label" for="cropMargin">Crop margin</label><span class="option-value">Points</span></div><select class="select-input" id="cropMargin"><option value="12">12 pt · light</option><option value="24" selected>24 pt · recommended</option><option value="48">48 pt · generous</option><option value="72">72 pt · strong</option></select><p class="option-help">This changes each page's visible CropBox. Content outside the box is hidden, not rasterized or deleted from the file.</p></div>
+)}
+
+{tool.slug === "txt-to-pdf" && (
+  <>
+    <div class="option-group"><div class="option-label-row"><label class="option-label" for="pageSize">Page size</label><span class="option-value">Text layout</span></div><select class="select-input" id="pageSize"><option value="a4" selected>A4</option><option value="letter">Letter</option></select></div>
+    <div class="option-group"><div class="option-label-row"><label class="option-label" for="pageOrientation">Orientation</label><span class="option-value">Page layout</span></div><select class="select-input" id="pageOrientation"><option value="portrait" selected>Portrait</option><option value="landscape">Landscape</option></select></div>
+    <div class="option-group"><div class="option-label-row"><label class="option-label" for="textFontSize">Text size</label><span class="option-value">Points</span></div><select class="select-input" id="textFontSize"><option value="10">10 pt</option><option value="11" selected>11 pt</option><option value="12">12 pt</option><option value="14">14 pt</option></select><p class="option-help">UTF-8 text is wrapped into a selectable PDF using a standard Helvetica-compatible character set.</p></div>
   </>
 )}
 
@@ -259,11 +303,47 @@ const configuredOptions = ["compress-image", "resize-image", "crop-image", "jpg-
   </div>
 )}
 
+{tool.slug === "compress-docx" && (
+  <div class="option-group">
+    <div class="option-label-row"><label class="option-label" for="documentCompressionPreset">Image quality</label><span class="option-value">Local package optimization</span></div>
+    <select class="select-input" id="documentCompressionPreset">
+      <option value="light">Light · preserve more JPEG detail</option>
+      <option value="balanced" selected>Balanced · recommended</option>
+      <option value="strong">Strong · smaller JPEG media</option>
+    </select>
+    <p class="option-help">Text, tables, and editable structure stay in the DOCX package. A result is offered only when supported JPEG media makes the file meaningfully smaller.</p>
+  </div>
+)}
+
 {isDeferred && tool.slug !== "compress-pdf" && (
   <div class="frontend-placeholder frontend-placeholder--deferred"><strong>Processing is deferred for V1.</strong><p>{statusReason}</p><code>status: deferred</code></div>
 )}
 
-{!isDeferred && !configuredOptions && (
+{!isDeferred && tool.slug === "remove-background" && (
+  <div class="frontend-placeholder">
+    <strong>Transparent PNG output.</strong>
+    <p>A native BiRefNet-lite segmentation job removes the background, keeps image dimensions, and returns a transparent PNG. No manual threshold control is exposed.</p>
+    <code>model: BiRefNet-lite · runtime: ONNX Runtime CPU</code>
+  </div>
+)}
+
+{!isDeferred && tool.slug === "upscale-image" && (
+  <div class="frontend-placeholder">
+    <strong>Fixed 3× model output.</strong>
+    <p>A small ONNX super-resolution model loads only when processing starts. The model enhances luminance detail; the result is always a PNG and is limited to tested browser memory.</p>
+    <code>model: ONNX Super Resolution · runtime: WebAssembly/WebGPU fallback</code>
+  </div>
+)}
+
+{!isDeferred && tool.category === "word" && (
+  <div class="frontend-placeholder">
+    <strong>No options needed.</strong>
+    <p>{tool.processingBoundary === "server" ? "This conversion uses the temporary native document engine for stronger layout and structure fidelity." : "This tool keeps its output focused: text is extracted, semantic HTML is generated, documents are organized, or plain text is packaged as DOCX."}</p>
+    <code>processing: {tool.processingBoundary === "server" ? "temporary native job" : "local browser"} · output: {tool.output.formats.join(" / ")}</code>
+  </div>
+)}
+
+{!isDeferred && !configuredOptions && tool.slug !== "remove-background" && tool.category !== "word" && (
   <div class="frontend-placeholder">
     <strong>{tool.action} workspace ready.</strong>
     <p>File selection, validation, responsive layout, and result states are connected to the shared browser engine.</p>

@@ -211,12 +211,12 @@ export class WorkspacePreviewManager {
   }
 
   private shouldShowImagePreview() {
-    return ["compress-image", "resize-image", "jpg-to-png", "png-to-jpg", "jpg-to-webp", "png-to-webp", "webp-to-jpg", "webp-to-png"].includes(this.options.tool)
+    return ["compress-image", "resize-image", "upscale-image", "jpg-to-png", "png-to-jpg", "jpg-to-webp", "png-to-webp", "webp-to-jpg", "webp-to-png"].includes(this.options.tool)
       || isImageToPdfTool(this.options.tool);
   }
 
   private shouldShowPdfPreview() {
-    return ["merge-pdf", "split-pdf", "organize-pdf", "rotate-pdf", "watermark-pdf", "pdf-to-jpg"].includes(this.options.tool);
+    return ["merge-pdf", "split-pdf", "organize-pdf", "rotate-pdf", "watermark-pdf", "pdf-to-jpg", "pdf-to-png", "pdf-to-webp", "extract-images-from-pdf", "add-page-numbers", "header-footer-pdf", "crop-pdf", "pdf-to-text", "pdf-to-html", "pdf-metadata-viewer", "clean-pdf-metadata", "flatten-pdf"].includes(this.options.tool);
   }
 
   private async renderImagePreview(files: File[], token: number) {
@@ -521,7 +521,7 @@ export class WorkspacePreviewManager {
       return;
     }
 
-    const selectionMode = this.options.tool === "pdf-to-jpg";
+    const selectionMode = ["pdf-to-jpg", "pdf-to-png", "pdf-to-webp", "add-page-numbers"].includes(this.options.tool);
     const selectedPages = parsePageSelection(this.options.getOption("pageSelection"), response.pageCount);
     response.thumbnails.forEach((thumbnail) => {
       const url = this.registerUrl(thumbnail.blob);
@@ -618,7 +618,7 @@ export class WorkspacePreviewManager {
 
   setResults(results: PreviewResult[]) {
     this.resultByFile = new Map(results.map((result) => [fileKey(result.input), result]));
-    if (this.currentFiles.length && (this.options.tool === "compress-image" || this.options.tool === "resize-image")) this.update(this.currentFiles);
+    if (this.currentFiles.length && (this.options.tool === "compress-image" || this.options.tool === "resize-image" || this.options.tool === "upscale-image")) this.update(this.currentFiles);
   }
 
   dispose() {

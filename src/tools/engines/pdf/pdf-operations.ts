@@ -1,6 +1,7 @@
 import {
   degrees,
   PDFDocument,
+  PDFName,
   PageSizes,
   rgb,
   StandardFonts,
@@ -12,7 +13,7 @@ import {
   parsePageGroups,
   validateOrganizeOrder,
 } from "./options";
-import type { PdfOptions, PdfToolSlug } from "./types";
+import { PdfProcessingError, type PdfOptions, type PdfToolSlug } from "./types";
 
 export type PdfOperationInput = {
   name: string;
@@ -24,9 +25,10 @@ export type PdfOperationOutput = {
   bytes: Uint8Array;
   pageCount?: number;
   pageNumber?: number;
+  mime?: "application/pdf";
 };
 
-const loadPdf = (bytes: Uint8Array) => PDFDocument.load(bytes);
+const loadPdf = (bytes: Uint8Array) => PDFDocument.load(bytes, { updateMetadata: false });
 
 const savePdf = (document: PDFDocument) => document.save({ useObjectStreams: true, addDefaultPage: false });
 
@@ -163,6 +165,125 @@ const watermarkPdf = async (input: PdfOperationInput, options: ReturnType<typeof
   return [{ bytes: await savePdf(document), pageCount: document.getPageCount() }];
 };
 
+const selectedPageNumbers = (selection: string | undefined, pageCount: number) => flattenPageGroups(parsePageGroups(selection, pageCount));
+
+const addPageNumbersPdf = async (input: PdfOperationInput, options: ReturnType<typeof normalizePdfOptions>) => {
+  const document = await loadPdf(input.bytes);
+  const font = await document.embedFont(StandardFonts.Helvetica);
+  const selected = new Set(selectedPageNumbers(options.pageSelection, document.getPageCount()));
+  let sequence = 0;
+  document.getPages().forEach((page, index) => {
+    if (!selected.has(index + 1)) return;
+    const { width, height } = page.getSize();
+    const size = Math.max(9, Math.min(18, Math.min(width, height) * 0.025));
+    const text = String(options.pageNumberStart + sequence);
+    const textWidth = font.widthOfTextAtSize(text, size);
+    const placement = getPlacement(options.pageNumberPlacement, width, height, textWidth, size);
+    page.drawText(text, { ...placement, size, font, color: rgb(0.16, 0.2, 0.28) });
+    sequence += 1;
+  });
+  return [{ bytes: await savePdf(document), pageCount: document.getPageCount() }];
+};
+
+const replacePageTokens = (value: string, pageNumber: number, pageCount: number) => value.replaceAll("{{page}}", String(pageNumber)).replaceAll("{{pages}}", String(pageCount));
+
+const headerFooterPdf = async (input: PdfOperationInput, options: ReturnType<typeof normalizePdfOptions>) => {
+  const header = options.headerText?.trim() ?? "";
+  const footer = options.footerText?.trim() ?? "";
+  if (!header && !footer) throw new PdfProcessingError("INVALID_INPUT", "Enter header text, footer text, or both before processing the PDF.");
+  const document = await loadPdf(input.bytes);
+  const font = await document.embedFont(StandardFonts.Helvetica);
+  const selected = new Set(selectedPageNumbers(options.headerFooterScope, document.getPageCount()));
+  document.getPages().forEach((page, index) => {
+    if (!selected.has(index + 1)) return;
+    const { width, height } = page.getSize();
+    const size = Math.max(8, Math.min(16, Math.min(width, height) * 0.022));
+    const draw = (value: string, y: number) => {
+      if (!value) return;
+      page.drawText(replacePageTokens(value, index + 1, document.getPageCount()), { x: 24, y, size, font, color: rgb(0.16, 0.2, 0.28), maxWidth: width - 48 });
+    };
+    draw(header, height - 24 - size);
+    draw(footer, 18);
+  });
+  return [{ bytes: await savePdf(document), pageCount: document.getPageCount() }];
+};
+
+const cropPdf = async (input: PdfOperationInput, options: ReturnType<typeof normalizePdfOptions>) => {
+  const document = await loadPdf(input.bytes);
+  document.getPages().forEach((page) => {
+    const { width, height } = page.getSize();
+    const margin = Math.min(options.cropMargin, Math.max(0, width / 2 - 1), Math.max(0, height / 2 - 1));
+    page.setCropBox(margin, margin, Math.max(1, width - margin * 2), Math.max(1, height - margin * 2));
+  });
+  return [{ bytes: await savePdf(document), pageCount: document.getPageCount() }];
+};
+
+const cleanPdfMetadata = async (input: PdfOperationInput) => {
+  const document = await loadPdf(input.bytes);
+  const infoRef = document.context.trailerInfo.Info;
+  const info = infoRef ? document.context.lookup(infoRef) : undefined;
+  if (info && typeof (info as { delete?: unknown }).delete === "function") {
+    const infoDict = info as unknown as { delete: (key: PDFName) => boolean };
+    ["Title", "Author", "Subject", "Keywords", "Creator", "Producer", "CreationDate", "ModDate", "Trapped"].forEach((key) => infoDict.delete(PDFName.of(key)));
+  }
+  document.context.trailerInfo.Info = undefined;
+  document.catalog.delete(PDFName.of("Metadata"));
+  return [{ bytes: await savePdf(document), pageCount: document.getPageCount() }];
+};
+
+const flattenPdf = async (input: PdfOperationInput) => {
+  const document = await loadPdf(input.bytes);
+  document.getForm().flatten();
+  return [{ bytes: await savePdf(document), pageCount: document.getPageCount() }];
+};
+
+const safePdfText = (value: string) => value.replace(/[^\x09\x0a\x0d\x20-\x7e\xa0-\xff]/g, "?");
+
+const txtToPdf = async (input: PdfOperationInput, options: ReturnType<typeof normalizePdfOptions>) => {
+  let text: string;
+  try {
+    text = new TextDecoder("utf-8", { fatal: true }).decode(input.bytes);
+  } catch (error) {
+    throw new PdfProcessingError("INVALID_INPUT", "The TXT file is not valid UTF-8 text.", error);
+  }
+  const document = await PDFDocument.create();
+  const font = await document.embedFont(StandardFonts.Helvetica);
+  const pageSize = options.pageSize === "letter" ? PageSizes.Letter : PageSizes.A4;
+  const [width, height] = options.pageOrientation === "landscape" ? [pageSize[1], pageSize[0]] : pageSize;
+  const margin = 48;
+  const fontSize = options.textFontSize;
+  const lineHeight = fontSize * 1.45;
+  const maxWidth = width - margin * 2;
+  const wrap = (line: string) => {
+    const words = safePdfText(line).split(/\s+/).filter(Boolean);
+    if (!words.length) return [""];
+    const lines: string[] = [];
+    let current = "";
+    for (const word of words) {
+      const candidate = current ? `${current} ${word}` : word;
+      if (current && font.widthOfTextAtSize(candidate, fontSize) > maxWidth) {
+        lines.push(current);
+        current = word;
+      } else current = candidate;
+    }
+    if (current) lines.push(current);
+    return lines;
+  };
+  let page = document.addPage([width, height]);
+  let y = height - margin - fontSize;
+  for (const sourceLine of text.replaceAll("\r\n", "\n").replaceAll("\r", "\n").split("\n")) {
+    for (const line of wrap(sourceLine)) {
+      if (y < margin) {
+        page = document.addPage([width, height]);
+        y = height - margin - fontSize;
+      }
+      page.drawText(line, { x: margin, y, size: fontSize, font, color: rgb(0.08, 0.1, 0.14) });
+      y -= lineHeight;
+    }
+  }
+  return [{ bytes: await savePdf(document), pageCount: document.getPageCount() }];
+};
+
 export const runPdfOperation = async (tool: PdfToolSlug, inputs: PdfOperationInput[], rawOptions: PdfOptions, watermarkImage?: PdfOperationInput): Promise<PdfOperationOutput[]> => {
   const options = normalizePdfOptions(tool, rawOptions);
   switch (tool) {
@@ -174,6 +295,18 @@ export const runPdfOperation = async (tool: PdfToolSlug, inputs: PdfOperationInp
     case "png-to-pdf":
     case "webp-to-pdf": return imagesToPdf(inputs, options);
     case "watermark-pdf": return watermarkPdf(inputs[0], options, watermarkImage);
+    case "add-page-numbers": return addPageNumbersPdf(inputs[0], options);
+    case "header-footer-pdf": return headerFooterPdf(inputs[0], options);
+    case "crop-pdf": return cropPdf(inputs[0], options);
+    case "clean-pdf-metadata": return cleanPdfMetadata(inputs[0]);
+    case "flatten-pdf": return flattenPdf(inputs[0]);
+    case "txt-to-pdf": return txtToPdf(inputs[0], options);
+    case "pdf-to-png":
+    case "pdf-to-webp":
+    case "extract-images-from-pdf":
+    case "pdf-to-text":
+    case "pdf-to-html":
+    case "pdf-metadata-viewer": throw new Error(`The ${tool} operation is handled by the PDF.js extraction path.`);
     default: throw new Error(`Unsupported PDF operation: ${tool}`);
   }
 };

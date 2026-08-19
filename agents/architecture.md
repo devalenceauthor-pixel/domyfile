@@ -1,15 +1,15 @@
 # Architecture - DoMyFile
 
 **Status:** Draft for implementation  
-**Version:** 1.4  
-**Last updated:** 2026-08-18  
+**Version:** 1.5
+**Last updated:** 2026-08-19
 **Source of truth for:** stack, deployment, processing boundaries, shared engines, file lifecycle, testing, and technical constraints.
 
 > Product behavior belongs in `prd.md`. Visual rules belong in `design.md`.
 
 ## 1. Product Context
 
-This architecture serves **DoMyFile**, a browser-first file utility product whose V1 processes user files locally whenever technically feasible. A small, explicit server fallback plane is allowed only for approved server-bound tools whose local implementation cannot meet the product quality bar. The architecture must preserve the product promises in `prd.md`: no account requirement, no permanent user-file storage, and a consistent experience across Image, PDF, Audio, and Video tools.
+This architecture serves **DoMyFile**, a browser-first file utility product whose V1 processes user files locally whenever technically feasible. A small, explicit server fallback plane is allowed only for approved server-bound tools whose local implementation cannot meet the product quality bar. The architecture must preserve the product promises in `prd.md`: no account requirement, no permanent user-file storage, and a consistent experience across Image, PDF, Word/Document, Audio, and Video tools.
 
 ## 2. Architecture Principles
 
@@ -32,9 +32,15 @@ flowchart LR
     A --> R[Typed Tool Registry]
     R --> UI[Interactive Tool Islands]
     UI --> I[Image Engine]
+    UI --> B[Background Removal Engine]
     UI --> P[PDF Engine]
+    UI --> D[Document Engine]
     UI --> M[Media Engine]
     I --> W[Browser APIs / Web Workers]
+    B -. quality-focused server path .-> G
+    D --> MW[Mammoth / docx]
+    UI --> U[Image Upscaler Engine]
+    U --> UW[ONNX Runtime Web / super-resolution model]
     P --> PW[PDF.js / pdf-lib]
     M --> F[FFmpeg WASM Worker]
     F -. runtime binary only .-> A2[R2 Runtime Asset Bucket]
@@ -65,7 +71,7 @@ The browser path remains the default. The fallback gateway is reachable only for
 - **DNS/TLS:** Cloudflare.
 - **Database:** none in V1. Ephemeral job status may use a short-lived Durable Object or equivalent coordination state; it must not contain file bytes or permanent job history.
 - **Server runtime:** optional Cloudflare Worker gateway, Cloudflare Queues, and Cloudflare Containers for the explicitly approved fallback tools only.
-- **Native fallback engines:** pikepdf `JobBuilder` selective image optimization for Compress PDF; a separately pinned and audited native FFmpeg build for Compress Video. Software-license inventories are recorded; final commercial codec/patent review remains a release gate for public traffic.
+- **Native fallback engines:** pikepdf `JobBuilder` selective image optimization for Compress PDF; a separately pinned and audited native FFmpeg build for Compress Video; and a pinned Debian LibreOffice Writer/Draw profile for DOCX to PDF and selectable-text PDF to DOCX. Software-license inventories are recorded; final codec/patent and native-document redistribution review remains a release gate for public traffic.
 - **Styling:** centralized design tokens following `design.md`.
 - **Client framework:** none by default; add one only when an interactive island clearly benefits from it.
 
@@ -73,7 +79,7 @@ Do not hard-code library versions in this document. At implementation time, choo
 
 ## 5. Deployment Model
 
-The main V1 deployment remains static. A separately deployed fallback plane is used only for the two classified server-bound tools whose browser paths cannot meet the compression quality bar.
+The main V1 deployment remains static. A separately deployed fallback plane is used only for the five classified server-bound tools whose browser paths cannot meet the compression, document-fidelity, or background-segmentation quality bar.
 
 ```text
 Astro build
@@ -96,7 +102,7 @@ Isolated native-processing Container
     ↓
 Private R2 temporary result
     ↓
-Short-lived download + deletion
+    Short-lived download + deletion
 ```
 
 Benefits:
@@ -163,6 +169,8 @@ src/
 │   │   └── [slug].astro
 │   ├── pdf/
 │   │   └── [slug].astro
+│   ├── word/
+│   │   └── [slug].astro
 │   ├── audio/
 │   │   └── [slug].astro
 │   └── video/
@@ -177,6 +185,8 @@ src/
 │   ├── types.ts
 │   ├── engines/
 │   │   ├── image/
+│   │   ├── background-removal/
+│   │   ├── document/
 │   │   ├── pdf/
 │   │   └── media/
 │   └── adapters/
@@ -191,7 +201,7 @@ Minimum registry shape:
 type ToolDefinition = {
   id: string
   slug: string
-  category: 'image' | 'pdf' | 'audio' | 'video'
+  category: 'image' | 'pdf' | 'word' | 'audio' | 'video'
   title: string
   description: string
   processor: ProcessorKey
@@ -341,13 +351,98 @@ HEIC/HEIF decoding is isolated behind an adapter. Select the decoder only after 
 - runtime size;
 - license and redistribution obligations.
 
+### Background removal engine
+
+Remove Background is an isolated quality-focused engine rather than a general
+Image Engine transform. The source implementation accepts one JPG, PNG, or
+WebP file, validates a readable raster signature, and returns a validated
+transparent PNG through the existing temporary server fallback (`IMG-12`).
+The public catalog currently holds this entry: its static route is excluded,
+the browser fallback client rejects it before job creation, and no Worker,
+Queue, R2, or Container public processing is enabled. If the release gate is
+completed later, the worker would store the source/output privately, queue one
+bounded job, and the isolated container would run the pinned BiRefNet-lite ONNX
+checkpoint with CPU ONNX Runtime. The browser implementation retains the
+original preview, checkerboard result, status, reset, and download flow for a
+future re-enable, but does not load a hidden browser segmentation model.
+
+The model uses a 1024×1024 ImageNet-normalized input, sigmoid mask decoding,
+BICUBIC alpha upsampling, source-alpha multiplication for PNG inputs, and only
+removes numerically invisible alpha values. No hard threshold, largest-component
+selection, or destructive morphology is used. This preserves hair/fur and
+soft/translucent edges while the model itself handles foreground islands. The
+server path is bounded to 40 MB input, 50 MP, 6000×6000 dimensions, a 7 GiB
+working-memory budget, 180 CPU seconds, and 240 wall seconds; values are
+engineering limits, not marketing guarantees. The native container is sized at
+2 vCPUs, 8 GiB hard memory, and 16 GB disk after deployment-class measurement
+of the pinned checkpoint's peak inference memory. A separate 10 GiB virtual
+address-space guard accommodates ONNX Runtime's large temporary mappings; the
+container cgroup remains the hard memory boundary.
+
+The former `@imgly/background-removal` AGPL package is not part of the shipped
+dependency graph. ONNX Runtime and the BiRefNet-lite checkpoint remain separate
+MIT notices, with the checkpoint commit and SHA recorded in the container
+license inventory. The temporary upload disclosure and deletion lifecycle must
+remain visible before processing.
+
+### Image Upscaler engine
+
+Image Upscaler is a separate single-image engine and is not an alias for Resize
+Image. It lazy-loads `onnxruntime-web` and the pinned ONNX Model Zoo
+`super-resolution-10.onnx` model only after processing starts. The model accepts
+224×224 luminance tiles and emits a fixed 3× luminance result; larger supported
+images are tiled with overlap, then browser-safe color and alpha channels are
+reconstructed into a PNG. Canvas resizing is used only for color/alpha
+reconstruction and tile preparation, never as the claimed enhancement method.
+
+The baseline provider is WebAssembly, with opportunistic WebGPU selection where
+the browser exposes it. The tested source limit is about 2 megapixels to keep
+the 3× output and model tensors within predictable memory. The model is about
+240 KB and is Apache-2.0; ONNX Runtime Web is MIT. The model license and runtime
+license remain separate notices. Sessions, canvases, bitmaps, and object URLs
+are released on reset or unload, and model loading is not present in homepage or
+category HTML.
+
+### Word/Document engine
+
+The Word category uses focused routes and no generic converter. Browser-local
+paths are split by their actual fidelity contract:
+
+- Mammoth is lazy-loaded for DOCX to TXT and DOCX to HTML. It reads modern
+  DOCX ZIP archives, disables external file access, maps readable content, and
+  rejects corrupt/empty results. HTML is a complete downloadable document, not
+  a pixel-perfect Word renderer.
+- `docx` is lazy-loaded for TXT to DOCX. Each source line becomes one paragraph,
+  which keeps the output predictable and avoids inventing document styling.
+- `docx` plus `JSZip` are lazy-loaded for HTML to DOCX, Merge DOCX, Compress
+  DOCX, Extract Images from DOCX, and DOCX Metadata Cleaner. These routes use a
+  bounded supported subset, validate ZIP/XML signatures and output packages,
+  and disclose unsupported headers/footers, tracked changes, shapes, charts,
+  complex sections, and metadata outside the cleaned property parts.
+- DOCX to PDF and PDF to DOCX do not use a browser snapshot or text-only export.
+  They use the existing temporary fallback plane with a pinned headless
+  LibreOffice Writer/Draw conversion. DOCX input is validated as a modern ZIP
+  package; PDF to DOCX requires selectable text and rejects encrypted or
+  image-only PDFs because OCR is not part of the route. The native path improves
+  pagination, tables, and embedded media fidelity but does not promise exact
+  Microsoft Word round-tripping.
+
+All paths validate extensions plus basic signatures/content, validate the output
+signature/content, use deterministic names, and release object URLs in the
+shared workspace. Browser parser/writer modules are action-lazy and do not load
+on category or homepage HTML; native conversion is reachable only through the
+allowlisted server fallback routes.
+
 ## 12. PDF Engine
 
 Use separate libraries for separate responsibilities.
 
 ### PDF.js
 
-Use for parsing/rendering, previews, and PDF-to-image conversion.
+Use for parsing/rendering, previews, PDF-to-image conversion, selectable-text
+and simple HTML extraction, metadata reporting, and embedded raster-image
+extraction. Raster outputs are validated by their image signature and structural
+outputs are reopened with PDF.js before download.
 
 ### pdf-lib
 
@@ -358,7 +453,19 @@ Use for supported structural operations:
 - rotate;
 - images-to-PDF;
 - text/image watermarking;
-- metadata operations when needed.
+- page-number and header/footer overlays;
+- CropBox edits;
+- supported metadata inspection/cleanup;
+- TXT-to-PDF packaging;
+- supported form flattening.
+
+The PDF category keeps one route per useful intent. Existing merge/split/
+organize/rotate/image-to-PDF/PDF-to-JPG/watermark/compression routes are reused;
+new routes extend the same PDF.js/pdf-lib boundary for PNG/WebP rendering,
+embedded-image extraction, text/HTML/metadata output, overlays, crop, metadata
+cleanup, TXT packaging, and form flattening. Password protection/unlock, repair,
+OCR/searchable-PDF, grayscale, and general PDF resize remain deferred until a
+reliable engine and output-quality contract exists.
 
 ### Encrypted PDFs
 
@@ -592,8 +699,13 @@ A browser dependency must be browser-compatible, license-acceptable, replaceable
 | PDF structural edit | pdf-lib | No normal encrypted-PDF support; not a general compressor. |
 | PDF server optimization | pikepdf `JobBuilder` | Selective embedded-image optimization with page/text/structure validation; MPL/qpdf/Pillow notices retained. |
 | Audio/video | ffmpeg.wasm | Heavy and slower than native; exact codecs/build must be tested. |
-| Server video processing | Pinned native FFmpeg container build | Only for VID-01 in the current V1 scope, after codec, patent, isolation, and licensing review. |
+| Server video processing | Pinned native FFmpeg container build | Only for VID-01 after codec, patent, isolation, and licensing review. |
+| Server document conversion | Debian LibreOffice Writer/Draw 7.4.7 headless profile | Only for DOC-04/DOC-05; pinned package set, isolated temporary jobs, selectable-text/no-OCR gate, and MPL/third-party notice review. |
 | HEIC decode | Adapter TBD | Requires compatibility/license spike. |
+| DOCX parse | Mammoth | Lazy browser import for DOCX to TXT/HTML; BSD-2-Clause; readable-content conversion rather than layout fidelity. |
+| DOCX write/package operations | docx + JSZip | Lazy browser imports for TXT/HTML writing and bounded ZIP/XML operations; MIT and MIT-or-GPL-3.0-or-later (MIT option) notices retained. |
+| Image super-resolution | ONNX Runtime Web + ONNX Model Zoo `super-resolution-10` | Lazy browser import; runtime MIT, model Apache-2.0, fixed 3×/224 tile contract, approximately 240 KB model asset. |
+| Background removal | Pinned BiRefNet-lite ONNX + onnxruntime (server IMG-12) | Existing fallback plane; CPU container inference, MIT runtime/checkpoint notices separate, private temporary lifecycle, no AGPL browser package. |
 
 ## 19. Testing
 
@@ -613,6 +725,10 @@ Validate actual outputs, such as:
 - PDF-to-JPG output count and JPEG signature;
 - resized image dimensions;
 - generated media contains expected streams and can be opened/probed;
+- DOCX fixtures produce readable TXT, complete HTML, valid DOCX ZIP outputs, merged embedded images, useful JPEG reduction, extracted media, and scoped metadata cleaning with deterministic names;
+- native DOCX/PDF fixtures produce a valid PDF or DOCX through LibreOffice, preserve selectable text where claimed, reject corrupt/encrypted/image-only inputs, and use the fixed output filenames;
+- Image Upscaler fixtures produce a real 3× PNG from representative small/large-enough inputs, reject corrupt/unsupported/oversized files, and release model/canvas resources on reset;
+- background-removal fixtures produce a non-empty PNG with transparency, while corrupt/unsupported inputs fail clearly;
 - cancelled/failed jobs clean temporary state.
 
 Add a privacy regression test that watches network traffic during processing and fails if prohibited file data is transmitted.

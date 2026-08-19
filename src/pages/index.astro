@@ -4,13 +4,14 @@ import SearchBox from "../components/ui/SearchBox.astro";
 import ToolCard from "../components/ui/ToolCard.astro";
 import CategoryToolLink from "../components/tools/CategoryToolLink.astro";
 import CategoryVisual from "../components/tools/CategoryVisual.astro";
-import { categoryMeta, tools } from "../tools/registry";
+import { categoryMeta, getProductionReadyTools } from "../tools/registry";
 import type { ToolCategory } from "../tools/types";
 import { getWebsiteStructuredData } from "../lib/seo";
 
-const featuredTools = tools.filter((tool) => tool.featured).slice(0, 6);
+const publicTools = getProductionReadyTools();
+const featuredTools = publicTools.filter((tool) => tool.featured).slice(0, 6);
 const categories = Object.keys(categoryMeta) as ToolCategory[];
-const description = "DoMyFile makes supported image, PDF, audio, and video tasks feel simple, private, and browser-first, with temporary processing disclosed where needed.";
+const description = "DoMyFile makes supported image, PDF, Word, audio, and video tasks feel simple, private, and browser-first, with temporary processing disclosed where needed.";
 ---
 
 <SiteLayout
@@ -26,7 +27,7 @@ const description = "DoMyFile makes supported image, PDF, audio, and video tasks
             <p class="section-kicker hero-kicker">Browser-first file tools · no upload by default</p>
             <h1 id="heroTitle">Simple file tools <span class="gradient-text">that just work.</span></h1>
             <p class="hero-description">
-              Convert, compress, and edit supported images, PDFs, audio, and video with a clear select-to-download workflow. Browser tools stay on your device; the two server-bound compression tools disclose temporary upload and automatic deletion.
+              Convert, compress, edit, and extract from supported images, PDFs, Word documents, audio, and video with a clear select-to-download workflow. Browser tools stay on your device; the two server-bound compression tools disclose temporary upload and automatic deletion.
             </p>
 
             <SearchBox variant="hero" id="heroSearchInput" />
@@ -85,7 +86,7 @@ const description = "DoMyFile makes supported image, PDF, audio, and video tasks
           <div class="category-list">
             {categories.map((category) => {
               const meta = categoryMeta[category];
-              const categoryTools = tools.filter((tool) => tool.category === category).slice(0, 4);
+              const categoryTools = publicTools.filter((tool) => tool.category === category).slice(0, 4);
               return (
                 <article class="category-row">
                   <div class="category-row-copy">

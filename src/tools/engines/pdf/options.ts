@@ -10,6 +10,14 @@ export type NormalizedPdfOptions = PdfOptions & {
   watermarkScale: number;
   watermarkOpacity: number;
   watermarkColor: string;
+  rasterFormat: "jpg" | "png" | "webp";
+  extractImageFormat: "png" | "webp";
+  extractImageQuality: number;
+  pageNumberStart: number;
+  pageNumberPlacement: NonNullable<PdfOptions["pageNumberPlacement"]>;
+  headerFooterScope: PdfPageSelection;
+  cropMargin: number;
+  textFontSize: number;
 };
 
 export const isPdfSignature = (bytes: Uint8Array) => bytes.length >= 5
@@ -41,11 +49,31 @@ const suffixes: Record<PdfToolSlug, string> = {
   "webp-to-pdf": "pdf",
   "pdf-to-jpg": "jpg",
   "watermark-pdf": "watermarked",
+  "pdf-to-png": "png",
+  "pdf-to-webp": "webp",
+  "extract-images-from-pdf": "images",
+  "add-page-numbers": "numbered",
+  "header-footer-pdf": "header-footer",
+  "crop-pdf": "cropped",
+  "pdf-to-text": "text",
+  "pdf-to-html": "html",
+  "pdf-metadata-viewer": "metadata",
+  "clean-pdf-metadata": "metadata-cleaned",
+  "txt-to-pdf": "pdf",
+  "flatten-pdf": "flattened",
 };
 
 export const getPdfOutputName = (fileName: string, tool: PdfToolSlug, index?: number, pageNumber?: number) => {
   const base = safeBaseName(fileName);
-  if (tool === "pdf-to-jpg") return `${base}-page-${pageNumber ?? (index ?? 0) + 1}.jpg`;
+  if (["pdf-to-jpg", "pdf-to-png", "pdf-to-webp"].includes(tool)) {
+    const extension = tool === "pdf-to-jpg" ? "jpg" : tool === "pdf-to-png" ? "png" : "webp";
+    return `${base}-page-${pageNumber ?? (index ?? 0) + 1}.${extension}`;
+  }
+  if (tool === "extract-images-from-pdf") return `${base}-image-${String((index ?? 0) + 1).padStart(2, "0")}.png`;
+  if (tool === "pdf-to-text") return `${base}-text.txt`;
+  if (tool === "pdf-to-html") return `${base}-text.html`;
+  if (tool === "pdf-metadata-viewer") return `${base}-metadata.json`;
+  if (tool === "txt-to-pdf") return `${base}-pdf.pdf`;
   if (tool === "split-pdf") return `${base}-${suffixes[tool]}-${(index ?? 0) + 1}.pdf`;
   return `${base}-${suffixes[tool]}.pdf`;
 };
@@ -92,6 +120,14 @@ export const normalizePdfOptions = (tool: PdfToolSlug, options: PdfOptions = {})
   watermarkScale: Math.min(Math.max(Number(options.watermarkScale ?? 0.35), 0.05), 1),
   watermarkOpacity: Math.min(Math.max(Number(options.watermarkOpacity ?? 35), 5), 100),
   watermarkColor: /^#[0-9a-f]{6}$/i.test(options.watermarkColor ?? "") ? options.watermarkColor ?? "#64748b" : "#64748b",
+  rasterFormat: options.rasterFormat === "png" || options.rasterFormat === "webp" ? options.rasterFormat : "jpg",
+  extractImageFormat: options.extractImageFormat === "webp" ? "webp" : "png",
+  extractImageQuality: Math.min(Math.max(Number(options.extractImageQuality ?? 92), 60), 100),
+  pageNumberStart: Math.min(Math.max(Math.round(Number(options.pageNumberStart ?? 1)), 1), 1_000_000),
+  pageNumberPlacement: options.pageNumberPlacement ?? "bottom-right",
+  headerFooterScope: options.headerFooterScope ?? "all",
+  cropMargin: Math.min(Math.max(Number(options.cropMargin ?? 24), 0), 720),
+  textFontSize: Math.min(Math.max(Number(options.textFontSize ?? 11), 7), 24),
 });
 
 export const parseHexColor = (value: string) => {

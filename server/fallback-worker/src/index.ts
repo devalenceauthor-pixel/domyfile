@@ -8,6 +8,7 @@ import type {
 } from "@cloudflare/workers-types";
 import {
   SERVER_FALLBACK_LIMITS,
+  SERVER_TOOL_INPUTS,
   SERVER_TOOL_OUTPUTS,
   isServerToolId,
   normalizeServerOptions,
@@ -266,8 +267,7 @@ const validateCreateRequest = (value: unknown): CreateRequest => {
   const inputBytes = Number(value.inputBytes);
   const inputMime = String(value.inputMime ?? "");
   if (!Number.isSafeInteger(inputBytes) || inputBytes <= 0 || inputBytes > limits.maxUploadBytes) throw new Error("resource_limit");
-  const allowedMimes = toolId === "PDF-01" ? ["application/pdf"] : ["video/mp4", "video/quicktime"];
-  if (!allowedMimes.includes(inputMime)) throw new Error("unsupported_mime");
+  if (!SERVER_TOOL_INPUTS[toolId].mimes.includes(inputMime)) throw new Error("unsupported_mime");
   const options = normalizeServerOptions(toolId, value.options);
   return { toolId, inputBytes, inputMime, options };
 };
@@ -287,14 +287,25 @@ const hasVideoBrand = (bytes: Uint8Array, allowed: Set<string>) => {
 };
 
 const inputMagicIsValid = (toolId: ServerToolId, mime: string, bytes: Uint8Array) => {
-  if (toolId === "PDF-01") return mime === "application/pdf" && ascii(bytes, 0, 5) === "%PDF-";
+  const input = SERVER_TOOL_INPUTS[toolId];
+  if (input.magic === "pdf") return mime === "application/pdf" && ascii(bytes, 0, 5) === "%PDF-";
+  if (input.magic === "zip") return mime === "application/vnd.openxmlformats-officedocument.wordprocessingml.document" && bytes.length >= 4 && bytes[0] === 0x50 && bytes[1] === 0x4b && bytes[2] === 0x03 && bytes[3] === 0x04;
+  if (input.magic === "image") {
+    if (mime === "image/jpeg") return bytes.length >= 3 && bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff;
+    if (mime === "image/png") return bytes.length >= 8 && ascii(bytes, 0, 8) === "\x89PNG\r\n\x1a\n";
+    return mime === "image/webp" && bytes.length >= 12 && ascii(bytes, 0, 4) === "RIFF" && ascii(bytes, 8, 4) === "WEBP";
+  }
   if (mime === "video/quicktime") return hasVideoBrand(bytes, new Set(["qt  "]));
   return mime === "video/mp4" && hasVideoBrand(bytes, new Set(["isom", "iso2", "iso5", "mp41", "mp42", "avc1", "M4V "]));
 };
 
-const outputMagicIsValid = (toolId: ServerToolId, bytes: Uint8Array) => toolId === "PDF-01"
-  ? ascii(bytes, 0, 5) === "%PDF-"
-  : bytes.length >= 4 && bytes[0] === 0x1a && bytes[1] === 0x45 && bytes[2] === 0xdf && bytes[3] === 0xa3;
+const outputMagicIsValid = (toolId: ServerToolId, bytes: Uint8Array) => {
+  const magic = SERVER_TOOL_OUTPUTS[toolId].magic;
+  if (magic === "pdf") return ascii(bytes, 0, 5) === "%PDF-";
+  if (magic === "zip") return bytes.length >= 4 && bytes[0] === 0x50 && bytes[1] === 0x4b && bytes[2] === 0x03 && bytes[3] === 0x04;
+  if (magic === "png") return bytes.length >= 8 && ascii(bytes, 0, 8) === "\x89PNG\r\n\x1a\n";
+  return bytes.length >= 4 && bytes[0] === 0x1a && bytes[1] === 0x45 && bytes[2] === 0xdf && bytes[3] === 0xa3;
+};
 
 const rateLimit = async (request: Request, env: WorkerEnv) => {
   const ip = request.headers.get("CF-Connecting-IP") ?? "unknown";
@@ -455,12 +466,12 @@ const processMessage = async (message: ProcessMessage, env: WorkerEnv, fromDlq: 
   const outputHead = await env.TEMP_FILES.head(record.outputKey);
   const outputLimit = limits.maxOutputBytes;
   const outputMagic = await readHead(env.TEMP_FILES, record.outputKey);
-  if (!result || !outputHead || outputHead.size <= 0 || outputHead.size > outputLimit || !outputMagic || !outputMagicIsValid(record.toolId, outputMagic) || outputHead.size >= record.inputBytes) {
-    await failJob(env, record, outputHead && outputHead.size >= record.inputBytes ? "NO_USEFUL_REDUCTION" : "OUTPUT_INVALID");
+  if (!result || !outputHead || outputHead.size <= 0 || outputHead.size > outputLimit || !outputMagic || !outputMagicIsValid(record.toolId, outputMagic)) {
+    await failJob(env, record, "OUTPUT_INVALID");
     return;
   }
   const savingsPercent = (1 - outputHead.size / record.inputBytes) * 100;
-  if (savingsPercent < limits.minimumSavingsPercent) {
+  if (limits.requireReduction && (outputHead.size >= record.inputBytes || savingsPercent < limits.minimumSavingsPercent)) {
     await failJob(env, record, "NO_USEFUL_REDUCTION");
     return;
   }
@@ -543,7 +554,7 @@ const handleDownload = async (request: Request, env: WorkerEnv, ctx: WorkerExecu
   const headers = new Headers();
   headers.set("Content-Type", SERVER_TOOL_OUTPUTS[record.toolId].mime);
   headers.set("Content-Length", String(object.size));
-  headers.set("Content-Disposition", `attachment; filename="compressed-${record.toolId === "PDF-01" ? "document.pdf" : "video.webm"}"`);
+  headers.set("Content-Disposition", `attachment; filename="${SERVER_TOOL_OUTPUTS[record.toolId].fileName}"`);
   headers.set("Cache-Control", "no-store, max-age=0");
   ctx.waitUntil(env.TEMP_FILES.delete(record.outputKey));
   return new Response(object.body as unknown as BodyInit, { headers });

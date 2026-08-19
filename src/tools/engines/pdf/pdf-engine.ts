@@ -1,6 +1,7 @@
 import * as pdfjsLib from "pdfjs-dist/build/pdf.min.mjs";
 import pdfWorkerUrl from "pdfjs-dist/build/pdf.worker.min.mjs?url";
 import type { PDFDocumentLoadingTask, PDFDocumentProxy } from "pdfjs-dist";
+import { ImageKind, OPS } from "pdfjs-dist";
 import { runPdfOperation, type PdfOperationInput, type PdfOperationOutput } from "./pdf-operations";
 import { asPdfProcessingError, getPdfErrorMessage } from "./errors";
 import {
@@ -12,7 +13,6 @@ import type { PdfWorkerMessage, PdfWorkerResponse, PdfWorkerSuccess } from "./wo
 import {
   PdfProcessingError,
   type PdfEngine as PdfEngineContract,
-  type PdfMime,
   type PdfOptions,
   type PdfProcessResult,
   type PdfProcessItem,
@@ -42,11 +42,27 @@ const toArrayBuffer = (bytes: Uint8Array) => {
   return copy.buffer as ArrayBuffer;
 };
 
-const detectImageMime = (bytes: Uint8Array): Exclude<PdfMime, "application/pdf"> | "image/png" | "image/webp" | null => {
+type RasterMime = "image/jpeg" | "image/png" | "image/webp";
+
+const detectImageMime = (bytes: Uint8Array): RasterMime | null => {
   if (bytes.length >= 3 && bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff) return "image/jpeg";
   if (bytes.length >= 8 && bytes.slice(0, 8).every((value, index) => value === [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a][index])) return "image/png";
   if (bytes.length >= 12 && String.fromCharCode(...bytes.slice(0, 4)) === "RIFF" && String.fromCharCode(...bytes.slice(8, 12)) === "WEBP") return "image/webp";
   return null;
+};
+
+const ensureTextInput = async (file: File) => {
+  if (!file || file.size <= 0) throw new PdfProcessingError("INVALID_INPUT", "Choose a non-empty TXT file to continue.");
+  if (!/^(txt|text)$/i.test(file.name.split(".").pop() ?? "") && file.type !== "text/plain") {
+    throw new PdfProcessingError("UNSUPPORTED_FORMAT", "TXT to PDF accepts UTF-8 plain text files only.");
+  }
+  const bytes = await readBytes(file);
+  try {
+    new TextDecoder("utf-8", { fatal: true }).decode(bytes);
+  } catch (error) {
+    throw new PdfProcessingError("CORRUPT_FILE", `“${file.name || "This file"}” is not valid UTF-8 text.`, error);
+  }
+  return bytes;
 };
 
 const ensurePdfInput = async (file: File) => {
@@ -112,6 +128,12 @@ const canvasToBlob = (canvas: HTMLCanvasElement, type: string, quality: number) 
   }, type, quality);
 });
 
+const validateRaster = async (blob: Blob, mime: RasterMime) => {
+  if (!blob.size) throw new PdfProcessingError("PROCESSING_FAILED", "The browser did not produce a valid image output.");
+  const bytes = new Uint8Array(await blob.slice(0, 16).arrayBuffer());
+  if (detectImageMime(bytes) !== mime) throw new PdfProcessingError("PROCESSING_FAILED", "The browser did not produce the expected image output.");
+};
+
 export type PdfThumbnail = {
   pageNumber: number;
   width: number;
@@ -164,9 +186,8 @@ export const renderPdfThumbnails = async (file: File, pageNumbers: number[], max
 };
 
 const validateJpeg = async (blob: Blob) => {
-  if (!blob.size || (blob.type && blob.type !== "image/jpeg")) throw new PdfProcessingError("PROCESSING_FAILED", "The browser did not produce a valid JPG page.");
-  const bytes = new Uint8Array(await blob.slice(0, 3).arrayBuffer());
-  if (bytes[0] !== 0xff || bytes[1] !== 0xd8 || bytes[2] !== 0xff) throw new PdfProcessingError("PROCESSING_FAILED", "The browser did not produce a valid JPG page.");
+  if (blob.type && blob.type !== "image/jpeg") throw new PdfProcessingError("PROCESSING_FAILED", "The browser did not produce a valid JPG page.");
+  await validateRaster(blob, "image/jpeg");
 };
 
 const validatePdfOutput = async (file: File, expectedPageCount?: number, signal?: AbortSignal) => {
@@ -288,6 +309,151 @@ const prepareImageInput = async (file: File, signal?: AbortSignal): Promise<PdfO
   return { name: file.name, mime, bytes };
 };
 
+const getTextFromPage = async (page: Awaited<ReturnType<PDFDocumentProxy["getPage"]>>) => {
+  const content = await page.getTextContent({ includeMarkedContent: false });
+  return content.items
+    .map((item) => "str" in item ? item.str : "")
+    .join(" ")
+    .replace(/[ \t]+/g, " ")
+    .trim();
+};
+
+const extractPdfText = async (file: File, signal?: AbortSignal) => {
+  const loaded = await loadPdf(file, signal);
+  try {
+    const pages: string[] = [];
+    for (let pageNumber = 1; pageNumber <= loaded.document.numPages; pageNumber += 1) {
+      throwIfAborted(signal);
+      pages.push(await getTextFromPage(await loaded.document.getPage(pageNumber)));
+    }
+    return pages.join("\n\n");
+  } finally {
+    await destroyPdf(loaded);
+  }
+};
+
+const escapeHtml = (value: string) => value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;");
+
+const extractPdfHtml = async (file: File, signal?: AbortSignal) => {
+  const loaded = await loadPdf(file, signal);
+  try {
+    const pages: string[] = [];
+    for (let pageNumber = 1; pageNumber <= loaded.document.numPages; pageNumber += 1) {
+      throwIfAborted(signal);
+      const page = await loaded.document.getPage(pageNumber);
+      const content = await page.getTextContent({ includeMarkedContent: false });
+      const lines = content.items.map((item) => "str" in item ? escapeHtml(item.str) : "").filter(Boolean);
+      pages.push(`<section aria-labelledby="page-${pageNumber}"><h2 id="page-${pageNumber}">Page ${pageNumber}</h2><p>${lines.join(" ") || "<em>No selectable text on this page.</em>"}</p></section>`);
+    }
+    return `<!doctype html><html lang="en"><head><meta charset="utf-8"><title>${escapeHtml(file.name)}</title></head><body><main>${pages.join("\n")}</main></body></html>`;
+  } finally {
+    await destroyPdf(loaded);
+  }
+};
+
+const imageObjectToBlob = async (value: unknown, format: "png" | "webp", quality: number) => {
+  if (!value || typeof value !== "object") return undefined;
+  const image = value as { width?: number; height?: number; data?: Uint8Array | Uint8ClampedArray; kind?: number; bitmap?: ImageBitmap };
+  const width = Number(image.width);
+  const height = Number(image.height);
+  if (!Number.isInteger(width) || !Number.isInteger(height) || width <= 0 || height <= 0 || width * height > 25_000_000) return undefined;
+  const canvas = typeof OffscreenCanvas !== "undefined" ? new OffscreenCanvas(width, height) : createCanvas(width, height);
+  const context = canvas.getContext("2d");
+  if (!context) return undefined;
+  if (image.bitmap) {
+    context.drawImage(image.bitmap, 0, 0);
+  } else if (image.data) {
+    const data = image.data;
+    const rgba = new Uint8ClampedArray(width * height * 4);
+    if (image.kind === ImageKind.RGBA_32BPP || data.length === width * height * 4) {
+      rgba.set(data);
+    } else if (image.kind === ImageKind.RGB_24BPP || data.length === width * height * 3) {
+      for (let source = 0, target = 0; source < data.length; source += 3, target += 4) {
+        rgba[target] = data[source];
+        rgba[target + 1] = data[source + 1];
+        rgba[target + 2] = data[source + 2];
+        rgba[target + 3] = 255;
+      }
+    } else {
+      for (let pixel = 0; pixel < width * height; pixel += 1) {
+        const valueAtPixel = image.kind === ImageKind.GRAYSCALE_1BPP
+          ? ((data[Math.floor(pixel / 8)] >> (7 - (pixel % 8))) & 1) * 255
+          : data[pixel] ?? 0;
+        const target = pixel * 4;
+        rgba[target] = valueAtPixel;
+        rgba[target + 1] = valueAtPixel;
+        rgba[target + 2] = valueAtPixel;
+        rgba[target + 3] = 255;
+      }
+    }
+    context.putImageData(new ImageData(rgba, width, height), 0, 0);
+  } else return undefined;
+  const mime: RasterMime = format === "webp" ? "image/webp" : "image/png";
+  const blob = typeof OffscreenCanvas !== "undefined" && canvas instanceof OffscreenCanvas
+    ? await canvas.convertToBlob({ type: mime, quality: quality / 100 })
+    : await canvasToBlob(canvas as HTMLCanvasElement, mime, quality / 100);
+  await validateRaster(blob, mime);
+  return { blob, width, height, mime };
+};
+
+const getPdfObject = async (page: Awaited<ReturnType<PDFDocumentProxy["getPage"]>>, id: string) => {
+  const objects = page.objs;
+  if (objects.has(id)) return objects.get(id);
+  return await new Promise<unknown>((resolve) => objects.get(id, resolve));
+};
+
+const extractPdfImages = async (file: File, options: PdfOptions, signal?: AbortSignal) => {
+  const loaded = await loadPdf(file, signal);
+  const images: Array<{ blob: Blob; width: number; height: number; mime: RasterMime }> = [];
+  const seenObjectIds = new Set<string>();
+  const format = options.extractImageFormat === "webp" ? "webp" : "png";
+  const quality = Math.min(Math.max(Number(options.extractImageQuality ?? 92), 60), 100);
+  try {
+    for (let pageNumber = 1; pageNumber <= loaded.document.numPages; pageNumber += 1) {
+      throwIfAborted(signal);
+      const page = await loaded.document.getPage(pageNumber);
+      const operatorList = await page.getOperatorList();
+      for (let index = 0; index < operatorList.fnArray.length; index += 1) {
+        const fn = operatorList.fnArray[index];
+        const args = operatorList.argsArray[index] as unknown[];
+        let image: unknown;
+        if (fn === OPS.paintInlineImageXObject || fn === OPS.paintInlineImageXObjectGroup) image = args[0];
+        else if (fn === OPS.paintImageXObject || fn === OPS.paintImageXObjectRepeat) {
+          const objectId = String(args[0]);
+          if (seenObjectIds.has(objectId)) continue;
+          seenObjectIds.add(objectId);
+          image = await getPdfObject(page, objectId);
+        }
+        if (!image) continue;
+        const converted = await imageObjectToBlob(image, format, quality);
+        if (converted) images.push(converted);
+        if (images.length >= 100) break;
+      }
+      page.cleanup();
+      if (images.length >= 100) break;
+    }
+    return images;
+  } finally {
+    await destroyPdf(loaded);
+  }
+};
+
+const extractPdfMetadata = async (file: File, signal?: AbortSignal) => {
+  const loaded = await loadPdf(file, signal);
+  try {
+    const metadata = await loaded.document.getMetadata().catch(() => ({ info: {}, metadata: null }));
+    const pageCount = loaded.document.numPages;
+    return {
+      pageCount,
+      info: metadata.info ?? {},
+      hasXmpMetadata: Boolean(metadata.metadata),
+      note: "This viewer reports metadata exposed by PDF.js; it does not enumerate every possible object, embedded-file, annotation, or application-specific field.",
+    };
+  } finally {
+    await destroyPdf(loaded);
+  }
+};
+
 const toWorkerInput = (file: File, bytes: Uint8Array, mime: string): PdfOperationInput => ({ name: file.name, mime, bytes });
 
 const pdfToolInputs = async (files: File[], signal?: AbortSignal) => {
@@ -328,6 +494,8 @@ export class BrowserPdfEngine implements PdfEngineContract {
           if (!imagePdfInputMimes[options.tool].has(mime)) {
             throw new PdfProcessingError("UNSUPPORTED_FORMAT", `${imagePdfInputLabels[options.tool]} to PDF accepts ${imagePdfInputLabels[options.tool]} images only.`);
           }
+        } else if (options.tool === "txt-to-pdf") {
+          await ensureTextInput(file);
         } else {
           await this.inspect(file);
         }
@@ -339,10 +507,11 @@ export class BrowserPdfEngine implements PdfEngineContract {
     return { valid: issues.length === 0, issues };
   }
 
-  private async renderPdfPages(file: File, options: PdfOptions, signal?: AbortSignal): Promise<PdfProcessItem[]> {
+  private async renderPdfPages(file: File, tool: "pdf-to-jpg" | "pdf-to-png" | "pdf-to-webp", options: PdfOptions, signal?: AbortSignal): Promise<PdfProcessItem[]> {
     const loaded = await loadPdf(file, signal);
     const quality = Math.min(Math.max(Number(options.jpgQuality ?? 88), 45), 100) / 100;
     const scale = Math.min(Math.max(Number(options.jpgScale ?? 1.5), 0.5), 3);
+    const outputMime: RasterMime = tool === "pdf-to-jpg" ? "image/jpeg" : tool === "pdf-to-png" ? "image/png" : "image/webp";
     const pageNumbers = parsePageGroups(options.pageSelection, loaded.document.numPages).flat();
     const items: PdfProcessItem[] = [];
     try {
@@ -366,11 +535,11 @@ export class BrowserPdfEngine implements PdfEngineContract {
           signal?.removeEventListener("abort", abort);
           page.cleanup();
         }
-        const blob = await canvasToBlob(canvas, "image/jpeg", quality);
-        await validateJpeg(blob);
-        const outputName = getPdfOutputName(file.name, "pdf-to-jpg", pageNumber - 1, pageNumber);
-        const output = new File([blob], outputName, { type: "image/jpeg", lastModified: Date.now() });
-        items.push({ input: file, output, mime: "image/jpeg", pageCount: loaded.document.numPages, pageNumber, inputBytes: file.size, outputBytes: output.size });
+        const blob = await canvasToBlob(canvas, outputMime, quality);
+        await validateRaster(blob, outputMime);
+        const outputName = getPdfOutputName(file.name, tool, pageNumber - 1, pageNumber);
+        const output = new File([blob], outputName, { type: outputMime, lastModified: Date.now() });
+        items.push({ input: file, output, mime: outputMime, pageCount: loaded.document.numPages, pageNumber, inputBytes: file.size, outputBytes: output.size, width: canvas.width, height: canvas.height });
         canvas.width = 0;
         canvas.height = 0;
       }
@@ -381,7 +550,11 @@ export class BrowserPdfEngine implements PdfEngineContract {
   }
 
   private async processStructural(tool: PdfToolSlug, files: File[], options: PdfOptions, signal?: AbortSignal) {
-    const inputs = isImageToPdfTool(tool) ? await Promise.all(files.map((file) => prepareImageInput(file, signal))) : await pdfToolInputs(files, signal);
+    const inputs = isImageToPdfTool(tool)
+      ? await Promise.all(files.map((file) => prepareImageInput(file, signal)))
+      : tool === "txt-to-pdf"
+        ? await Promise.all(files.map(async (file) => toWorkerInput(file, await ensureTextInput(file), "text/plain")))
+        : await pdfToolInputs(files, signal);
     let watermarkImage: PdfOperationInput | undefined;
     if (tool === "watermark-pdf" && options.watermarkMode === "image" && options.watermarkImage) watermarkImage = await prepareImageInput(options.watermarkImage, signal);
     let response: { outputs: PdfOperationOutput[] };
@@ -423,8 +596,29 @@ export class BrowserPdfEngine implements PdfEngineContract {
           throw new PdfProcessingError("INVALID_INPUT", "Enter watermark text before processing the PDF.");
         }
       }
-      if (options.tool === "pdf-to-jpg") {
-        result.items = await this.renderPdfPages(validFiles[0], options, signal);
+      if (["pdf-to-jpg", "pdf-to-png", "pdf-to-webp"].includes(options.tool)) {
+        result.items = await this.renderPdfPages(validFiles[0], options.tool as "pdf-to-jpg" | "pdf-to-png" | "pdf-to-webp", options, signal);
+      } else if (options.tool === "pdf-to-text") {
+        const text = await extractPdfText(validFiles[0], signal);
+        const output = new File([text], getPdfOutputName(validFiles[0].name, options.tool), { type: "text/plain", lastModified: Date.now() });
+        result.items = [{ input: validFiles[0], output, mime: "text/plain", pageCount: (await this.inspect(validFiles[0], signal)).pageCount, inputBytes: validFiles[0].size, outputBytes: output.size }];
+      } else if (options.tool === "pdf-to-html") {
+        const html = await extractPdfHtml(validFiles[0], signal);
+        const output = new File([html], getPdfOutputName(validFiles[0].name, options.tool), { type: "text/html", lastModified: Date.now() });
+        result.items = [{ input: validFiles[0], output, mime: "text/html", pageCount: (await this.inspect(validFiles[0], signal)).pageCount, inputBytes: validFiles[0].size, outputBytes: output.size }];
+      } else if (options.tool === "pdf-metadata-viewer") {
+        const metadata = await extractPdfMetadata(validFiles[0], signal);
+        const output = new File([JSON.stringify(metadata, null, 2)], getPdfOutputName(validFiles[0].name, options.tool), { type: "application/json", lastModified: Date.now() });
+        result.items = [{ input: validFiles[0], output, mime: "application/json", pageCount: metadata.pageCount, inputBytes: validFiles[0].size, outputBytes: output.size, detail: `${metadata.pageCount} pages · ${metadata.hasXmpMetadata ? "XMP metadata detected" : "no XMP metadata reported"}` }];
+      } else if (options.tool === "extract-images-from-pdf") {
+        const images = await extractPdfImages(validFiles[0], options, signal);
+        if (!images.length) throw new PdfProcessingError("PROCESSING_FAILED", "No decodable embedded raster images were found in this PDF. Vector drawings and page screenshots are not extracted.");
+        result.items = images.map((image, index) => {
+          const extension = image.mime === "image/webp" ? "webp" : "png";
+          const name = getPdfOutputName(validFiles[0].name, options.tool, index).replace(/\.png$/i, `.${extension}`);
+          const output = new File([image.blob], name, { type: image.mime, lastModified: Date.now() });
+          return { input: validFiles[0], output, mime: image.mime, inputBytes: validFiles[0].size, outputBytes: output.size, width: image.width, height: image.height } satisfies PdfProcessItem;
+        });
       } else {
         const structural = await this.processStructural(options.tool, validFiles, options, signal);
         const sourceFile = validFiles[0];
@@ -461,6 +655,18 @@ export const isImplementedPdfTool = (slug: string): slug is PdfToolSlug => [
   "webp-to-pdf",
   "pdf-to-jpg",
   "watermark-pdf",
+  "pdf-to-png",
+  "pdf-to-webp",
+  "extract-images-from-pdf",
+  "add-page-numbers",
+  "header-footer-pdf",
+  "crop-pdf",
+  "pdf-to-text",
+  "pdf-to-html",
+  "pdf-metadata-viewer",
+  "clean-pdf-metadata",
+  "txt-to-pdf",
+  "flatten-pdf",
 ].includes(slug as PdfToolSlug);
 
 export { getPdfErrorMessage };

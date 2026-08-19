@@ -1,5 +1,5 @@
 ---
-import { getTool, getToolPath } from "../../tools/registry";
+import { getProductionReadyTool, getToolPath } from "../../tools/registry";
 import type { ToolDefinition } from "../../tools/types";
 import type { ContextualToolLink } from "../../content/internal-links";
 
@@ -11,7 +11,7 @@ interface Props {
 
 const { links, kicker, title } = Astro.props;
 const resolvedLinks = links
-  .map((link) => ({ link, tool: getTool(link.slug) }))
+  .map((link) => ({ link, tool: getProductionReadyTool(link.slug) }))
   .filter((entry): entry is { link: ContextualToolLink; tool: ToolDefinition } => Boolean(entry.tool));
 ---
 

@@ -1,12 +1,12 @@
 ---
 import SiteLayout from "../../layouts/SiteLayout.astro";
 import ToolPage from "../../components/tools/ToolPage.astro";
-import { getToolsByCategory } from "../../tools/registry";
+import { getProductionReadyToolsByCategory } from "../../tools/registry";
 import { getToolContent } from "../../content/tool-content";
 import { getToolStructuredData } from "../../lib/seo";
 
 export function getStaticPaths() {
-  return getToolsByCategory("audio").map((tool) => ({ params: { slug: tool.slug }, props: { tool } }));
+  return getProductionReadyToolsByCategory("audio").map((tool) => ({ params: { slug: tool.slug }, props: { tool } }));
 }
 
 const { tool } = Astro.props;

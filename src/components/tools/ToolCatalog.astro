@@ -3,7 +3,7 @@ import SearchBox from "../ui/SearchBox.astro";
 import ToolCard from "../ui/ToolCard.astro";
 import Breadcrumbs from "./Breadcrumbs.astro";
 import ContextualToolLinks from "./ContextualToolLinks.astro";
-import { categoryMeta, getTool, tools } from "../../tools/registry";
+import { categoryMeta, getProductionReadyTool, getProductionReadyTools } from "../../tools/registry";
 import { getCategoryCrossLinks } from "../../content/internal-links";
 import type { ToolCategory } from "../../tools/types";
 
@@ -14,7 +14,8 @@ interface Props {
 const { category } = Astro.props;
 const selectedCategory = category ?? "all";
 const selectedMeta = category ? categoryMeta[category] : null;
-const visibleTools = category ? tools.filter((tool) => tool.category === category) : tools;
+const publicTools = getProductionReadyTools();
+const visibleTools = category ? publicTools.filter((tool) => tool.category === category) : publicTools;
 const categories = Object.keys(categoryMeta) as ToolCategory[];
 const catalogGroups = category
   ? [{ category, groups: selectedMeta?.groups ?? [] }]
@@ -24,12 +25,12 @@ const catalogGroups = category
       key: item,
       label: categoryMeta[item].label,
       description: categoryMeta[item].description,
-      toolSlugs: tools.filter((tool) => tool.category === item).map((tool) => tool.slug),
+      toolSlugs: publicTools.filter((tool) => tool.category === item).map((tool) => tool.slug),
     }],
   }));
 const resolveGroupTools = (slugs: string[]) => slugs
-  .map((slug) => getTool(slug))
-  .filter((tool): tool is (typeof tools)[number] => Boolean(tool));
+  .map((slug) => getProductionReadyTool(slug))
+  .filter((tool): tool is (typeof publicTools)[number] => Boolean(tool));
 const categoryCrossKicker = category === "image" ? "Image to PDF" : "Continue the workflow";
 const categoryCrossTitle = category === "image" ? "Turn images into PDF pages" : "Related file workflows";
 ---

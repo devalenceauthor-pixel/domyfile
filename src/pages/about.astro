@@ -9,14 +9,14 @@ const label = "About DoMyFile";
   title="About DoMyFile — browser-first file tools"
   description="Learn what DoMyFile does, which file categories it supports, and how its browser-local and temporary server workflows work."
   label={label}
-  intro="DoMyFile is a browser-first file toolkit for common image, PDF, audio, and video tasks, with a clear select-to-download workflow."
+  intro="DoMyFile is a browser-first file toolkit for common image, PDF, Word/document, audio, and video tasks, with a clear select-to-download workflow."
   structuredData={getTrustPageStructuredData(label, "/about/")}
 >
   <section class="info-section" aria-labelledby="about-product-title">
     <p class="section-kicker">The product</p>
     <h2 id="about-product-title">Simple file tools that just work.</h2>
     <p>
-      DoMyFile helps people fix common file problems without installing dedicated software or creating an account. The current production set covers image editing and conversion, PDF page and document workflows, audio editing and conversion, and focused video workflows.
+      DoMyFile helps people fix common file problems without installing dedicated software or creating an account. The current production set covers image editing and conversion, focused Word/document conversion, PDF page and document workflows, audio editing and conversion, and focused video workflows.
     </p>
     <p>
       The canonical website is <a class="inline-link" href="https://domyfile.web.id">https://domyfile.web.id</a>. The public site and tool pages are statically generated so the task explanation, supported formats, limitations, and privacy behavior are available before the interactive processor loads.
@@ -25,15 +25,19 @@ const label = "About DoMyFile";
 
   <section class="info-section" aria-labelledby="about-categories-title">
     <p class="section-kicker">What it handles</p>
-    <h2 id="about-categories-title">Four focused file categories.</h2>
+    <h2 id="about-categories-title">Five focused file categories.</h2>
     <div class="info-grid">
       <article class="info-card">
         <h3><a class="inline-link" href="/image/">Image</a></h3>
-        <p>Compress, resize, crop, or convert supported JPG, PNG, WebP, and HEIC/HEIF images.</p>
+        <p>Compress, resize, crop, upscale, or convert supported JPG, PNG, WebP, and HEIC/HEIF images.</p>
       </article>
       <article class="info-card">
         <h3><a class="inline-link" href="/pdf/">PDF &amp; Document</a></h3>
         <p>Merge, split, organize, rotate, watermark, compress, and convert supported document workflows.</p>
+      </article>
+      <article class="info-card">
+        <h3><a class="inline-link" href="/word/">Word &amp; Document</a></h3>
+        <p>Extract readable DOCX text, create semantic HTML, or turn plain text into a downloadable DOCX file.</p>
       </article>
       <article class="info-card">
         <h3><a class="inline-link" href="/audio/">Audio</a></h3>

@@ -1,16 +1,17 @@
 # DoMyFile
 
-DoMyFile is a browser-first file utility site for common image, PDF, audio,
-and video workflows.
+DoMyFile is a browser-first file utility site for common image, PDF,
+Word/document, audio, and video workflows.
 
 Production site: <https://domyfile.web.id>
 
 ## What is included
 
-The current production-ready catalog contains 29 tools:
+The current production-ready catalog contains 52 focused tools:
 
-- **Image** — compress, resize, crop, convert JPG/PNG/WebP, and convert HEIC to JPG.
-- **PDF** — compress, merge, split, organize, rotate, watermark, convert PDF to JPG, and create PDFs from JPG/PNG/WebP.
+- **Image** — compress, resize, crop, run model-backed 3× super-resolution, and convert supported JPG/PNG/WebP/HEIC files.
+- **PDF** — compress, merge, split, organize, rotate, watermark, crop, number, extract, clean, flatten, render PDF pages to JPG/PNG/WebP, extract text/HTML/images/metadata, and create PDFs from JPG/PNG/WebP/TXT.
+- **Word & Document** — convert DOCX/PDF with the temporary native document path, convert TXT/HTML/DOCX locally, merge documents, extract images, compress supported media, and clean supported metadata.
 - **Audio** — trim, convert, merge, and compress supported audio formats.
 - **Video** — compress, trim, extract MP3, and convert supported MP4/MOV containers.
 
@@ -22,9 +23,10 @@ The complete route and engine inventory is maintained in
 DoMyFile is local by default. Browser-local tools keep selected files on the
 user's device and produce local downloads.
 
-Compress PDF and Compress Video use an explicitly disclosed temporary server
-workflow. Uploaded input and generated output are short-lived and cleaned up
-through the application lifecycle and storage backstop. See the public
+Compress PDF, Compress Video, DOCX to PDF, and PDF to DOCX use an explicitly
+disclosed temporary server workflow. Uploaded input and generated output are
+short-lived and cleaned up through the application lifecycle and storage
+backstop. Remove Background remains held and does not accept uploads. See the public
 [Privacy page](https://domyfile.web.id/privacy/) for the current distinction.
 
 DoMyFile does not require an account, provide file history, or use uploaded
@@ -46,6 +48,7 @@ pnpm check
 pnpm lint
 pnpm build
 pnpm verify:seo
+pnpm verify:new
 pnpm verify:phase2a
 pnpm verify:phase2b
 pnpm verify:phase3
@@ -69,8 +72,10 @@ wrangler pages deploy dist --project-name domyfile
 
 The optional server fallback plane is maintained separately under
 [`server/fallback-worker/`](server/fallback-worker/). It is reserved for
-Compress PDF and Compress Video and requires the credentials, storage, queue,
-license, and compliance gates documented in its README before production use.
+Compress PDF, Compress Video, DOCX to PDF, and PDF to DOCX. The held
+Remove Background implementation remains in source but must not receive
+public traffic until the container, lifecycle, performance, security, and
+license gates documented in its release report are complete.
 
 ## Repository structure
 

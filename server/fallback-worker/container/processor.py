@@ -5,6 +5,7 @@ import json
 import math
 import os
 import signal
+import shutil
 import subprocess
 import tempfile
 import threading
@@ -12,18 +13,24 @@ import time
 import urllib.error
 import urllib.parse
 import urllib.request
+import zipfile
 from contextlib import contextmanager
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from pathlib import Path
 from typing import Any
 
 import pikepdf
+import numpy as np
+import onnxruntime as ort
+from PIL import Image, ImageOps
 from pypdf import PdfReader
 
 
 FFMPEG = os.environ.get("FFMPEG_BIN", "/opt/ffmpeg/bin/ffmpeg")
 FFPROBE = os.environ.get("FFPROBE_BIN", "/opt/ffmpeg/bin/ffprobe")
+SOFFICE = os.environ.get("SOFFICE_BIN", "/usr/bin/soffice")
 PORT = int(os.environ.get("PORT", "8080"))
+BACKGROUND_MODEL = os.environ.get("BACKGROUND_MODEL_PATH", "/opt/models/birefnet-lite.onnx")
 
 PDF_LIMITS = {
     "max_upload_bytes": 50 * 1024 * 1024,
@@ -49,6 +56,31 @@ VIDEO_LIMITS = {
     "minimum_savings_percent": 5,
 }
 
+DOC_LIMITS = {
+    "max_upload_bytes": 50 * 1024 * 1024,
+    "max_output_bytes": 100 * 1024 * 1024,
+    "max_pages": 200,
+    "max_memory_bytes": 2 * 1024 * 1024 * 1024,
+    "max_cpu_seconds": 120,
+    "max_wall_seconds": 180,
+}
+
+BACKGROUND_LIMITS = {
+    "max_upload_bytes": 40 * 1024 * 1024,
+    "max_output_bytes": 80 * 1024 * 1024,
+    "max_decoded_pixels": 50_000_000,
+    "max_width": 6000,
+    "max_height": 6000,
+    "max_memory_bytes": 7 * 1024 * 1024 * 1024,
+    # ONNX Runtime reserves large virtual mappings during attention kernels.
+    # The container cgroup remains the hard 8 GiB memory boundary.
+    "max_address_space_bytes": 10 * 1024 * 1024 * 1024,
+    "max_cpu_seconds": 180,
+    "max_wall_seconds": 240,
+}
+
+_background_session: ort.InferenceSession | None = None
+
 PDF_PRESETS = {"quality": 85, "balanced": 75, "smaller": 60}
 VIDEO_PRESETS = {
     "quality": {"crf": 32, "audio_bitrate": "96k"},
@@ -61,6 +93,23 @@ class JobFailure(Exception):
     def __init__(self, code: str):
         super().__init__(code)
         self.code = code
+
+
+def background_session() -> ort.InferenceSession:
+    global _background_session
+    if _background_session is None:
+        session_options = ort.SessionOptions()
+        # The deployment instance has two vCPUs. Four ORT workers increase
+        # contention without reducing peak memory; two is the measured sweet
+        # spot for this checkpoint in the native container.
+        session_options.intra_op_num_threads = max(1, min(2, os.cpu_count() or 1))
+        session_options.inter_op_num_threads = 1
+        session_options.log_severity_level = 3
+        try:
+            _background_session = ort.InferenceSession(BACKGROUND_MODEL, sess_options=session_options, providers=["CPUExecutionProvider"])
+        except (OSError, RuntimeError, ValueError):
+            raise JobFailure("PROCESSING_FAILED") from None
+    return _background_session
 
 
 def json_response(handler: BaseHTTPRequestHandler, value: dict[str, Any], status: int = 200) -> None:
@@ -155,8 +204,9 @@ def process_budget(limits: dict[str, Any]):
             import resource
 
             resource_module = resource
+            address_space_limit = int(limits.get("max_address_space_bytes", limits["max_memory_bytes"]))
             for kind, requested in (
-                (resource.RLIMIT_AS, int(limits["max_memory_bytes"])),
+                (resource.RLIMIT_AS, address_space_limit),
                 (resource.RLIMIT_FSIZE, int(limits["max_output_bytes"]) + 1),
             ):
                 soft, hard = resource.getrlimit(kind)
@@ -240,7 +290,7 @@ def delete_output(url: str, token: str) -> None:
         pass
 
 
-def run_command(command: list[str], timeout_seconds: int, max_output_bytes: int, max_memory_bytes: int, cpu_seconds: int, progress_callback: Any = None, duration_seconds: float | None = None) -> None:
+def run_command(command: list[str], timeout_seconds: int, max_output_bytes: int, max_memory_bytes: int, cpu_seconds: int, progress_callback: Any = None, duration_seconds: float | None = None, watched_paths: list[Path] | None = None) -> None:
     def set_resource_limits() -> None:
         try:
             import resource
@@ -279,13 +329,14 @@ def run_command(command: list[str], timeout_seconds: int, max_output_bytes: int,
     reader = threading.Thread(target=read_progress, daemon=True)
     reader.start()
     deadline = time.monotonic() + timeout_seconds
+    watch_paths = watched_paths or []
     try:
         while process.poll() is None:
             if time.monotonic() > deadline:
                 raise JobFailure("RESOURCE_LIMIT")
-            output_path = Path(command[-1])
-            if output_path.exists() and output_path.stat().st_size > max_output_bytes:
-                raise JobFailure("RESOURCE_LIMIT")
+            for output_path in watch_paths:
+                if output_path.exists() and output_path.stat().st_size > max_output_bytes:
+                    raise JobFailure("RESOURCE_LIMIT")
             time.sleep(0.25)
         reader.join(timeout=2)
     except JobFailure:
@@ -422,6 +473,70 @@ def optimize_pdf(input_path: Path, output_path: Path, preset: str, limits: dict[
     }
 
 
+def background_input(path: Path, limits: dict[str, Any]) -> Image.Image:
+    try:
+        with Image.open(path) as source:
+            if source.format not in {"JPEG", "PNG", "WEBP"}:
+                raise JobFailure("UNSUPPORTED_FORMAT")
+            image = ImageOps.exif_transpose(source).convert("RGBA")
+            image.load()
+            width, height = image.size
+            if width <= 0 or height <= 0 or width > limits["max_width"] or height > limits["max_height"] or width * height > limits["max_decoded_pixels"]:
+                raise JobFailure("RESOURCE_LIMIT")
+            return image
+    except JobFailure:
+        raise
+    except (OSError, ValueError, SyntaxError):
+        raise JobFailure("CORRUPT_FILE") from None
+
+
+def remove_background(input_path: Path, output_path: Path, limits: dict[str, Any], progress: Any) -> dict[str, Any]:
+    image = background_input(input_path, limits)
+    progress(0.12)
+    session = background_session()
+    rgb_image = image.convert("RGB")
+    model_image = rgb_image.resize((1024, 1024), Image.Resampling.BILINEAR)
+    pixels = np.asarray(model_image, dtype=np.float32) / 255.0
+    pixels = (pixels - np.asarray([0.485, 0.456, 0.406], dtype=np.float32)) / np.asarray([0.229, 0.224, 0.225], dtype=np.float32)
+    input_tensor = np.transpose(pixels, (2, 0, 1))[None, ...]
+    progress(0.2)
+    try:
+        output = session.run(None, {session.get_inputs()[0].name: input_tensor})[0]
+    except (RuntimeError, ValueError, OSError):
+        raise JobFailure("PROCESSING_FAILED") from None
+    progress(0.78)
+    logits = np.asarray(output[0, 0], dtype=np.float32)
+    mask = 1.0 / (1.0 + np.exp(-np.clip(logits, -40, 40)))
+    alpha = Image.fromarray(np.clip(mask * 255.0, 0, 255).astype(np.uint8), mode="L").resize(image.size, Image.Resampling.BICUBIC)
+    alpha_array = np.asarray(alpha, dtype=np.uint8).copy()
+    source_alpha = np.asarray(image.getchannel("A"), dtype=np.uint16)
+    if np.any(source_alpha < 255):
+        alpha_array = ((alpha_array.astype(np.uint16) * source_alpha) // 255).astype(np.uint8)
+    # Only discard numerically invisible values. The continuous model alpha is
+    # deliberately retained for hair, fur, shadows, and translucent edges.
+    alpha_array[alpha_array < 2] = 0
+    result = image.copy()
+    result.putalpha(Image.fromarray(alpha_array, mode="L"))
+    try:
+        result.save(output_path, format="PNG", optimize=True)
+    except (OSError, ValueError):
+        raise JobFailure("PROCESSING_FAILED") from None
+    progress(0.9)
+    output_bytes = output_path.stat().st_size
+    if output_bytes <= 0 or output_bytes > limits["max_output_bytes"]:
+        raise JobFailure("OUTPUT_INVALID")
+    input_bytes = input_path.stat().st_size
+    return {
+        "inputBytes": input_bytes,
+        "outputBytes": output_bytes,
+        "savingsPercent": (1 - output_bytes / input_bytes) * 100,
+        "outputMime": "image/png",
+        "outputFormat": "PNG",
+        "width": result.width,
+        "height": result.height,
+    }
+
+
 def pdf_structure(path: Path) -> tuple[int, int, int, int]:
     with pikepdf.Pdf.open(path) as pdf:
         content_pages = 0
@@ -474,6 +589,137 @@ def count_preserved_text_pages(input_path: Path, output_path: Path) -> int:
     return sum(1 for before, after in zip(source, output) if before and after)
 
 
+def validate_docx_archive(path: Path, output: bool = False) -> None:
+    try:
+        with zipfile.ZipFile(path) as archive:
+            names = set(archive.namelist())
+            if "[Content_Types].xml" not in names or "word/document.xml" not in names:
+                raise JobFailure("OUTPUT_INVALID" if output else "CORRUPT_FILE")
+            if archive.getinfo("word/document.xml").file_size <= 0:
+                raise JobFailure("OUTPUT_INVALID" if output else "CORRUPT_FILE")
+    except JobFailure:
+        raise
+    except (OSError, zipfile.BadZipFile, KeyError):
+        raise JobFailure("OUTPUT_INVALID" if output else "CORRUPT_FILE") from None
+
+
+def pdf_input_details(path: Path, limits: dict[str, Any]) -> tuple[int, int]:
+    try:
+        reader = PdfReader(str(path), strict=False)
+        if reader.is_encrypted:
+            raise JobFailure("ENCRYPTED_PDF_UNSUPPORTED")
+        page_count = len(reader.pages)
+        if page_count <= 0 or page_count > limits["max_pages"]:
+            raise JobFailure("RESOURCE_LIMIT")
+        text_pages = sum(1 for page in reader.pages if normalize_text(page.extract_text()))
+        return page_count, text_pages
+    except JobFailure:
+        raise
+    except Exception:
+        raise JobFailure("CORRUPT_FILE") from None
+
+
+def validate_converted_pdf(path: Path, limits: dict[str, Any]) -> int:
+    try:
+        with path.open("rb") as output_file:
+            if output_file.read(5) != b"%PDF-":
+                raise JobFailure("OUTPUT_INVALID")
+        reader = PdfReader(str(path), strict=False)
+        if reader.is_encrypted:
+            raise JobFailure("OUTPUT_INVALID")
+        page_count = len(reader.pages)
+        if page_count <= 0 or page_count > limits["max_pages"]:
+            raise JobFailure("OUTPUT_INVALID")
+        for page in reader.pages:
+            page.extract_text()
+        return page_count
+    except JobFailure:
+        raise
+    except Exception:
+        raise JobFailure("OUTPUT_INVALID") from None
+
+
+def convert_document(input_path: Path, output_path: Path, tool_id: str, limits: dict[str, Any], progress: Any) -> dict[str, Any]:
+    if tool_id == "DOC-04":
+        validate_docx_archive(input_path)
+        source_extension = ".docx"
+        output_extension = ".pdf"
+        conversion_filter = "pdf:writer_pdf_Export"
+        output_mime = "application/pdf"
+        output_format = "PDF"
+    elif tool_id == "DOC-05":
+        page_count, text_pages = pdf_input_details(input_path, limits)
+        if text_pages <= 0:
+            raise JobFailure("UNSUPPORTED_FORMAT")
+        source_extension = ".pdf"
+        output_extension = ".docx"
+        conversion_filter = "docx:Office Open XML Text"
+        output_mime = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+        output_format = "DOCX"
+    else:
+        raise JobFailure("INVALID_INPUT")
+
+    progress(0.15)
+    with tempfile.TemporaryDirectory(prefix="domyfile-libreoffice-") as conversion_directory:
+        directory = Path(conversion_directory)
+        profile = directory / "profile"
+        output_directory = directory / "output"
+        profile.mkdir()
+        output_directory.mkdir()
+        named_input = directory / f"source{source_extension}"
+        expected_output = output_directory / f"source{output_extension}"
+        shutil.copyfile(input_path, named_input)
+        command = [
+            SOFFICE,
+            "--headless",
+            "--invisible",
+            "--nodefault",
+            "--nologo",
+            "--nolockcheck",
+            "--norestore",
+            f"-env:UserInstallation={profile.as_uri()}",
+        ]
+        if tool_id == "DOC-05":
+            command.extend(["--infilter=writer_pdf_import"])
+        command.extend([
+            "--convert-to",
+            conversion_filter,
+            "--outdir",
+            str(output_directory),
+            str(named_input),
+        ])
+        run_command(
+            command,
+            limits["max_wall_seconds"],
+            limits["max_output_bytes"],
+            limits["max_memory_bytes"],
+            limits["max_cpu_seconds"],
+            watched_paths=[expected_output],
+        )
+        if not expected_output.exists() or expected_output.stat().st_size <= 0:
+            raise JobFailure("PROCESSING_FAILED")
+        shutil.copyfile(expected_output, output_path)
+
+    progress(0.82)
+    if tool_id == "DOC-04":
+        output_page_count = validate_converted_pdf(output_path, limits)
+        result: dict[str, Any] = {"pageCount": output_page_count}
+    else:
+        validate_docx_archive(output_path, output=True)
+        result = {"pageCount": page_count, "textPagesPreserved": text_pages}
+    progress(0.9)
+    input_bytes = input_path.stat().st_size
+    output_bytes = output_path.stat().st_size
+    return {
+        "inputBytes": input_bytes,
+        "outputBytes": output_bytes,
+        "savingsPercent": (1 - output_bytes / input_bytes) * 100,
+        "outputMime": output_mime,
+        "outputFormat": output_format,
+        **result,
+    }
+
+
 def compress_video(input_path: Path, output_path: Path, preset: str, limits: dict[str, Any], progress: Any) -> dict[str, Any]:
     source = video_input_probe(input_path, limits)
     progress(0.15)
@@ -501,7 +747,7 @@ def compress_video(input_path: Path, output_path: Path, preset: str, limits: dic
         "-nostats",
         str(output_path),
     ]
-    run_command(command, limits["max_wall_seconds"], limits["max_output_bytes"], limits["max_memory_bytes"], limits["max_cpu_seconds"], progress, source["duration"])
+    run_command(command, limits["max_wall_seconds"], limits["max_output_bytes"], limits["max_memory_bytes"], limits["max_cpu_seconds"], progress, source["duration"], [output_path])
     progress(0.9)
     output = video_output_probe(output_path, source)
     output_bytes = output_path.stat().st_size
@@ -529,7 +775,7 @@ def compress_video(input_path: Path, output_path: Path, preset: str, limits: dic
 def process_job(value: dict[str, Any]) -> dict[str, Any]:
     tool_id = value.get("toolId")
     preset = value.get("preset")
-    if tool_id not in {"PDF-01", "VID-01"} or preset not in {"quality", "balanced", "smaller"}:
+    if tool_id not in {"PDF-01", "VID-01", "DOC-04", "DOC-05", "IMG-12"} or preset not in {"quality", "balanced", "smaller"}:
         raise JobFailure("INVALID_INPUT")
     input_url = allowed_callback_url(value.get("inputUrl"))
     output_url = allowed_callback_url(value.get("outputUrl"))
@@ -541,24 +787,28 @@ def process_job(value: dict[str, Any]) -> dict[str, Any]:
     if not all(isinstance(token, str) and token for token in (input_token, output_token, progress_token)):
         raise JobFailure("INVALID_INPUT")
     expected_bytes = int(value.get("inputBytes") or 0)
-    limits = PDF_LIMITS if tool_id == "PDF-01" else VIDEO_LIMITS
+    limits = PDF_LIMITS if tool_id == "PDF-01" else VIDEO_LIMITS if tool_id == "VID-01" else BACKGROUND_LIMITS if tool_id == "IMG-12" else DOC_LIMITS
     if expected_bytes <= 0 or expected_bytes > limits["max_upload_bytes"]:
         raise JobFailure("RESOURCE_LIMIT")
-    mime = "application/pdf" if tool_id == "PDF-01" else str(value.get("inputMime") or "")
-    allowed_mimes = {"application/pdf"} if tool_id == "PDF-01" else {"video/mp4", "video/quicktime"}
+    mime = "application/pdf" if tool_id in {"PDF-01", "DOC-05"} else "application/vnd.openxmlformats-officedocument.wordprocessingml.document" if tool_id == "DOC-04" else str(value.get("inputMime") or "")
+    allowed_mimes = {"application/pdf"} if tool_id in {"PDF-01", "DOC-05"} else {"application/vnd.openxmlformats-officedocument.wordprocessingml.document"} if tool_id == "DOC-04" else {"video/mp4", "video/quicktime"} if tool_id == "VID-01" else {"image/jpeg", "image/png", "image/webp"}
     if mime not in allowed_mimes:
         raise JobFailure("UNSUPPORTED_FORMAT")
     with tempfile.TemporaryDirectory(prefix="domyfile-job-") as temporary_directory:
         directory = Path(temporary_directory)
         input_path = directory / "input.bin"
-        output_path = directory / ("output.pdf" if tool_id == "PDF-01" else "output.webm")
+        output_path = directory / ("output.pdf" if tool_id in {"PDF-01", "DOC-04"} else "output.docx" if tool_id == "DOC-05" else "output.png" if tool_id == "IMG-12" else "output.webm")
         download_input(urllib.parse.urlunparse(input_url), input_token, input_path, expected_bytes, mime)
         post_progress(urllib.parse.urlunparse(progress_url), progress_token, "validating", 0.05)
         with process_budget(limits):
             if tool_id == "PDF-01":
                 result = optimize_pdf(input_path, output_path, preset, limits, lambda value: post_progress(urllib.parse.urlunparse(progress_url), progress_token, "processing", value))
-            else:
+            elif tool_id == "IMG-12":
+                result = remove_background(input_path, output_path, limits, lambda value: post_progress(urllib.parse.urlunparse(progress_url), progress_token, "processing", value))
+            elif tool_id == "VID-01":
                 result = compress_video(input_path, output_path, preset, limits, lambda value: post_progress(urllib.parse.urlunparse(progress_url), progress_token, "processing", value))
+            else:
+                result = convert_document(input_path, output_path, tool_id, limits, lambda value: post_progress(urllib.parse.urlunparse(progress_url), progress_token, "processing", value))
         post_progress(urllib.parse.urlunparse(progress_url), progress_token, "verifying", 0.9)
         upload_output(urllib.parse.urlunparse(output_url), output_token, output_path, result["outputMime"], limits["max_output_bytes"])
         return result

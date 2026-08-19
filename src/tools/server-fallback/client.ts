@@ -22,6 +22,13 @@ export type ServerClientResult = ServerJobResult & {
 };
 
 const terminalStatuses = new Set<ServerJobStatus>(["ready", "error", "cancelled", "expired"]);
+const disabledServerToolIds = new Set<ServerToolId>(["IMG-12"]);
+
+const assertServerToolAvailable = (toolId: ServerToolId) => {
+  if (disabledServerToolIds.has(toolId)) {
+    throw new ServerFallbackError("INVALID_INPUT", "This temporary processing route is currently unavailable.");
+  }
+};
 
 const asJson = async <T>(response: Response) => {
   try {
@@ -40,7 +47,7 @@ export class ServerFallbackClient {
 
   constructor(baseUrl: string, options: { fetchImpl?: FetchLike; pollDelayMs?: number } = {}) {
     this.baseUrl = baseUrl || "/__server-fallback";
-    this.fetchImpl = options.fetchImpl ?? fetch;
+    this.fetchImpl = options.fetchImpl ?? globalThis.fetch.bind(globalThis);
     this.pollDelayMs = options.pollDelayMs ?? 750;
   }
 
@@ -49,6 +56,7 @@ export class ServerFallbackClient {
   }
 
   async create(toolId: ServerToolId, inputBytes: number, inputMime: string, options: ServerJobOptions, signal?: AbortSignal): Promise<CreatedJob> {
+    assertServerToolAvailable(toolId);
     const response = await this.fetchImpl(joinUrl(this.baseUrl, "/v1/jobs"), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -139,6 +147,7 @@ export class ServerFallbackClient {
     signal?: AbortSignal;
     onStatus?: (status: ServerJobStatusResponse) => void;
   }): Promise<ServerClientResult> {
+    assertServerToolAvailable(params.toolId);
     let job: CreatedJob | undefined;
     const cancelOnAbort = () => {
       if (job) void this.cancel(job);

@@ -7,15 +7,15 @@ const label = "Privacy";
 
 <TrustPage
   title="Privacy — DoMyFile"
-  description="Understand which DoMyFile tools process files in your browser, which compression tools use temporary server processing, and how temporary data is deleted."
+  description="Understand which DoMyFile tools process files in your browser, which quality-focused tools use temporary server processing, and how temporary data is deleted."
   label={label}
-  intro="DoMyFile is local by default. Two compression tools use a temporary server workflow, and that difference is disclosed before upload."
+  intro="DoMyFile is local by default. A small set of quality-focused tools use a temporary server workflow, and that difference is disclosed before upload."
   structuredData={getTrustPageStructuredData(label, "/privacy/")}
 >
   <section class="info-section" aria-labelledby="privacy-summary-title">
     <p class="section-kicker">The short version</p>
     <h2 id="privacy-summary-title">The selected tool determines the data path.</h2>
-    <p>DoMyFile does not require an account, does not provide file history, and does not permanently store user files. Browser-local tools keep selected files on the device. Compress PDF and Compress Video temporarily upload a file only for their requested compression job.</p>
+    <p>DoMyFile does not require an account, does not provide file history, and does not permanently store user files. Browser-local tools keep selected files on the device. Compress PDF, Compress Video, DOCX to PDF, and PDF to DOCX temporarily upload a file only for the requested job. Remove Background is currently disabled and does not accept uploads.</p>
   </section>
 
   <section class="info-section" aria-labelledby="privacy-local-title">
@@ -23,7 +23,7 @@ const label = "Privacy";
     <h2 id="privacy-local-title">Files stay on your device.</h2>
     <div class="info-card">
       <ul class="info-list">
-        <li>Image, PDF, audio, HEIC, and released browser-side video workflows process selected file bytes in the browser.</li>
+        <li>Image, PDF, Word/document, audio, HEIC, and released browser-side video workflows process selected file bytes in the browser.</li>
         <li>Those tools do not upload the selected file to a DoMyFile processing service or store it as a user file.</li>
         <li>Generated results are held in browser memory and offered as local downloads; temporary browser object URLs are released by the workspace.</li>
         <li>Browser limits, unsupported formats, corrupt files, and compatibility restrictions can prevent a result.</li>
@@ -33,14 +33,14 @@ const label = "Privacy";
 
   <section class="info-section" aria-labelledby="privacy-server-title">
     <p class="section-kicker">Temporary server processing</p>
-    <h2 id="privacy-server-title">Compress PDF and Compress Video use a short-lived job.</h2>
+    <h2 id="privacy-server-title">Selected quality-focused tools use a short-lived job.</h2>
     <div class="info-card">
       <ul class="info-list">
-        <li>The file is uploaded only to create the requested compressed result. The upload disclosure appears before the upload/process action.</li>
+        <li>The file is uploaded only to create the requested result. The upload disclosure appears before the upload/process action.</li>
         <li>Temporary input and output objects use a private job workspace. The application targets a short job window, currently 15 minutes.</li>
         <li>Input and output objects are deleted after successful processing/download and cleanup also runs for failure, cancellation, and expiry. A storage lifecycle rule is a backstop for delayed cleanup and is configured for no more than one day.</li>
         <li>Temporary processing is not a file-storage, history, or account feature. The original file remains untouched on the user's device.</li>
-        <li>Unsupported, corrupt, encrypted, oversized, or resource-intensive inputs can be rejected without a result.</li>
+        <li>Unsupported, corrupt, encrypted, oversized, or resource-intensive inputs can be rejected without a result. Disabled routes do not create temporary jobs.</li>
       </ul>
     </div>
   </section>

@@ -2,7 +2,7 @@
 import ToolCard from "../ui/ToolCard.astro";
 import ToolWorkspace from "./ToolWorkspace.astro";
 import ContextualToolLinks from "./ContextualToolLinks.astro";
-import { categoryMeta, getTool, getToolAvailability } from "../../tools/registry";
+import { categoryMeta, getProductionReadyTool, getToolAvailability } from "../../tools/registry";
 import { getToolContent } from "../../content/tool-content";
 import { getToolCrossLinks } from "../../content/internal-links";
 import type { ToolDefinition } from "../../tools/types";
@@ -14,7 +14,7 @@ interface Props {
 const { tool } = Astro.props;
 const content = getToolContent(tool);
 const relatedTools = content.relatedTools
-  .map((slug) => getTool(slug))
+  .map((slug) => getProductionReadyTool(slug))
   .filter((candidate): candidate is ToolDefinition => Boolean(candidate && candidate.slug !== tool.slug));
 const categoryLabel = categoryMeta[tool.category].label;
 const availability = getToolAvailability(tool);
@@ -80,7 +80,7 @@ const batchLabel = content.batchBehavior.supported
       </div>
       <div class="tool-info-card">
         <p class="section-kicker">Result and privacy</p>
-        <h2>{content.processingMode === "temporary-server" ? "Temporary result flow" : "Local result flow"}</h2>
+        <h2>{content.processingMode === "browser-local" ? "Local result flow" : "Temporary result flow"}</h2>
         <p>{content.resultDownload}</p>
         <p>{content.page.privacy}</p>
       </div>

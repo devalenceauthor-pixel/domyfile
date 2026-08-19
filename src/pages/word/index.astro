@@ -1,0 +1,17 @@
+---
+import SiteLayout from "../../layouts/SiteLayout.astro";
+import ToolCatalog from "../../components/tools/ToolCatalog.astro";
+import RelatedCategories from "../../components/tools/RelatedCategories.astro";
+import { getCategoryStructuredData } from "../../lib/seo";
+---
+
+<SiteLayout
+  title="Word & Document tools — DoMyFile"
+  description="Convert, merge, inspect, compress, and clean Word documents, with native temporary DOCX/PDF conversion when layout or structure fidelity matters."
+  structuredData={getCategoryStructuredData("word")}
+>
+  <main id="main-content">
+    <ToolCatalog category="word" />
+    <div class="container category-related-wrap"><RelatedCategories current="word" /></div>
+  </main>
+</SiteLayout>

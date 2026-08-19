@@ -370,6 +370,450 @@
     ]
   },
   {
+    "slug": "upscale-image",
+    "title": "Image Upscaler",
+    "category": "image",
+    "primarySearchIntent": "Enhance one JPG, PNG, or WebP image with a 3× super-resolution model.",
+    "acceptedInput": { "formats": ["JPG", "PNG", "WebP"], "extensions": ["jpg", "jpeg", "png", "webp"] },
+    "output": { "formats": ["PNG"], "behavior": "Produces a fixed 3× PNG result using a local ONNX super-resolution model." },
+    "processingMode": "browser-local",
+    "keyControls": ["One image per job", "Fixed 3× model output", "Model loads only when processing starts"],
+    "batchBehavior": { "supported": false, "description": "Process one raster image per super-resolution job so memory use and the result remain reviewable." },
+    "importantLimitations": ["The selected model requires a 224×224 tile and produces a fixed 3× result; tile stitching is used for larger images.", "Images around 2 megapixels or smaller are the tested browser limit.", "Model-based enhancement estimates detail and cannot guarantee recovery of information missing from the source; fine texture may look over-sharpened."],
+    "qualityCompatibility": ["The ONNX model enhances the luminance channel rather than using Canvas interpolation alone.", "WebAssembly is the compatibility fallback; WebGPU may be selected where the browser exposes it and the model is supported.", "The result is always a PNG so the enhanced RGB output and alpha channel can be validated consistently."],
+    "resultDownload": "One validated PNG is offered as <original-name>-upscaled-3x.png.",
+    "faqTopics": ["Can I upscale a JPG, PNG, or WebP?", "Why is the result fixed at 3×?", "Does the model restore missing detail?", "Is the image uploaded?"],
+    "relatedTools": ["resize-image", "compress-image"],
+    "primaryLongTailOpportunity": "enhance image with a 3x super resolution model locally",
+    "canonicalDecision": "Keep Image Upscaler separate from Resize Image because it runs a learned super-resolution model and has a different quality and processing expectation.",
+    "page": {
+      "title": "Image Upscaler with 3× Super-Resolution | DoMyFile",
+      "metaDescription": "Enhance a JPG, PNG, or WebP image with a local 3× super-resolution model and download a PNG result. No image API is used.",
+      "h1": "Enhance an image with 3× super-resolution",
+      "intro": "Run one JPG, PNG, or WebP image through a lazy-loaded local super-resolution model and download a fixed 3× PNG.",
+      "summary": "Image Upscaler is a model-backed enhancement route, not a Canvas-only resize. It processes the luminance channel with a small ONNX super-resolution model, uses safe color/alpha reconstruction, and limits source size to keep browser memory predictable.",
+      "steps": [
+        { "title": "Choose one image", "body": "Select a readable JPG, PNG, or WebP and review the local source preview." },
+        { "title": "Load the enhancement model", "body": "Start processing to load the ONNX runtime and 3× model only for this route; the selected image stays in the browser." },
+        { "title": "Download the PNG", "body": "Review the enhanced dimensions and download the validated -upscaled-3x.png result." }
+      ],
+      "privacy": "The selected image is decoded and enhanced locally in the browser. The model/runtime asset may be fetched on first use, but the image bytes are not uploaded or stored by DoMyFile."
+    },
+    "faqContent": [
+      { "question": "Can I upscale a JPG, PNG, or WebP?", "answer": "Yes. The route accepts one JPG, JPEG, PNG, or WebP file with a readable image signature." },
+      { "question": "Why is the result fixed at 3×?", "answer": "The selected Apache-2.0 model is trained for a fixed 3× output, so the route exposes that scale instead of pretending to offer unrelated model scales." },
+      { "question": "Does the model restore missing detail?", "answer": "It estimates plausible higher-resolution luminance detail; it cannot guarantee recovery of texture or information absent from the source." },
+      { "question": "Is the image uploaded?", "answer": "No. Inference runs in the browser. The model asset may be downloaded when the tool starts, but the selected image is not sent to a processing API." }
+    ]
+  },
+  {
+    "slug": "remove-background",
+    "title": "Remove Background",
+    "category": "image",
+    "primarySearchIntent": "Create a transparent PNG cutout from one supported JPG, PNG, or WebP image.",
+    "acceptedInput": { "formats": ["JPG", "PNG", "WebP"], "extensions": ["jpg", "jpeg", "png", "webp"] },
+    "output": { "formats": ["Transparent PNG"], "behavior": "Produces one PNG with transparent pixels around the detected foreground." },
+    "processingMode": "temporary-native",
+    "keyControls": ["One image per job", "Pinned BiRefNet-lite model", "Fixed transparent PNG output"],
+    "batchBehavior": { "supported": false, "description": "Process one JPG, PNG, or WebP image per background-removal job." },
+    "importantLimitations": ["Fine hair, fur, translucent objects, shadows, and busy backgrounds can still produce soft or missed edge pixels.", "The model is not a manual brush editor and does not expose a refinement threshold.", "Very large images are bounded by the temporary worker's file, pixel, memory, and wall-time limits."],
+    "qualityCompatibility": ["The original image is shown before processing and the result is a transparent PNG.", "The pinned BiRefNet-lite ONNX checkpoint runs in an isolated native container with CPU ONNX Runtime.", "The output is validated as a non-empty PNG before the short-lived download is offered."],
+    "resultDownload": "One validated PNG is offered as a deterministic <original-name>-no-background.png download.",
+    "faqTopics": ["Which image formats are accepted?", "What does the transparent PNG contain?", "Where does Remove Background run?", "Why can fine hair or busy backgrounds look imperfect?"],
+    "relatedTools": ["crop-image", "png-to-jpg", "jpg-to-png"],
+    "primaryLongTailOpportunity": "remove background from JPG PNG or WebP locally",
+    "canonicalDecision": "Keep this focused background-removal URL separate from format conversion and crop routes because the user intent is to create a transparent foreground PNG.",
+    "page": {
+      "title": "Remove Image Background to Transparent PNG | DoMyFile",
+      "metaDescription": "Remove the background from JPG, PNG, or WebP images with a pinned BiRefNet-lite model and download a transparent PNG through a temporary private job.",
+      "h1": "Remove the background from an image",
+      "intro": "Create a transparent PNG cutout from one JPG, PNG, or WebP image through a temporary private native job.",
+      "summary": "Remove Background uses a pinned BiRefNet-lite segmentation checkpoint to separate a foreground from its background. It is tuned for cleaner product shots, portraits, busy photos, and textured illustrations, but fine hair, fur, translucent edges, shadows, and unusual scenes can still need manual cleanup.",
+      "steps": [
+        { "title": "Choose one image", "body": "Add a readable JPG, PNG, or WebP image and review the original preview before processing." },
+        { "title": "Run the temporary job", "body": "Start processing to send the file to the approved isolated native path. The pinned model runs there only for this job." },
+        { "title": "Review and download", "body": "Compare the original and checkerboard result, then download the validated PNG or process another image." }
+      ],
+      "privacy": "The selected image is temporarily uploaded to private object storage for the isolated native job, then deleted after success, failure, cancellation, or expiry. DoMyFile does not send it to a paid third-party image API or use it for analytics or training."
+    },
+    "faqContent": [
+      { "question": "Which image formats are accepted?", "answer": "The route accepts JPG, JPEG, PNG, and WebP files with readable image signatures." },
+      { "question": "What format will I download?", "answer": "Every successful result is a transparent PNG named with the original base name and a -no-background suffix." },
+      { "question": "Where does Remove Background run?", "answer": "This quality-focused route uses a temporary private native job. The source and output are deleted after success, failure, cancellation, or expiry, and the image is not sent to a paid third-party API." },
+      { "question": "Why can hair or busy backgrounds look imperfect?", "answer": "Segmentation is model-based. Fine hair, fur, translucent objects, shadows, and busy backgrounds can produce soft or missing edge pixels, especially on CPU/mobile devices." }
+    ]
+  },
+  {
+    "slug": "docx-to-txt",
+    "title": "DOCX to TXT",
+    "category": "word",
+    "primarySearchIntent": "Extract readable paragraph text from a DOCX file as a plain TXT download.",
+    "acceptedInput": { "formats": ["DOCX"], "extensions": ["docx"] },
+    "output": { "formats": ["TXT"], "behavior": "Extracts readable document text and writes it to one UTF-8 TXT result." },
+    "processingMode": "browser-local",
+    "keyControls": ["One DOCX file per job", "Formatting-free plain text output", "Modern DOCX input only"],
+    "batchBehavior": { "supported": false, "description": "Process one DOCX file per extraction job so the result stays easy to identify and review." },
+    "importantLimitations": ["Legacy .doc files, password-protected documents, and corrupt DOCX archives are rejected.", "Formatting is intentionally removed; this is not a layout-preserving export.", "Only readable text exposed by the parser is included; unsupported Word features may be omitted."],
+    "qualityCompatibility": ["Paragraph text is extracted in document order with paragraph spacing in the TXT result.", "Headings, list text, and readable table cell text are represented as plain text where the parser exposes them.", "The output is validated as a non-empty UTF-8 TXT file."],
+    "resultDownload": "One validated TXT file is offered as <original-name>-text.txt, and the source DOCX is never modified.",
+    "faqTopics": ["What does DOCX to TXT keep?", "Are headings and lists preserved?", "Does it accept legacy DOC files?", "Where is the document processed?"],
+    "relatedTools": ["docx-to-html", "txt-to-docx"],
+    "primaryLongTailOpportunity": "extract text from DOCX to TXT in browser",
+    "canonicalDecision": "Keep DOCX to TXT as the focused plain-text extraction intent; DOCX to HTML remains a separate semantic-web export.",
+    "page": {
+      "title": "Extract Text from DOCX to TXT | DoMyFile",
+      "metaDescription": "Extract readable text from a DOCX file and download it as TXT. DoMyFile processes the document locally in your browser.",
+      "h1": "Extract text from a DOCX file",
+      "intro": "Turn one modern DOCX document into a formatting-free TXT download with local browser processing.",
+      "summary": "DOCX to TXT is for copying Word content into scripts, notes, search indexes, or plain-text workflows. It intentionally removes Word styling and layout, while preserving readable paragraph text in document order.",
+      "steps": [
+        { "title": "Choose a DOCX file", "body": "Select one modern .docx file; legacy .doc files and corrupt archives are rejected before conversion." },
+        { "title": "Extract readable text", "body": "The DOCX parser loads on demand and reads document text locally without uploading the source." },
+        { "title": "Download TXT", "body": "Review the result summary and download the deterministic -text.txt file." }
+      ],
+      "privacy": "The DOCX is read and converted locally in your browser. The parser loads only when this tool is used, and the source document is not uploaded or stored."
+    },
+    "faqContent": [
+      { "question": "What does DOCX to TXT keep?", "answer": "It keeps readable paragraph text and removes Word formatting. Headings, list text, and readable table cell text are represented as plain text when the parser exposes them." },
+      { "question": "Are headings and lists preserved as formatting?", "answer": "No. Their readable text is extracted, but the TXT output has no heading styles, bullets, fonts, tables, or page layout." },
+      { "question": "Does it accept legacy DOC files?", "answer": "No. This browser route accepts modern DOCX archives only." },
+      { "question": "Where is the document processed?", "answer": "The parser runs in your browser and the selected document is not uploaded or stored." }
+    ]
+  },
+  {
+    "slug": "docx-to-html",
+    "title": "DOCX to HTML",
+    "category": "word",
+    "primarySearchIntent": "Convert a DOCX file into a downloadable semantic HTML document.",
+    "acceptedInput": { "formats": ["DOCX"], "extensions": ["docx"] },
+    "output": { "formats": ["HTML"], "behavior": "Creates a complete HTML document containing the converted DOCX body." },
+    "processingMode": "browser-local",
+    "keyControls": ["One DOCX file per job", "Semantic HTML body output", "External file access disabled"],
+    "batchBehavior": { "supported": false, "description": "Convert one DOCX file per job so the downloaded HTML remains unambiguous." },
+    "importantLimitations": ["Legacy .doc files, password-protected documents, and corrupt DOCX archives are rejected.", "Complex page layout, headers, footers, tracked changes, and some Word styling may not map exactly to HTML.", "The result is a downloadable HTML document, not a pixel-perfect Word renderer."],
+    "qualityCompatibility": ["Readable headings, paragraphs, lists, and supported document structure map to semantic HTML elements.", "External file access is disabled during conversion.", "The output is validated as a complete non-empty HTML document before download."],
+    "resultDownload": "One validated HTML file is offered as <original-name>-html.html for editing or publishing in another workflow.",
+    "faqTopics": ["What does DOCX to HTML output?", "Will the HTML match Word exactly?", "Are external files fetched?", "Can a legacy .doc file be used here?"],
+    "relatedTools": ["docx-to-txt", "txt-to-docx"],
+    "primaryLongTailOpportunity": "convert DOCX to semantic HTML locally",
+    "canonicalDecision": "Keep DOCX to HTML separate from DOCX to TXT because the output is a web document with structural markup rather than formatting-free text.",
+    "page": {
+      "title": "Convert DOCX to HTML Locally | DoMyFile",
+      "metaDescription": "Convert a DOCX file into a downloadable semantic HTML document locally in your browser. Complex Word layout may need manual cleanup.",
+      "h1": "Convert a DOCX file to HTML",
+      "intro": "Create a downloadable semantic HTML document from one modern DOCX file with local browser processing.",
+      "summary": "DOCX to HTML is useful when Word content needs to move into a web editor, static page, or developer workflow. The conversion prioritizes readable semantic structure; it does not promise pixel-identical pagination or complete support for every Word feature.",
+      "steps": [
+        { "title": "Choose a DOCX file", "body": "Select one modern .docx archive containing the Word content you want to reuse on the web." },
+        { "title": "Convert document structure", "body": "The browser parser maps supported Word structure to semantic HTML with external file access disabled." },
+        { "title": "Download HTML", "body": "Download the complete -html.html result and continue editing or publishing it in your own workflow." }
+      ],
+      "privacy": "The DOCX is parsed and converted locally in your browser. The parser loads on demand, external file access is disabled, and the source document is not uploaded or stored."
+    },
+    "faqContent": [
+      { "question": "What does DOCX to HTML output?", "answer": "The result is a complete .html file with a document body and semantic elements for supported headings, paragraphs, lists, and other readable structure." },
+      { "question": "Will the HTML match Word exactly?", "answer": "No. The route prioritizes semantic, readable HTML. Complex layout, pagination, tracked changes, headers, footers, and some styling may need manual cleanup." },
+      { "question": "Are external files fetched during conversion?", "answer": "No. External file access is disabled in the converter configuration." },
+      { "question": "Can a legacy .doc file be used here?", "answer": "No. Only modern DOCX input is supported." }
+    ]
+  },
+  {
+    "slug": "txt-to-docx",
+    "title": "TXT to DOCX",
+    "category": "word",
+    "primarySearchIntent": "Turn a plain TXT file into a simple DOCX document with one paragraph per line.",
+    "acceptedInput": { "formats": ["TXT"], "extensions": ["txt"] },
+    "output": { "formats": ["DOCX"], "behavior": "Creates a standard DOCX file with one plain paragraph for each TXT line." },
+    "processingMode": "browser-local",
+    "keyControls": ["One TXT file per job", "One source line becomes one paragraph", "No guessed formatting"],
+    "batchBehavior": { "supported": false, "description": "Create one DOCX file per plain-text job." },
+    "importantLimitations": ["Empty files, binary-looking text, and non-TXT extensions are rejected.", "The generated document uses simple paragraphs; it does not infer headings, lists, fonts, or page layout.", "Source encoding is interpreted by the browser as text and unusual encodings may need cleanup before conversion."],
+    "qualityCompatibility": ["Each source line is kept as a separate paragraph, including blank lines.", "The result is a standard DOCX archive that can be opened by Word-compatible applications.", "The output is checked for a non-empty DOCX ZIP signature before download."],
+    "resultDownload": "One validated DOCX file is offered with the original base name and a .docx extension.",
+    "faqTopics": ["How are TXT lines represented?", "Does it add headings or lists?", "What input is accepted?", "Can the result be edited in Word?"],
+    "relatedTools": ["docx-to-txt", "docx-to-html"],
+    "primaryLongTailOpportunity": "convert plain TXT file to DOCX locally",
+    "canonicalDecision": "Keep TXT to DOCX as the focused plain-text packaging intent; it does not overlap with layout-preserving HTML or Word parsing routes.",
+    "page": {
+      "title": "Convert TXT to DOCX Locally | DoMyFile",
+      "metaDescription": "Turn a plain TXT file into a simple DOCX document with one paragraph per line. Process the text locally in your browser with DoMyFile.",
+      "h1": "Convert a TXT file to DOCX",
+      "intro": "Package one plain-text file into a simple, editable DOCX document with predictable paragraph structure.",
+      "summary": "TXT to DOCX is a small bridge between plain-text notes and Word-compatible editing. It keeps the source lines predictable instead of guessing at headings, lists, fonts, or page design that are not present in a TXT file.",
+      "steps": [
+        { "title": "Choose a TXT file", "body": "Select a non-empty .txt file with the text you want to place in a Word document." },
+        { "title": "Create simple paragraphs", "body": "The local DOCX writer turns each source line into one paragraph and keeps blank lines as blank paragraphs." },
+        { "title": "Download the DOCX", "body": "The generated archive is checked before the editable .docx download is offered." }
+      ],
+      "privacy": "The TXT is read and packaged into a DOCX locally in your browser. The writer loads only when this tool is used, and the source text is not uploaded or stored."
+    },
+    "faqContent": [
+      { "question": "How are TXT lines represented in the DOCX?", "answer": "Each source line becomes one paragraph. Blank lines remain blank paragraphs." },
+      { "question": "Does TXT to DOCX add headings or lists?", "answer": "No. The route creates plain paragraphs and does not guess formatting from raw text." },
+      { "question": "What input is accepted?", "answer": "The route accepts a non-empty .txt file and rejects binary-looking content or other extensions." },
+      { "question": "Can the result be edited in Word?", "answer": "Yes. The result is a standard DOCX archive designed to open in Word-compatible applications, with simple paragraph content." }
+    ]
+  },
+  {
+    "slug": "docx-to-pdf",
+    "title": "DOCX to PDF",
+    "category": "word",
+    "primarySearchIntent": "Convert a DOCX document to PDF with a native document engine.",
+    "acceptedInput": { "formats": ["DOCX"], "extensions": ["docx"] },
+    "output": { "formats": ["PDF"], "behavior": "Creates a PDF through a temporary isolated LibreOffice Writer conversion." },
+    "processingMode": "temporary-server",
+    "keyControls": ["One DOCX file per job", "Native document pagination and layout conversion", "Temporary upload disclosure"],
+    "batchBehavior": { "supported": false, "description": "Convert one DOCX file per native document job so the source and result remain unambiguous." },
+    "importantLimitations": ["The DOCX is temporarily uploaded and deleted automatically after the short-lived job.", "Exact Microsoft Word rendering is not guaranteed because fonts, fields, and unsupported features can differ in LibreOffice.", "Legacy .doc input is not accepted; oversized, corrupt, or unsupported documents are rejected."],
+    "qualityCompatibility": ["The native Writer path is used instead of a browser HTML snapshot.", "Selectable text, pagination, tables, and supported embedded media are intended to remain useful in the PDF.", "The generated PDF is checked for a valid readable page structure before download."],
+    "resultDownload": "A validated PDF is offered as <original-name>-pdf.pdf.",
+    "faqTopics": ["What does DOCX to PDF preserve?", "Is the result pixel-perfect compared with Word?", "Are legacy DOC files accepted?", "Why does DOCX to PDF use a server job?"],
+    "relatedTools": ["pdf-to-docx", "docx-to-html", "docx-to-txt"],
+    "primaryLongTailOpportunity": "convert DOCX to PDF with document layout preserved",
+    "canonicalDecision": "Keep DOCX to PDF as a native document-export intent separate from DOCX to HTML and DOCX to TXT, which deliberately produce semantic or formatting-free content.",
+    "page": {
+      "title": "Convert DOCX to PDF with Native Layout | DoMyFile",
+      "metaDescription": "Convert a DOCX document to PDF through a temporary native document job that keeps Word pagination, text, tables, and supported media useful.",
+      "h1": "Convert a DOCX document to PDF",
+      "intro": "Use a temporary native document converter for a PDF result with stronger layout fidelity than a browser HTML snapshot.",
+      "summary": "DOCX to PDF sends one modern DOCX through an isolated headless LibreOffice Writer profile. This is the quality path for pagination, selectable text, tables, and supported embedded media; exact application parity still depends on fonts and document features.",
+      "steps": [
+        { "title": "Choose a DOCX file", "body": "Select one modern .docx file and review the temporary-upload and automatic-deletion disclosure." },
+        { "title": "Convert with the native engine", "body": "The isolated document job validates the archive, renders it with Writer, and checks the generated PDF." },
+        { "title": "Download the PDF", "body": "Download the validated -pdf.pdf result after the short-lived job completes." }
+      ],
+      "privacy": "This quality-focused conversion temporarily uploads the selected DOCX to the approved isolated native job. The input and output are deleted automatically after processing, and the file is not retained as user storage."
+    },
+    "faqContent": [
+      { "question": "What does DOCX to PDF preserve?", "answer": "The native Writer conversion is intended to keep pagination, selectable text, tables, and supported embedded media useful in the generated PDF." },
+      { "question": "Is the result pixel-perfect compared with Word?", "answer": "No. Native conversion is substantially closer than a browser snapshot, but font availability, unsupported features, fields, and exact application rendering can still differ." },
+      { "question": "Are legacy DOC files accepted?", "answer": "No. This focused route accepts modern DOCX archives only." },
+      { "question": "Why does DOCX to PDF use a server job?", "answer": "Native document rendering provides better fidelity than a browser snapshot, so the file uses an isolated short-lived server job and is deleted automatically after processing." }
+    ]
+  },
+  {
+    "slug": "pdf-to-docx",
+    "title": "PDF to DOCX",
+    "category": "word",
+    "primarySearchIntent": "Convert a text-based PDF to an editable DOCX with native PDF import.",
+    "acceptedInput": { "formats": ["PDF"], "extensions": ["pdf"] },
+    "output": { "formats": ["DOCX"], "behavior": "Creates an editable DOCX through a temporary LibreOffice PDF-import job." },
+    "processingMode": "temporary-server",
+    "keyControls": ["One PDF file per job", "Selectable-text input required", "Temporary upload disclosure"],
+    "batchBehavior": { "supported": false, "description": "Convert one PDF per native document job so layout and output validation remain reviewable." },
+    "importantLimitations": ["Scanned or image-only PDFs are rejected because this route does not run OCR.", "Native import can preserve useful structure and images but cannot guarantee exact recovery of positioned text, forms, columns, or fonts.", "Password-protected, corrupt, oversized, or unsupported PDFs are rejected."],
+    "qualityCompatibility": ["The route uses native PDF import rather than simple browser text extraction into paragraphs.", "Text-based PDFs may retain useful page structure and embedded content where the importer supports it.", "The resulting DOCX is checked as an editable Word archive before download."],
+    "resultDownload": "A validated DOCX is offered as <original-name>-editable.docx.",
+    "faqTopics": ["Does PDF to DOCX run OCR?", "Will the DOCX match the PDF exactly?", "Can scanned PDFs be converted?", "Why does PDF to DOCX use a server job?"],
+    "relatedTools": ["docx-to-pdf", "docx-to-txt", "docx-metadata-cleaner"],
+    "primaryLongTailOpportunity": "convert selectable text PDF to editable DOCX without OCR",
+    "canonicalDecision": "Keep PDF to DOCX as a structure-oriented native import intent; it is not a text-extraction route and explicitly excludes scanned-PDF OCR claims.",
+    "page": {
+      "title": "Convert PDF to Editable DOCX without OCR | DoMyFile",
+      "metaDescription": "Convert a text-based PDF to an editable DOCX through a temporary native document job. Scanned PDFs remain unsupported because the route does not run OCR.",
+      "h1": "Convert a text-based PDF to DOCX",
+      "intro": "Use native PDF import to create an editable DOCX from a PDF with selectable text; scanned PDFs are not OCR-processed.",
+      "summary": "PDF to DOCX uses an isolated LibreOffice import path instead of packaging extracted text as plain paragraphs. It can retain useful text, page structure, and images where the source allows, but exact layout recovery is not guaranteed and image-only PDFs are rejected without OCR.",
+      "steps": [
+        { "title": "Choose a text-based PDF", "body": "Select one readable PDF with selectable text and review the temporary-upload disclosure." },
+        { "title": "Import the document natively", "body": "The isolated job rejects encrypted or image-only input, imports the PDF, and validates the generated DOCX archive." },
+        { "title": "Download the editable DOCX", "body": "Download the validated -editable.docx result and review complex positioning or forms in your Word-compatible editor." }
+      ],
+      "privacy": "This route temporarily uploads the selected PDF to the approved isolated native document job. The input and generated DOCX are deleted automatically after the short-lived job; scanned PDFs are not sent for OCR."
+    },
+    "faqContent": [
+      { "question": "Does PDF to DOCX run OCR?", "answer": "No. The route requires selectable PDF text and rejects image-only or scanned PDFs instead of pretending to recover text." },
+      { "question": "Will the DOCX match the PDF exactly?", "answer": "No. Native import can retain useful structure and images, but positioned text, columns, forms, fonts, and complex layouts may require cleanup." },
+      { "question": "Can scanned PDFs be converted?", "answer": "No. OCR is not included, so a scanned or image-only PDF is rejected with a clear unsupported-input message." },
+      { "question": "Why does PDF to DOCX use a server job?", "answer": "The native import path preserves more useful structure than simple browser text extraction; the job is short-lived and deletes the input and result automatically." }
+    ]
+  },
+  {
+    "slug": "html-to-docx",
+    "title": "HTML to DOCX",
+    "category": "word",
+    "primarySearchIntent": "Convert supported HTML headings, text, lists, tables, and links into an editable DOCX.",
+    "acceptedInput": { "formats": ["HTML"], "extensions": ["html", "htm"] },
+    "output": { "formats": ["DOCX"], "behavior": "Creates an editable DOCX from a safe subset of HTML structure." },
+    "processingMode": "browser-local",
+    "keyControls": ["One HTML file per job", "Safe semantic element whitelist", "Scripts and active embeds disabled"],
+    "batchBehavior": { "supported": false, "description": "Convert one HTML file per job so the sanitized document structure stays predictable." },
+    "importantLimitations": ["CSS layout, external stylesheets, images, scripts, event handlers, active embeds, SVG, and unsafe links are not imported.", "Only supported headings, paragraphs, inline emphasis, lists, tables, line breaks, and safe links are mapped.", "Empty, binary-looking, corrupt, or unsupported HTML input is rejected."],
+    "qualityCompatibility": ["The HTML is parsed through a whitelist before any DOCX is generated.", "The result remains an editable DOCX package with headings, lists, tables, and supported inline formatting.", "No external file access or active HTML content is executed."],
+    "resultDownload": "One validated DOCX is offered as <original-name>.docx.",
+    "faqTopics": ["Which HTML elements are supported?", "Are scripts executed?", "Are CSS layout and images preserved?", "Where is HTML processed?"],
+    "relatedTools": ["docx-to-html", "txt-to-docx", "docx-to-txt"],
+    "primaryLongTailOpportunity": "convert HTML headings lists and tables to DOCX locally",
+    "canonicalDecision": "Keep HTML to DOCX separate from DOCX to HTML because the input intent is safe web-content packaging into an editable Word document.",
+    "page": {
+      "title": "Convert HTML to Editable DOCX | DoMyFile",
+      "metaDescription": "Convert supported HTML files to editable DOCX documents with headings, lists, tables, formatting, and safe links. Processing stays local.",
+      "h1": "Convert an HTML file to DOCX",
+      "intro": "Turn supported HTML structure into an editable DOCX while ignoring active or unsafe content.",
+      "summary": "HTML to DOCX uses a local whitelist for headings, paragraphs, inline emphasis, lists, tables, line breaks, and safe HTTP or mailto links. It does not claim CSS fidelity or import active content, external stylesheets, or images.",
+      "steps": [
+        { "title": "Choose an HTML file", "body": "Select one non-empty .html or .htm file containing the document structure you want to keep." },
+        { "title": "Convert the safe subset", "body": "The browser parses the file through a whitelist; scripts, event handlers, active embeds, unsafe links, stylesheets, and images are ignored." },
+        { "title": "Download the DOCX", "body": "Download the validated editable .docx result and continue formatting it in a Word-compatible editor." }
+      ],
+      "privacy": "The HTML is sanitized and converted to DOCX locally in the browser. Active content is not executed, external file access is disabled, and the source is not uploaded or stored."
+    },
+    "faqContent": [
+      { "question": "Which HTML elements are supported?", "answer": "The converter supports headings, paragraphs, bold, italic, underline, lists, tables, line breaks, and safe HTTP or mailto links." },
+      { "question": "Are scripts executed?", "answer": "No. Scripts, event handlers, active embeds, stylesheets, SVG, and unsafe links are ignored by the whitelist." },
+      { "question": "Are CSS layout and images preserved?", "answer": "No. Complex CSS layout and images are outside the supported subset; the result focuses on editable document structure." },
+      { "question": "Where is HTML processed?", "answer": "The HTML is sanitized and converted locally in the browser without uploading the source." }
+    ]
+  },
+  {
+    "slug": "merge-docx",
+    "title": "Merge DOCX",
+    "category": "word",
+    "primarySearchIntent": "Combine two or more compatible DOCX files into one editable document.",
+    "acceptedInput": { "formats": ["DOCX", "2+ files"], "extensions": ["docx"] },
+    "output": { "formats": ["DOCX"], "behavior": "Creates one merged DOCX with a page break between source documents." },
+    "processingMode": "browser-local",
+    "keyControls": ["Two or more DOCX files", "Reorder inputs before processing", "Embedded raster media copied without transcoding"],
+    "batchBehavior": { "supported": true, "minimumFiles": 2, "description": "Merge two or more compatible DOCX files in the visible file order." },
+    "importantLimitations": ["The browser merger focuses on main document content, styles, numbering, hyperlinks, and embedded raster images.", "Headers, footers, comments, tracked changes, charts, section-specific parts, and complex field relationships may be rejected or remain tied to the first document.", "Legacy .doc files and corrupt or unsupported DOCX archives are rejected."],
+    "qualityCompatibility": ["A page break is inserted between source document bodies.", "Styles and numbering IDs are remapped to avoid common collisions, and supported media relationships are copied.", "The resulting archive is checked for a valid DOCX body before download."],
+    "resultDownload": "One validated DOCX is offered as <first-file-name>-merged.docx.",
+    "faqTopics": ["How many DOCX files can be merged?", "Are embedded images preserved?", "What happens between documents?", "Are headers and tracked changes fully merged?"],
+    "relatedTools": ["docx-to-txt", "docx-to-html", "extract-images-from-docx"],
+    "primaryLongTailOpportunity": "combine multiple DOCX files while preserving images",
+    "canonicalDecision": "Keep Merge DOCX as the multi-file assembly intent; it is not a generic Word converter and does not overlap with single-file format routes.",
+    "page": {
+      "title": "Merge DOCX Files into One Document | DoMyFile",
+      "metaDescription": "Merge two or more compatible DOCX files into one editable document locally. Reorder inputs and preserve supported structure and embedded images.",
+      "h1": "Merge DOCX files into one document",
+      "intro": "Combine two or more compatible DOCX files in the order you choose, with supported structure and embedded raster images retained.",
+      "summary": "Merge DOCX works directly on modern DOCX package parts in the browser. It remaps common styles, numbering, hyperlinks, and image relationships, inserts page breaks between inputs, and validates the resulting editable archive.",
+      "steps": [
+        { "title": "Choose two or more DOCX files", "body": "Add compatible modern DOCX files and use the file controls or keyboard-friendly reorder actions to set their order." },
+        { "title": "Merge supported package parts", "body": "The browser combines the main document content and remaps common relationships, styles, numbering, and embedded raster media." },
+        { "title": "Download the merged DOCX", "body": "Download the validated -merged.docx file and review complex sections, headers, or tracked changes in your editor." }
+      ],
+      "privacy": "DOCX archives are read and merged locally in the browser. The source files are not uploaded, stored, or modified."
+    },
+    "faqContent": [
+      { "question": "How many DOCX files can be merged?", "answer": "The route requires at least two modern DOCX files and uses their visible order." },
+      { "question": "Are embedded images preserved?", "answer": "Supported embedded raster image files are copied into the merged package with remapped document relationships." },
+      { "question": "What happens between source documents?", "answer": "A page break is inserted so each following source document starts on a new page." },
+      { "question": "Are headers and tracked changes fully merged?", "answer": "No. The current browser merger focuses on main content and selected package parts; complex section-specific headers, footers, comments, and tracked changes are not fully claimed." }
+    ]
+  },
+  {
+    "slug": "compress-docx",
+    "title": "Compress DOCX",
+    "category": "word",
+    "primarySearchIntent": "Reduce a DOCX file by safely recompressing supported embedded JPEG images.",
+    "acceptedInput": { "formats": ["DOCX"], "extensions": ["docx"] },
+    "output": { "formats": ["DOCX"], "behavior": "Offers a smaller editable DOCX only when supported JPEG media produces meaningful reduction." },
+    "processingMode": "browser-local",
+    "keyControls": ["Light, Balanced, or Strong JPEG quality preset", "Keep text and document structure editable", "No result when reduction is not useful"],
+    "batchBehavior": { "supported": false, "description": "Compress one DOCX file per job so the size result and quality preset remain clear." },
+    "importantLimitations": ["Only supported embedded JPEG media is recompressed; PNG, WebP, vector, chart, and other package content is not broadly transcoded.", "A result is rejected when it is not meaningfully smaller or no safe replacement is available.", "Legacy .doc files, corrupt archives, and unsupported documents are rejected."],
+    "qualityCompatibility": ["Document text, tables, and editable XML remain in the DOCX package.", "Only a JPEG replacement that is smaller is kept, and the output ZIP is validated as DOCX.", "The three presets change JPEG quality, so stronger reduction can introduce more visible image loss."],
+    "resultDownload": "A validated smaller DOCX is offered as <original-name>-compressed.docx when reduction succeeds.",
+    "faqTopics": ["What does Compress DOCX optimize?", "How do the quality presets differ?", "What if no useful reduction is found?", "Does compression remove editability?"],
+    "relatedTools": ["extract-images-from-docx", "docx-metadata-cleaner", "merge-docx"],
+    "primaryLongTailOpportunity": "reduce DOCX size while keeping it editable",
+    "canonicalDecision": "Keep Compress DOCX separate from image compression because it operates on embedded package media while preserving the document archive and editable structure.",
+    "page": {
+      "title": "Compress DOCX while Keeping It Editable | DoMyFile",
+      "metaDescription": "Compress a DOCX by recompressing supported embedded JPEG images with Light, Balanced, or Strong presets while keeping the file editable.",
+      "h1": "Compress a DOCX without flattening it",
+      "intro": "Reduce a DOCX package through supported embedded JPEG optimization while keeping document text and structure editable.",
+      "summary": "Compress DOCX inspects the package, recompresses supported JPEG media with your selected preset, applies ZIP compression, and only offers the result when it is meaningfully smaller and remains a valid DOCX.",
+      "steps": [
+        { "title": "Choose a DOCX file", "body": "Select one modern DOCX archive and review its file size before processing." },
+        { "title": "Choose image quality", "body": "Select Light, Balanced, or Strong; the browser keeps only safe JPEG replacements that reduce the package." },
+        { "title": "Download the smaller DOCX", "body": "Download the validated -compressed.docx result, or receive a clear no-useful-reduction message when the source is already compact." }
+      ],
+      "privacy": "The DOCX package is inspected and recompressed locally in the browser. It is not uploaded or stored, and the original file is not modified."
+    },
+    "faqContent": [
+      { "question": "What does Compress DOCX optimize?", "answer": "It recompresses supported embedded JPEG images and applies safe ZIP package compression without rasterizing document text." },
+      { "question": "How do the quality presets differ?", "answer": "Light, Balanced, and Strong choose different JPEG quality targets; stronger reduction can make image artifacts more visible." },
+      { "question": "What if no useful reduction is found?", "answer": "The route reports that no useful reduction was possible instead of offering a larger or needlessly degraded DOCX." },
+      { "question": "Does compression remove editability?", "answer": "No. The output remains a DOCX archive with editable text and structure; supported JPEG media is the part that may change." }
+    ]
+  },
+  {
+    "slug": "extract-images-from-docx",
+    "title": "Extract Images from DOCX",
+    "category": "word",
+    "primarySearchIntent": "Extract embedded image files from a DOCX without transcoding their bytes.",
+    "acceptedInput": { "formats": ["DOCX"], "extensions": ["docx"] },
+    "output": { "formats": ["Images", "ZIP"], "behavior": "Offers each supported embedded image and one ZIP archive containing all extracted files." },
+    "processingMode": "browser-local",
+    "keyControls": ["One DOCX file per job", "Original embedded bytes copied", "Individual downloads and ZIP archive"],
+    "batchBehavior": { "supported": false, "description": "Extract images from one DOCX package per job so each output remains associated with its source." },
+    "importantLimitations": ["The route extracts normal package media files and does not claim to render shapes, charts, icons, SmartArt, or every drawing object.", "Unsupported or corrupt DOCX archives are rejected, and a document with no embedded image media returns a clear empty-result error.", "Image bytes are preserved when the package contains a recognizable raster media file; no image enhancement is applied."],
+    "qualityCompatibility": ["Embedded PNG, JPEG, WebP, and GIF media with recognized signatures are copied without transcoding.", "Each result is named deterministically and a ZIP archive is generated for batch download.", "The source DOCX remains unchanged."],
+    "resultDownload": "Individual images use <original-name>-image-01.ext naming, with an additional <original-name>-images.zip archive.",
+    "faqTopics": ["Are embedded image bytes transcoded?", "Does this extract charts and shapes?", "Can all images be downloaded together?", "What happens when no images are present?"],
+    "relatedTools": ["merge-docx", "compress-docx", "docx-to-html"],
+    "primaryLongTailOpportunity": "extract embedded pictures from a DOCX without changing them",
+    "canonicalDecision": "Keep image extraction separate from DOCX conversion because the intent is to recover package media files, not create another document format.",
+    "page": {
+      "title": "Extract Images from DOCX Files | DoMyFile",
+      "metaDescription": "Extract embedded images from a DOCX and download each original image or one ZIP archive. Shapes, charts, and icons are not claimed as images.",
+      "h1": "Extract images from a DOCX file",
+      "intro": "Recover supported embedded image files from one DOCX package without transcoding their original bytes.",
+      "summary": "Extract Images from DOCX inspects the Word ZIP package, copies recognizable media files, creates individual downloads, and offers one ZIP archive. Shapes, charts, icons, and other drawing objects may not exist as standalone image files and are not claimed as extracted output.",
+      "steps": [
+        { "title": "Choose a DOCX file", "body": "Select one modern DOCX file containing the embedded media you want to recover." },
+        { "title": "Inspect package media", "body": "The browser reads word/media entries and keeps recognizable PNG, JPEG, WebP, or GIF bytes without transcoding." },
+        { "title": "Download images or ZIP", "body": "Download individual results or use the ZIP archive to save all extracted images together." }
+      ],
+      "privacy": "The DOCX ZIP package is inspected locally in the browser. No source file or extracted image is uploaded or stored by DoMyFile."
+    },
+    "faqContent": [
+      { "question": "Are embedded image bytes transcoded?", "answer": "No. Recognizable media files are copied from the DOCX package without unnecessary transcoding." },
+      { "question": "Does this extract charts and shapes?", "answer": "No. The route extracts normal embedded media files; vector shapes, charts, icons, and other drawing objects may not be separate image files." },
+      { "question": "Can all images be downloaded together?", "answer": "Yes. When images are found, the route creates a ZIP archive alongside individual image downloads." },
+      { "question": "What happens when no images are present?", "answer": "The route shows a clear empty-result error explaining that shapes, charts, icons, and other non-image drawing objects are not extracted." }
+    ]
+  },
+  {
+    "slug": "docx-metadata-cleaner",
+    "title": "DOCX Metadata Cleaner",
+    "category": "word",
+    "primarySearchIntent": "Remove supported author, title, application, and custom properties from a DOCX.",
+    "acceptedInput": { "formats": ["DOCX"], "extensions": ["docx"] },
+    "output": { "formats": ["DOCX"], "behavior": "Creates a cleaned editable DOCX after removing detected supported property parts." },
+    "processingMode": "browser-local",
+    "keyControls": ["Detect supported properties before processing", "Remove core, application, and custom properties", "Editable DOCX output"],
+    "batchBehavior": { "supported": false, "description": "Clean one DOCX file per job so detected and removed property lists remain clear." },
+    "importantLimitations": ["The cleaner does not claim to remove comments, tracked changes, hidden text, thumbnails, embedded-media metadata, or every application-specific artifact.", "Only supported core, application, and custom property parts are changed.", "Legacy .doc files, corrupt archives, and unsupported documents are rejected; no result is offered when no supported properties are detected."],
+    "qualityCompatibility": ["The document body and editable DOCX structure are not flattened or rasterized.", "Detected supported properties are shown in the workspace metadata summary before the cleaned download.", "The result is checked as a valid DOCX archive after cleaning."],
+    "resultDownload": "A cleaned editable DOCX is offered as <original-name>-cleaned.docx when supported properties are removed.",
+    "faqTopics": ["Which metadata is removed?", "Does this remove all hidden data?", "What happens when no supported properties are present?", "Is the cleaned DOCX still editable?"],
+    "relatedTools": ["compress-docx", "extract-images-from-docx", "docx-to-txt"],
+    "primaryLongTailOpportunity": "remove author and document properties from a DOCX locally",
+    "canonicalDecision": "Keep Metadata Cleaner as a privacy-property cleanup intent and disclose its scope rather than presenting it as a complete Word redaction or hidden-data scrubber.",
+    "page": {
+      "title": "Clean DOCX Metadata and Document Properties | DoMyFile",
+      "metaDescription": "Remove detected DOCX author, title, application, company, manager, revision, and custom properties locally while keeping the document editable.",
+      "h1": "Clean supported metadata from a DOCX",
+      "intro": "Inspect and remove supported document properties from one DOCX while keeping the editable document body intact.",
+      "summary": "DOCX Metadata Cleaner removes detected supported core properties such as author, title, dates, keywords, and revision, plus supported application and custom properties. It deliberately does not claim to remove every hidden artifact, comment, tracked change, hidden text, thumbnail, or media metadata.",
+      "steps": [
+        { "title": "Choose a DOCX file", "body": "Select one modern DOCX archive and let the browser inspect supported property parts without uploading it." },
+        { "title": "Review detected properties", "body": "The workspace reports which supported properties can be removed before it changes the package." },
+        { "title": "Download the cleaned DOCX", "body": "Download the validated -cleaned.docx result and review the document in your Word-compatible editor." }
+      ],
+      "privacy": "The DOCX is inspected and cleaned locally in the browser. The source is not uploaded or stored, and the cleaner does not claim to remove metadata embedded inside media files."
+    },
+    "faqContent": [
+      { "question": "Which metadata is removed?", "answer": "Supported core properties such as author, title, subject, keywords, dates, and revision plus supported application, company, manager, version, and custom properties are removed when detected." },
+      { "question": "Does this remove all hidden data?", "answer": "No. Comments, tracked changes, hidden text, thumbnails, embedded-media metadata, and every application-specific artifact are outside the supported cleaning scope." },
+      { "question": "What happens when no supported properties are present?", "answer": "The route reports that no supported document properties were found instead of changing the file unnecessarily." },
+      { "question": "Is the cleaned DOCX still editable?", "answer": "Yes. The output is validated as a DOCX archive and the document body is not flattened." }
+    ]
+  },
+  {
     "slug": "compress-pdf",
     "title": "Compress PDF",
     "category": "pdf",
@@ -737,6 +1181,450 @@
       { "question": "Can I change opacity and placement?", "answer": "Yes. Choose center or corner placement and set opacity from 5% to 100%; image scale runs from 5% to 100%." },
       { "question": "How long can watermark text be?", "answer": "The text control accepts up to 120 characters." },
       { "question": "Does the watermark alter the original PDF?", "answer": "No. The original remains unchanged; the configured overlay is written to a separate PDF result." }
+    ]
+  },
+  {
+    "slug": "pdf-to-png",
+    "title": "PDF to PNG",
+    "category": "pdf",
+    "primarySearchIntent": "Render selected PDF pages as PNG images at a chosen scale.",
+    "acceptedInput": { "formats": ["PDF"], "extensions": ["pdf"] },
+    "output": { "formats": ["PNG"], "behavior": "Creates one PNG image for each selected page." },
+    "processingMode": "browser-local",
+    "keyControls": ["Select all pages or a 1-based page range", "Standard, detailed, or large render scale", "Download all rendered pages as ZIP"],
+    "batchBehavior": { "supported": false, "description": "One PDF is rendered per job; selected pages become separate PNG outputs." },
+    "importantLimitations": ["Rendering creates raster images and does not preserve selectable text in the PNG.", "Very large pages or high scales can require substantial browser memory.", "Password-protected or malformed PDFs are rejected."],
+    "qualityCompatibility": ["PDF.js renders each selected page at the requested scale on the device.", "The output is validated as a PNG before download.", "The source PDF is not modified."],
+    "resultDownload": "Each selected page is offered as a PNG and the Download ZIP action packs the page images into one archive.",
+    "faqTopics": ["Can I convert only some PDF pages to PNG?", "Does PNG output keep selectable text?", "What does render scale change?", "Are PDF pages uploaded?"],
+    "relatedTools": ["pdf-to-jpg", "pdf-to-webp", "pdf-to-text"],
+    "primaryLongTailOpportunity": "convert selected PDF pages to PNG images",
+    "canonicalDecision": "Keep this self-canonical for PNG page rendering; JPG and WebP are separate output-format intents.",
+    "page": {
+      "title": "Convert PDF Pages to PNG Images | DoMyFile",
+      "metaDescription": "Render all or selected PDF pages as PNG images with standard, detailed, or large scale. Download individual pages or one ZIP locally.",
+      "h1": "Convert PDF pages to PNG images",
+      "intro": "Render selected pages from one PDF into PNG images with a clear resolution control and a ZIP download for multi-page results.",
+      "summary": "PDF to PNG is a page-rendering workflow. It creates raster PNG files from selected PDF pages, so the results are useful for image sharing or design workflows but do not retain selectable text or vector structure.",
+      "steps": [
+        { "title": "Choose one PDF", "body": "Select a supported PDF and review its local page previews." },
+        { "title": "Choose pages and scale", "body": "Use all or a 1-based page selection, then choose standard, detailed, or large rendering scale." },
+        { "title": "Download PNG pages", "body": "Download an individual page or pack all validated PNG outputs into one ZIP archive." }
+      ],
+      "privacy": "PDF pages are parsed and rendered locally in your browser; the source document is not uploaded or stored."
+    },
+    "faqContent": [
+      { "question": "Can I convert only some PDF pages to PNG?", "answer": "Yes. Use a selection such as 1-3, 5, or leave the field at all for every page." },
+      { "question": "Does PNG output keep selectable text?", "answer": "No. PNG is a raster image format; use PDF to Text when you need extracted selectable text." },
+      { "question": "What does render scale change?", "answer": "Scale changes the pixel dimensions of each rendered page and therefore affects visual detail, output size, and browser memory use." },
+      { "question": "Are PDF pages uploaded?", "answer": "No. The PDF.js renderer runs in the browser on your device." }
+    ]
+  },
+  {
+    "slug": "pdf-to-webp",
+    "title": "PDF to WebP",
+    "category": "pdf",
+    "primarySearchIntent": "Render selected PDF pages as WebP images with scale and quality controls.",
+    "acceptedInput": { "formats": ["PDF"], "extensions": ["pdf"] },
+    "output": { "formats": ["WebP"], "behavior": "Creates one WebP image for each selected page." },
+    "processingMode": "browser-local",
+    "keyControls": ["Select pages", "Standard, detailed, or large render scale", "WebP quality", "Download all pages as ZIP"],
+    "batchBehavior": { "supported": false, "description": "One PDF is rendered per job; selected pages become separate WebP outputs." },
+    "importantLimitations": ["WebP output is raster and does not retain PDF text or vector structure.", "The browser must decode and encode each selected page locally.", "Encrypted or malformed PDFs are rejected."],
+    "qualityCompatibility": ["Page rendering uses PDF.js at the selected scale.", "WebP quality affects lossy image encoding, not the PDF page layout itself.", "The source PDF remains unchanged."],
+    "resultDownload": "Selected pages are offered as WebP files with a ZIP option for the complete result set.",
+    "faqTopics": ["Why use WebP for PDF pages?", "Can I select a page range?", "Does quality change page resolution?", "Is the conversion local?"],
+    "relatedTools": ["pdf-to-png", "pdf-to-jpg", "webp-to-pdf"],
+    "primaryLongTailOpportunity": "convert PDF pages to WebP images",
+    "canonicalDecision": "Keep this self-canonical for WebP page rendering; PNG and JPG output routes are not duplicate format names.",
+    "page": {
+      "title": "Convert PDF Pages to WebP Images | DoMyFile",
+      "metaDescription": "Render selected PDF pages as WebP images with scale and quality controls, then download individual files or one ZIP locally.",
+      "h1": "Convert PDF pages to WebP images",
+      "intro": "Render PDF pages into web-ready WebP images with selected page ranges, scale, and quality under your control.",
+      "summary": "PDF to WebP creates image outputs for pages rather than editing the PDF structure. Use it when a web-friendly raster asset is more useful than a document page; selectable text is not carried into the image.",
+      "steps": [
+        { "title": "Select a PDF", "body": "Choose one supported document and confirm its page previews." },
+        { "title": "Set render options", "body": "Choose pages, render scale, and WebP quality." },
+        { "title": "Download the images", "body": "Download a page individually or start one ZIP download for all outputs." }
+      ],
+      "privacy": "The PDF is rendered and encoded in your browser without an upload."
+    },
+    "faqContent": [
+      { "question": "Why use WebP for PDF pages?", "answer": "WebP can be useful for web or app assets where a compressed raster image is easier to embed than a PDF page." },
+      { "question": "Can I select a page range?", "answer": "Yes. Enter all or a 1-based selection such as 1-3, 5." },
+      { "question": "Does quality change page resolution?", "answer": "No. Scale determines pixel dimensions; quality controls WebP encoding after the page is rendered." },
+      { "question": "Is the conversion local?", "answer": "Yes. PDF.js and the browser image encoder run on the device." }
+    ]
+  },
+  {
+    "slug": "extract-images-from-pdf",
+    "title": "Extract Images from PDF",
+    "category": "pdf",
+    "primarySearchIntent": "Extract decodable embedded raster images from a PDF as individual image files.",
+    "acceptedInput": { "formats": ["PDF"], "extensions": ["pdf"] },
+    "output": { "formats": ["PNG", "WebP", "ZIP"], "behavior": "Decodes embedded raster image objects and re-encodes them as individual PNG or WebP files." },
+    "processingMode": "browser-local",
+    "keyControls": ["PNG or WebP output", "WebP quality", "Preview extracted dimensions", "Download all as ZIP"],
+    "batchBehavior": { "supported": false, "description": "One PDF is inspected per job and each decodable embedded raster object becomes one output." },
+    "importantLimitations": ["Vector drawings, page screenshots, annotations, charts, and every possible PDF image representation are not claimed as extractable.", "Images are decoded and re-encoded, so original embedded bytes are not preserved.", "A PDF with no decodable raster image objects returns an explanatory error."],
+    "qualityCompatibility": ["PDF.js operator lists identify embedded image objects without uploading the document.", "Output dimensions are reported for each decoded raster.", "The extraction limit is capped to protect browser memory."],
+    "resultDownload": "Each image can be downloaded individually and the complete set can be packed into one ZIP archive.",
+    "faqTopics": ["Does this extract vector logos?", "Are original image bytes preserved?", "Can I download all images together?", "What if the PDF has no embedded images?"],
+    "relatedTools": ["pdf-to-png", "pdf-to-text", "extract-images-from-docx"],
+    "primaryLongTailOpportunity": "extract embedded images from a PDF",
+    "canonicalDecision": "Keep this self-canonical for embedded-image extraction; PDF to PNG is page rendering and serves a different intent.",
+    "page": {
+      "title": "Extract Embedded Images from a PDF | DoMyFile",
+      "metaDescription": "Extract decodable embedded raster images from a PDF as PNG or WebP files, inspect dimensions, and download all results as a ZIP locally.",
+      "h1": "Extract embedded images from a PDF",
+      "intro": "Inspect one PDF for decodable embedded raster images, preview their dimensions, and download individual files or one ZIP archive.",
+      "summary": "This route extracts image objects embedded in a PDF, not a screenshot of every page. It is useful for photos and raster media stored in the document; vector artwork, annotations, and some specialized PDF image paths may remain in the source.",
+      "steps": [
+        { "title": "Choose a PDF", "body": "Select a supported PDF containing raster images and let the browser inspect its page operators." },
+        { "title": "Choose an output format", "body": "Use PNG for lossless decoded output or WebP for a compact raster result." },
+        { "title": "Review and download", "body": "Check each image's dimensions, download one result, or create a ZIP of the complete set." }
+      ],
+      "privacy": "The PDF is inspected locally in the browser; embedded image content is not uploaded or stored."
+    },
+    "faqContent": [
+      { "question": "Does this extract vector logos?", "answer": "No. The shipped route extracts decodable embedded raster image objects; vector drawings and many annotation types are outside that claim." },
+      { "question": "Are original image bytes preserved?", "answer": "No. The browser decodes each supported image object and re-encodes it as PNG or WebP for consistent downloads." },
+      { "question": "Can I download all images together?", "answer": "Yes. The result workspace offers a ZIP download containing the individual extracted files." },
+      { "question": "What if the PDF has no embedded images?", "answer": "The route reports that no decodable embedded raster images were found instead of fabricating page screenshots." }
+    ]
+  },
+  {
+    "slug": "add-page-numbers",
+    "title": "Add Page Numbers to PDF",
+    "category": "pdf",
+    "primarySearchIntent": "Add selectable page numbers to selected PDF pages.",
+    "acceptedInput": { "formats": ["PDF"], "extensions": ["pdf"] },
+    "output": { "formats": ["PDF"], "behavior": "Creates a structurally edited PDF with page-number text overlays." },
+    "processingMode": "browser-local",
+    "keyControls": ["All pages or selected page ranges", "Starting number", "Corner or center placement"],
+    "batchBehavior": { "supported": false, "description": "One PDF is numbered per job." },
+    "importantLimitations": ["Numbers are added as a simple text overlay and do not use the source document's existing typography.", "The overlay can overlap existing content near page edges if the source has no margin.", "This does not renumber references inside the document text."],
+    "qualityCompatibility": ["Existing page content stays structural and selectable.", "Only the selected pages receive the overlay.", "The output is reopened and page-count validated before download."],
+    "resultDownload": "One validated numbered PDF is offered without changing the original file.",
+    "faqTopics": ["Can I number only some pages?", "Can numbering start at another number?", "Does this rasterize the PDF?", "Can it update references in the text?"],
+    "relatedTools": ["header-footer-pdf", "organize-pdf", "watermark-pdf"],
+    "primaryLongTailOpportunity": "add page numbers to selected PDF pages",
+    "canonicalDecision": "Keep this self-canonical for page-number overlays; Header and Footer handles persistent text, while Organize handles page order.",
+    "page": {
+      "title": "Add Page Numbers to a PDF | DoMyFile",
+      "metaDescription": "Add selectable page numbers to all or selected PDF pages, choose a starting number and placement, and download a validated PDF locally.",
+      "h1": "Add page numbers to a PDF",
+      "intro": "Place simple selectable page numbers on all pages or a selected range, starting at the number you choose.",
+      "summary": "Add Page Numbers writes a new text overlay into the PDF. It keeps the existing document content structural, but it does not rewrite internal page references or reproduce the source typography.",
+      "steps": [
+        { "title": "Choose a PDF", "body": "Select one supported PDF and review the local page preview." },
+        { "title": "Set number options", "body": "Choose pages, a starting number, and a bottom or top placement." },
+        { "title": "Download the numbered PDF", "body": "The result is validated and offered separately from the source document." }
+      ],
+      "privacy": "Page numbers are added locally in your browser; the PDF is not uploaded or stored."
+    },
+    "faqContent": [
+      { "question": "Can I number only some pages?", "answer": "Yes. Use a selection such as 2-5 instead of all." },
+      { "question": "Can numbering start at another number?", "answer": "Yes. Set the starting number before processing." },
+      { "question": "Does this rasterize the PDF?", "answer": "No. The page-number overlay is added structurally and the existing page content remains selectable." },
+      { "question": "Can it update references in the text?", "answer": "No. It adds visible page numbers but does not rewrite table-of-contents entries or other references." }
+    ]
+  },
+  {
+    "slug": "header-footer-pdf",
+    "title": "Add Header and Footer to PDF",
+    "category": "pdf",
+    "primarySearchIntent": "Add simple selectable header and footer text to selected PDF pages.",
+    "acceptedInput": { "formats": ["PDF"], "extensions": ["pdf"] },
+    "output": { "formats": ["PDF"], "behavior": "Creates a PDF with the configured header and footer text overlays." },
+    "processingMode": "browser-local",
+    "keyControls": ["Header text", "Footer text", "Page and total-page tokens", "Page range"],
+    "batchBehavior": { "supported": false, "description": "One PDF is edited per job." },
+    "importantLimitations": ["The route uses simple built-in font text and does not reproduce complex headers, footers, or source styles.", "Text is placed within a fixed page margin and can overlap content on edge-to-edge pages.", "No images or rich header/footer layout are supported."],
+    "qualityCompatibility": ["Existing page content remains selectable.", "{{page}} and {{pages}} tokens are replaced with the current and total page numbers.", "The result keeps the original page count and is validated before download."],
+    "resultDownload": "One validated PDF with the configured header/footer overlay is offered.",
+    "faqTopics": ["Can I add only a footer?", "Which page tokens are supported?", "Can I choose a page range?", "Are headers and footers editable PDF fields?"],
+    "relatedTools": ["add-page-numbers", "watermark-pdf", "clean-pdf-metadata"],
+    "primaryLongTailOpportunity": "add a header or footer to a PDF",
+    "canonicalDecision": "Keep this self-canonical for reusable header/footer text; Add Page Numbers is the narrower numbering intent.",
+    "page": {
+      "title": "Add a Header or Footer to a PDF | DoMyFile",
+      "metaDescription": "Add simple selectable header and footer text to selected PDF pages with current-page tokens and local structural output validation.",
+      "h1": "Add a header or footer to a PDF",
+      "intro": "Add a simple text header, footer, or both to selected PDF pages using page-number tokens where useful.",
+      "summary": "Header and Footer adds a fixed, readable text overlay rather than building a full PDF layout editor. Use it for short labels, document names, or page indicators where a simple margin-based placement is enough.",
+      "steps": [
+        { "title": "Choose a PDF", "body": "Select one supported PDF and check its page previews." },
+        { "title": "Enter header or footer text", "body": "Add one or both text values and use {{page}} or {{pages}} if needed." },
+        { "title": "Choose the page range", "body": "Apply the overlay to all pages or a 1-based selection, then download the validated result." }
+      ],
+      "privacy": "Header and footer text is applied locally in your browser; the source PDF is not uploaded."
+    },
+    "faqContent": [
+      { "question": "Can I add only a footer?", "answer": "Yes. A header, footer, or both may be provided; at least one value is required." },
+      { "question": "Which page tokens are supported?", "answer": "Use {{page}} for the current page number and {{pages}} for the total page count." },
+      { "question": "Can I choose a page range?", "answer": "Yes. Enter all or a selection such as 1-3, 5." },
+      { "question": "Are headers and footers editable PDF fields?", "answer": "No. They are ordinary selectable text overlays, not interactive form fields." }
+    ]
+  },
+  {
+    "slug": "crop-pdf",
+    "title": "Crop PDF Pages",
+    "category": "pdf",
+    "primarySearchIntent": "Apply a consistent visible crop margin to PDF pages without rasterizing them.",
+    "acceptedInput": { "formats": ["PDF"], "extensions": ["pdf"] },
+    "output": { "formats": ["PDF"], "behavior": "Creates a PDF with each page's CropBox inset by the chosen margin." },
+    "processingMode": "browser-local",
+    "keyControls": ["12, 24, 48, or 72 point crop margin", "Structural CropBox output"],
+    "batchBehavior": { "supported": false, "description": "One PDF is cropped per job." },
+    "importantLimitations": ["The fixed margin is applied to every page; there is no freeform per-page crop editor.", "Cropping changes the visible CropBox and can hide content outside it; it does not erase the underlying objects.", "Viewer behavior can vary when a source PDF has unusual page boxes."],
+    "qualityCompatibility": ["Text, images, and vector content are not rasterized.", "The output keeps the original page count.", "The crop is applied conservatively so the page cannot collapse to zero size."],
+    "resultDownload": "One validated cropped PDF is offered with the source left unchanged.",
+    "faqTopics": ["Does crop erase content?", "Can each page have a different crop?", "Does cropping rasterize text?", "What is a point?"],
+    "relatedTools": ["rotate-pdf", "add-page-numbers", "pdf-to-png"],
+    "primaryLongTailOpportunity": "crop PDF pages by a consistent margin",
+    "canonicalDecision": "Keep this self-canonical for a simple document-wide crop box; a full per-page crop editor is intentionally out of scope.",
+    "page": {
+      "title": "Crop PDF Pages by Margin | DoMyFile",
+      "metaDescription": "Crop every PDF page by a 12, 24, 48, or 72 point visible margin without rasterizing text or images. Download a validated PDF locally.",
+      "h1": "Crop PDF pages by a consistent margin",
+      "intro": "Apply a simple document-wide crop margin to the visible page box while keeping the PDF's text and image objects structural.",
+      "summary": "Crop PDF is a focused CropBox utility for trimming consistent outer margins. It is not a freeform page editor: every page receives the selected inset and content outside the visible box may remain in the file but hidden by viewers.",
+      "steps": [
+        { "title": "Choose a PDF", "body": "Select one supported document and inspect its page previews." },
+        { "title": "Choose a crop margin", "body": "Select a light, recommended, generous, or strong point margin." },
+        { "title": "Download the cropped PDF", "body": "The page count and PDF header are checked before the result is offered." }
+      ],
+      "privacy": "The CropBox edit runs locally in your browser without uploading the PDF."
+    },
+    "faqContent": [
+      { "question": "Does crop erase content?", "answer": "No. The route changes each page's visible CropBox; objects outside the box can remain in the PDF structure." },
+      { "question": "Can each page have a different crop?", "answer": "No. The current focused control applies one margin to every page." },
+      { "question": "Does cropping rasterize text?", "answer": "No. The PDF page boxes are edited structurally, so text and vector content are not rendered into images." },
+      { "question": "What is a point?", "answer": "A PDF point is a layout unit; 72 points equal one inch in the standard PDF coordinate system." }
+    ]
+  },
+  {
+    "slug": "pdf-to-text",
+    "title": "PDF to Text",
+    "category": "pdf",
+    "primarySearchIntent": "Extract selectable PDF text into a plain UTF-8 text file.",
+    "acceptedInput": { "formats": ["PDF"], "extensions": ["pdf"] },
+    "output": { "formats": ["TXT"], "behavior": "Creates one UTF-8 text file with page-separated extracted text." },
+    "processingMode": "browser-local",
+    "keyControls": ["One PDF input", "Page-separated plain-text output"],
+    "batchBehavior": { "supported": false, "description": "One PDF is extracted per job." },
+    "importantLimitations": ["This extracts text exposed by the PDF parser and does not run OCR.", "Reading order, columns, tables, and positioned text can differ from the visual page.", "Image-only scanned PDFs can produce empty pages."],
+    "qualityCompatibility": ["Text is extracted with PDF.js on the device.", "Page boundaries are retained as blank-line separators.", "The PDF itself is not changed."],
+    "resultDownload": "One UTF-8 TXT file is offered with a deterministic text suffix.",
+    "faqTopics": ["Does PDF to Text run OCR?", "What happens with scanned PDFs?", "Are columns preserved?", "Is the result UTF-8?"],
+    "relatedTools": ["pdf-to-html", "txt-to-pdf", "pdf-metadata-viewer"],
+    "primaryLongTailOpportunity": "extract selectable text from a PDF",
+    "canonicalDecision": "Keep this self-canonical for plain-text extraction; PDF to HTML preserves a simple page-oriented HTML wrapper instead.",
+    "page": {
+      "title": "Extract Text from a PDF to TXT | DoMyFile",
+      "metaDescription": "Extract selectable PDF text into a UTF-8 TXT file locally. Scanned image-only PDFs are not OCRed and may produce empty text pages.",
+      "h1": "Extract PDF text to a TXT file",
+      "intro": "Turn selectable text exposed by one PDF into a plain UTF-8 text download with page boundaries kept readable.",
+      "summary": "PDF to Text is a text-extraction route, not OCR. It works best with digitally generated PDFs that contain selectable text; scanned or image-only pages need the deferred OCR capability rather than this browser utility.",
+      "steps": [
+        { "title": "Choose a PDF", "body": "Select a supported PDF with selectable text when possible." },
+        { "title": "Run local extraction", "body": "The browser reads each page's text layer and separates the pages in the output." },
+        { "title": "Download TXT", "body": "Download the UTF-8 plain-text file and review reading order in your text editor." }
+      ],
+      "privacy": "Text extraction runs locally in your browser; the PDF and extracted text are not uploaded or stored."
+    },
+    "faqContent": [
+      { "question": "Does PDF to Text run OCR?", "answer": "No. It reads the text layer exposed by PDF.js and does not recognize text from pixels." },
+      { "question": "What happens with scanned PDFs?", "answer": "Image-only pages can produce empty text because no OCR engine is used." },
+      { "question": "Are columns preserved?", "answer": "Not reliably. PDF text extraction follows parser reading order, which can differ from a multi-column visual layout." },
+      { "question": "Is the result UTF-8?", "answer": "Yes. The route creates a plain UTF-8 TXT file." }
+    ]
+  },
+  {
+    "slug": "pdf-to-html",
+    "title": "PDF to HTML",
+    "category": "pdf",
+    "primarySearchIntent": "Export selectable PDF text into a simple semantic HTML document organized by page.",
+    "acceptedInput": { "formats": ["PDF"], "extensions": ["pdf"] },
+    "output": { "formats": ["HTML"], "behavior": "Creates a self-contained HTML file with one section per PDF page." },
+    "processingMode": "browser-local",
+    "keyControls": ["One PDF input", "Page-oriented HTML output"],
+    "batchBehavior": { "supported": false, "description": "One PDF is exported per job." },
+    "importantLimitations": ["The output is a simple text-oriented HTML representation, not a pixel-perfect layout conversion.", "Images, fonts, columns, forms, and complex styling are not recreated as HTML.", "The route does not run OCR on scanned pages."],
+    "qualityCompatibility": ["Extracted text is HTML-escaped before it is written to the output.", "Page sections and headings identify the original page boundaries.", "The output is generated locally without executing uploaded HTML or scripts."],
+    "resultDownload": "One standalone HTML document is offered for download.",
+    "faqTopics": ["Does PDF to HTML preserve the exact layout?", "Are PDF images included?", "Is extracted text escaped safely?", "Does it OCR scans?"],
+    "relatedTools": ["pdf-to-text", "txt-to-pdf", "docx-to-html"],
+    "primaryLongTailOpportunity": "convert selectable PDF text to HTML",
+    "canonicalDecision": "Keep this self-canonical for simple HTML text export; existing Word HTML tools remain canonical for DOCX conversion.",
+    "page": {
+      "title": "Convert PDF Text to HTML | DoMyFile",
+      "metaDescription": "Export selectable PDF text into a simple page-oriented HTML file locally. Exact visual layout, images, and OCR are outside this focused conversion.",
+      "h1": "Convert PDF text to a simple HTML file",
+      "intro": "Create a self-contained HTML document with escaped text and one readable section for each PDF page.",
+      "summary": "PDF to HTML is useful for a lightweight text-oriented web document. It intentionally does not promise pixel-perfect reconstruction of the PDF's typography, images, forms, or multi-column layout.",
+      "steps": [
+        { "title": "Select a PDF", "body": "Choose a supported document and let the browser inspect its pages." },
+        { "title": "Export page text", "body": "PDF.js reads the available text layer and the route escapes it into semantic HTML." },
+        { "title": "Download the HTML", "body": "Open the generated file in a browser or edit it in a text editor." }
+      ],
+      "privacy": "The PDF is read locally in your browser and the HTML output is created on the device."
+    },
+    "faqContent": [
+      { "question": "Does PDF to HTML preserve the exact layout?", "answer": "No. It creates a simple page-oriented text representation, not a pixel-perfect layout clone." },
+      { "question": "Are PDF images included?", "answer": "No. The focused output contains extracted text sections; use Extract Images from PDF for supported embedded raster images." },
+      { "question": "Is extracted text escaped safely?", "answer": "Yes. Text is HTML-escaped before it is inserted into the generated document." },
+      { "question": "Does it OCR scans?", "answer": "No. Image-only pages remain empty or nearly empty when there is no selectable text layer." }
+    ]
+  },
+  {
+    "slug": "pdf-metadata-viewer",
+    "title": "PDF Metadata Viewer",
+    "category": "pdf",
+    "primarySearchIntent": "Inspect metadata reported by a PDF parser and download a JSON summary.",
+    "acceptedInput": { "formats": ["PDF"], "extensions": ["pdf"] },
+    "output": { "formats": ["JSON"], "behavior": "Creates a JSON summary of page count, reported Info values, and whether XMP metadata was reported." },
+    "processingMode": "browser-local",
+    "keyControls": ["One PDF input", "Local metadata summary", "JSON download"],
+    "batchBehavior": { "supported": false, "description": "One PDF is inspected per job." },
+    "importantLimitations": ["The viewer reports metadata exposed by PDF.js and does not enumerate every object or hidden application-specific field.", "The JSON summary is an inspection result, not a security or privacy guarantee.", "Encrypted or malformed PDFs are rejected by the parser."],
+    "qualityCompatibility": ["Page count and parser-reported Info values are included.", "XMP presence is reported when the parser exposes a metadata packet.", "No source PDF bytes are modified."],
+    "resultDownload": "One JSON metadata summary is offered for download.",
+    "faqTopics": ["Which metadata is shown?", "Does this find every hidden field?", "Can I clean the reported metadata?", "Where is the inspection run?"],
+    "relatedTools": ["clean-pdf-metadata", "pdf-to-text", "docx-metadata-cleaner"],
+    "primaryLongTailOpportunity": "view PDF metadata and document properties",
+    "canonicalDecision": "Keep this self-canonical for PDF metadata inspection; Clean PDF Metadata is the separate editing intent.",
+    "page": {
+      "title": "View PDF Metadata and Properties | DoMyFile",
+      "metaDescription": "Inspect PDF page count, parser-reported document properties, and XMP presence, then download a JSON summary locally.",
+      "h1": "View PDF metadata and properties",
+      "intro": "Inspect the metadata that the PDF parser reports for one document and download a clear JSON summary without editing the source.",
+      "summary": "The viewer helps identify common PDF Info values and whether an XMP packet was reported. It is deliberately factual: it does not claim to discover every hidden object, embedded file, annotation property, or application artifact.",
+      "steps": [
+        { "title": "Choose a PDF", "body": "Select one supported document for local parser inspection." },
+        { "title": "Review the summary", "body": "Check page count, reported Info values, and the XMP presence flag." },
+        { "title": "Download JSON", "body": "Save the structured metadata summary for review or another local workflow." }
+      ],
+      "privacy": "Metadata inspection runs locally in your browser and the source PDF is not uploaded."
+    },
+    "faqContent": [
+      { "question": "Which metadata is shown?", "answer": "The JSON includes page count, PDF.js-reported Info values, and whether PDF.js reported an XMP metadata packet." },
+      { "question": "Does this find every hidden field?", "answer": "No. It does not enumerate every PDF object, embedded file, annotation, or application-specific field." },
+      { "question": "Can I clean the reported metadata?", "answer": "Use Clean PDF Metadata for supported standard Info properties and the catalog XMP stream." },
+      { "question": "Where is the inspection run?", "answer": "The PDF parser runs locally in the browser." }
+    ]
+  },
+  {
+    "slug": "clean-pdf-metadata",
+    "title": "Clean PDF Metadata",
+    "category": "pdf",
+    "primarySearchIntent": "Remove standard PDF document information and the catalog XMP metadata stream.",
+    "acceptedInput": { "formats": ["PDF"], "extensions": ["pdf"] },
+    "output": { "formats": ["PDF"], "behavior": "Creates a PDF with standard Info metadata and the catalog XMP stream removed where supported by the parser." },
+    "processingMode": "browser-local",
+    "keyControls": ["One PDF input", "Standard Info and catalog XMP cleanup", "No claim of complete hidden-data removal"],
+    "batchBehavior": { "supported": false, "description": "One PDF is cleaned per job." },
+    "importantLimitations": ["This does not claim to remove every hidden object, embedded file, annotation property, form value, or metadata inside embedded media.", "Some PDF viewers may add new producer or modification metadata when resaving the result.", "The document must be supported and unencrypted."],
+    "qualityCompatibility": ["Page count is preserved and the PDF is reopened after saving.", "The cleanup edits metadata structures rather than rasterizing page content.", "The original file is left unchanged."],
+    "resultDownload": "One validated metadata-cleaned PDF is offered.",
+    "faqTopics": ["Which PDF metadata is removed?", "Does this remove all hidden information?", "Does cleaning alter page content?", "Can I inspect metadata first?"],
+    "relatedTools": ["pdf-metadata-viewer", "flatten-pdf", "pdf-to-text"],
+    "primaryLongTailOpportunity": "remove standard metadata from a PDF",
+    "canonicalDecision": "Keep this self-canonical for supported PDF metadata cleanup; the viewer is a read-only inspection workflow.",
+    "page": {
+      "title": "Clean Standard PDF Metadata | DoMyFile",
+      "metaDescription": "Remove standard PDF Info properties and the catalog XMP stream locally while keeping page content structural. No claim of complete hidden-data removal.",
+      "h1": "Clean supported metadata from a PDF",
+      "intro": "Create a separate PDF with standard document properties and the catalog XMP metadata stream removed where the parser supports it.",
+      "summary": "Clean PDF Metadata has a defined scope. It targets common Info dictionary fields and the catalog XMP stream; it does not promise to remove every hidden artifact, embedded-file property, annotation value, or metadata stored inside an image.",
+      "steps": [
+        { "title": "Choose a PDF", "body": "Select one supported, non-encrypted document." },
+        { "title": "Run the scoped cleanup", "body": "The browser removes supported standard metadata structures without rasterizing pages." },
+        { "title": "Download the new PDF", "body": "The output is reopened and page-count checked before download." }
+      ],
+      "privacy": "The metadata edit runs locally in your browser; the source PDF is not uploaded or stored."
+    },
+    "faqContent": [
+      { "question": "Which PDF metadata is removed?", "answer": "The route removes standard Info dictionary values such as title, author, subject, keywords, creator, producer, dates, and trapped status, plus the catalog XMP stream where supported." },
+      { "question": "Does this remove all hidden information?", "answer": "No. It does not claim to remove every embedded file, annotation property, form value, hidden object, or metadata inside embedded media." },
+      { "question": "Does cleaning alter page content?", "answer": "The route does not rasterize or redraw page content; it edits the metadata structures and validates the page count." },
+      { "question": "Can I inspect metadata first?", "answer": "Yes. PDF Metadata Viewer produces a parser-reported JSON summary before you choose whether to clean the file." }
+    ]
+  },
+  {
+    "slug": "txt-to-pdf",
+    "title": "TXT to PDF",
+    "category": "pdf",
+    "primarySearchIntent": "Convert a UTF-8 plain text file into a selectable PDF.",
+    "acceptedInput": { "formats": ["TXT", "UTF-8 plain text"], "extensions": ["txt"] },
+    "output": { "formats": ["PDF"], "behavior": "Creates a selectable PDF with wrapped text and simple page layout." },
+    "processingMode": "browser-local",
+    "keyControls": ["A4 or Letter page size", "Portrait or landscape orientation", "10–14 point text size"],
+    "batchBehavior": { "supported": false, "description": "One UTF-8 TXT file is converted per job." },
+    "importantLimitations": ["This is a text layout utility, not a rich document editor.", "Complex styling, images, tables, and arbitrary Unicode glyph coverage are not reproduced by the built-in standard font.", "Invalid UTF-8 input is rejected."],
+    "qualityCompatibility": ["The result contains selectable text and page breaks.", "Long lines are wrapped to the selected page width.", "The PDF is reopened and page count checked before download."],
+    "resultDownload": "One selectable PDF is offered with the TXT source name and PDF suffix.",
+    "faqTopics": ["Which TXT encoding is accepted?", "Can I choose A4 or Letter?", "Is the PDF text selectable?", "Does it preserve rich formatting?"],
+    "relatedTools": ["pdf-to-text", "docx-to-pdf", "txt-to-docx"],
+    "primaryLongTailOpportunity": "convert a UTF-8 text file to PDF",
+    "canonicalDecision": "Keep this self-canonical for plain-text-to-PDF packaging; DOCX routes remain canonical for editable document conversion.",
+    "page": {
+      "title": "Convert TXT to a Selectable PDF | DoMyFile",
+      "metaDescription": "Convert a UTF-8 TXT file to a selectable PDF with A4 or Letter size, orientation, and text-size controls locally in your browser.",
+      "h1": "Convert a TXT file to PDF",
+      "intro": "Turn a UTF-8 plain text file into a readable selectable PDF with simple page-size, orientation, and text-size choices.",
+      "summary": "TXT to PDF is deliberately focused: it lays out plain text into pages with a standard font. It is useful for notes, logs, and simple exports, while rich formatting, images, tables, and full Unicode font coverage belong in a document editor workflow.",
+      "steps": [
+        { "title": "Choose a TXT file", "body": "Select a non-empty UTF-8 plain text file." },
+        { "title": "Set the page layout", "body": "Choose A4 or Letter, portrait or landscape, and a text size." },
+        { "title": "Download the PDF", "body": "The browser creates selectable wrapped text and validates the resulting PDF." }
+      ],
+      "privacy": "The TXT file is read and converted locally in your browser without an upload."
+    },
+    "faqContent": [
+      { "question": "Which TXT encoding is accepted?", "answer": "The route accepts valid UTF-8 plain text and rejects invalid byte sequences." },
+      { "question": "Can I choose A4 or Letter?", "answer": "Yes. Both page sizes and portrait or landscape orientation are available." },
+      { "question": "Is the PDF text selectable?", "answer": "Yes. The result contains PDF text objects rather than a page screenshot." },
+      { "question": "Does it preserve rich formatting?", "answer": "No. The route handles plain text only; it does not import styling, images, tables, or arbitrary document layout." }
+    ]
+  },
+  {
+    "slug": "flatten-pdf",
+    "title": "Flatten PDF Form",
+    "category": "pdf",
+    "primarySearchIntent": "Flatten supported interactive PDF form fields into page content.",
+    "acceptedInput": { "formats": ["PDF"], "extensions": ["pdf"] },
+    "output": { "formats": ["PDF"], "behavior": "Creates a PDF after flattening supported AcroForm field appearances." },
+    "processingMode": "browser-local",
+    "keyControls": ["One PDF input", "Supported AcroForm flattening"],
+    "batchBehavior": { "supported": false, "description": "One PDF is flattened per job." },
+    "importantLimitations": ["The route targets supported AcroForm fields and is not a universal annotation or JavaScript flattener.", "Unsupported XFA forms, unusual appearances, comments, and some annotation types can remain unsupported.", "Flattening is not reversible in the output; keep the original if editable fields are still needed."],
+    "qualityCompatibility": ["The PDF stays structural rather than being rasterized.", "Page count is preserved and the result is reopened before download.", "The source PDF remains unchanged."],
+    "resultDownload": "One validated flattened PDF is offered as a separate download.",
+    "faqTopics": ["What does flattening do?", "Are all annotations flattened?", "Can I edit fields after flattening?", "Does flattening rasterize pages?"],
+    "relatedTools": ["clean-pdf-metadata", "pdf-metadata-viewer", "compress-pdf"],
+    "primaryLongTailOpportunity": "flatten interactive PDF form fields",
+    "canonicalDecision": "Keep this self-canonical for form flattening; metadata cleanup and image rendering are separate PDF operations.",
+    "page": {
+      "title": "Flatten Supported PDF Form Fields | DoMyFile",
+      "metaDescription": "Flatten supported AcroForm fields into PDF page content locally. Keep the original because flattening is not reversible in the downloaded copy.",
+      "h1": "Flatten supported PDF form fields",
+      "intro": "Create a separate PDF with supported interactive form fields flattened into their visible page appearances.",
+      "summary": "Flatten PDF is for a real form workflow: make supported AcroForm values part of the page so the downloaded copy is less dependent on editable fields. It is not a promise to flatten every annotation, XFA form, JavaScript action, or hidden object.",
+      "steps": [
+        { "title": "Choose a PDF form", "body": "Select a supported PDF and keep the original file if you may need editable fields later." },
+        { "title": "Run flattening", "body": "The browser applies supported AcroForm appearances without rendering pages to images." },
+        { "title": "Download the flattened copy", "body": "The PDF is reopened and page-count checked before it is offered." }
+      ],
+      "privacy": "Form flattening runs locally in your browser; the source PDF is not uploaded or stored."
+    },
+    "faqContent": [
+      { "question": "What does flattening do?", "answer": "It turns supported AcroForm field appearances into page content so the downloaded copy no longer depends on those editable fields." },
+      { "question": "Are all annotations flattened?", "answer": "No. The scope is supported AcroForm fields; XFA, comments, JavaScript, and every annotation type are not guaranteed." },
+      { "question": "Can I edit fields after flattening?", "answer": "The flattened copy is not intended to keep those fields editable. Keep the original PDF if you need the form controls later." },
+      { "question": "Does flattening rasterize pages?", "answer": "No. The current operation uses the PDF structure and does not turn pages into screenshots." }
     ]
   },
   {

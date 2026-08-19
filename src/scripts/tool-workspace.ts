@@ -16,6 +16,11 @@ import type {
 } from "../tools/engines/image/types";
 import type { PdfOptions, PdfProcessFailure, PdfProcessItem, PdfToolSlug } from "../tools/engines/pdf/types";
 import type { MediaOptions, MediaProcessFailure, MediaProcessItem, MediaToolSlug } from "../tools/engines/media/types";
+import { backgroundRemovalEngine, getBackgroundRemovalErrorMessage, getBackgroundRemovalOutputName } from "../tools/engines/background-removal/background-removal-engine";
+import type { BackgroundRemovalResult } from "../tools/engines/background-removal/types";
+import { documentEngine, getDocumentErrorMessage } from "../tools/engines/document/document-engine";
+import type { DocumentProcessFailure, DocumentProcessItem, DocumentToolSlug } from "../tools/engines/document/types";
+import type { ImageUpscalerResult } from "../tools/engines/image-upscaler/types";
 import { getProcessingBoundary, getTool } from "../tools/registry";
 import { ServerFallbackClient } from "../tools/server-fallback/client";
 import { getServerErrorMessage } from "../tools/server-fallback/errors";
@@ -32,6 +37,11 @@ type MediaEngineModule = typeof import("../tools/engines/media/media-engine");
 let mediaEngineModulePromise: Promise<MediaEngineModule> | undefined;
 
 const loadMediaEngine = () => mediaEngineModulePromise ??= import("../tools/engines/media/media-engine");
+
+type ImageUpscalerModule = typeof import("../tools/engines/image-upscaler/image-upscaler-engine");
+let imageUpscalerModulePromise: Promise<ImageUpscalerModule> | undefined;
+
+const loadImageUpscaler = () => imageUpscalerModulePromise ??= import("../tools/engines/image-upscaler/image-upscaler-engine");
 
 type ImageResult = {
   kind: "image";
@@ -57,8 +67,26 @@ type ServerResult = {
   url: string;
 };
 
-type WorkspaceResult = ImageResult | PdfResult | MediaResult | ServerResult;
-type WorkspaceFailure = ImageProcessFailure | PdfProcessFailure | MediaProcessFailure;
+type DocumentResult = {
+  kind: "document";
+  item: DocumentProcessItem;
+  url: string;
+};
+
+type BackgroundRemovalResultItem = {
+  kind: "background-removal";
+  item: BackgroundRemovalResult;
+  url: string;
+};
+
+type ImageUpscalerResultItem = {
+  kind: "image-upscaler";
+  item: ImageUpscalerResult;
+  url: string;
+};
+
+type WorkspaceResult = ImageResult | PdfResult | MediaResult | ServerResult | DocumentResult | BackgroundRemovalResultItem | ImageUpscalerResultItem;
+type WorkspaceFailure = ImageProcessFailure | PdfProcessFailure | MediaProcessFailure | DocumentProcessFailure;
 
 const getFileExtension = (fileName: string) => {
   const parts = fileName.toLowerCase().split(".");
@@ -81,6 +109,7 @@ const isPreviewableImage = (file: File) => {
 const isFileSupported = (file: File, tool: ToolDefinition) => {
   const extension = getFileExtension(file.name);
   const mime = file.type.toLowerCase();
+  if (tool.category === "word") return tool.input.extensions.includes(extension);
   return tool.input.extensions.includes(extension) || tool.input.mimes.includes(mime);
 };
 
@@ -147,8 +176,11 @@ const getImageOptions = (workspace: HTMLElement, tool: ImageToolSlug, cropPlan?:
   };
 };
 
-const getReadyDetail = (category: ToolDefinition["category"]) => category === "pdf"
+const getReadyDetail = (category: ToolDefinition["category"], server = false) => server ? "This file will use a temporary native job and be deleted automatically after processing."
+  : category === "pdf"
     ? "PDFs are parsed, edited, and generated on this device; originals never leave this device."
+    : category === "word"
+      ? "Documents are parsed or written on this device; originals never leave this device."
     : category === "audio"
       ? "Audio is probed, processed, and validated on this device; originals never leave this device."
       : category === "video"
@@ -159,7 +191,29 @@ const imageToPdfTools = new Set(["jpg-to-pdf", "png-to-pdf", "webp-to-pdf"]);
 
 const isImageToPdfTool = (slug: string) => imageToPdfTools.has(slug);
 
-const implementedPdfTools = new Set(["merge-pdf", "split-pdf", "organize-pdf", "rotate-pdf", "jpg-to-pdf", "png-to-pdf", "webp-to-pdf", "pdf-to-jpg", "watermark-pdf"]);
+const implementedPdfTools = new Set([
+  "merge-pdf",
+  "split-pdf",
+  "organize-pdf",
+  "rotate-pdf",
+  "jpg-to-pdf",
+  "png-to-pdf",
+  "webp-to-pdf",
+  "pdf-to-jpg",
+  "watermark-pdf",
+  "pdf-to-png",
+  "pdf-to-webp",
+  "extract-images-from-pdf",
+  "add-page-numbers",
+  "header-footer-pdf",
+  "crop-pdf",
+  "pdf-to-text",
+  "pdf-to-html",
+  "pdf-metadata-viewer",
+  "clean-pdf-metadata",
+  "txt-to-pdf",
+  "flatten-pdf",
+]);
 
 const isImplementedPdfTool = (slug: string) => implementedPdfTools.has(slug);
 
@@ -185,6 +239,13 @@ const getServerOptions = (workspace: HTMLElement): ServerJobOptions => {
 
 const getServerInputMime = (file: File, tool: ToolDefinition) => {
   if (tool.slug === "compress-pdf") return "application/pdf";
+  if (tool.slug === "remove-background") {
+    if (file.type === "image/png" || getFileExtension(file.name) === "png") return "image/png";
+    if (file.type === "image/webp" || getFileExtension(file.name) === "webp") return "image/webp";
+    return "image/jpeg";
+  }
+  if (tool.slug === "docx-to-pdf") return "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+  if (tool.slug === "pdf-to-docx") return "application/pdf";
   if (file.type === "video/quicktime" || getFileExtension(file.name) === "mov") return "video/quicktime";
   return "video/mp4";
 };
@@ -211,6 +272,16 @@ const getPdfOptions = (workspace: HTMLElement, tool: PdfToolSlug): PdfOptions & 
     pageOrientation: (value("pageOrientation") as PdfOptions["pageOrientation"]) ?? "auto",
     jpgScale: numberValue("pdfJpgScale", 1.5),
     jpgQuality: numberValue("pdfJpgQualityRange", 88),
+    rasterFormat: tool === "pdf-to-png" ? "png" : tool === "pdf-to-webp" ? "webp" : "jpg",
+    extractImageFormat: value("extractImageFormat") === "webp" ? "webp" : "png",
+    extractImageQuality: numberValue("extractImageQualityRange", 92),
+    pageNumberStart: numberValue("pageNumberStart", 1),
+    pageNumberPlacement: (value("pageNumberPlacement") as PdfOptions["pageNumberPlacement"]) ?? "bottom-right",
+    headerText: value("headerText") ?? "",
+    footerText: value("footerText") ?? "",
+    headerFooterScope: value("headerFooterScope")?.trim() || "all",
+    cropMargin: numberValue("cropMargin", 24),
+    textFontSize: numberValue("textFontSize", 11),
     watermarkMode: (value("watermarkMode") as PdfOptions["watermarkMode"]) ?? "text",
     watermarkText: value("watermarkText") ?? "",
     watermarkImage,
@@ -228,9 +299,13 @@ const initWorkspace = (workspace: HTMLElement) => {
   const deferredTool = workspace.dataset.deferred === "true";
   const serverTool = workspace.dataset.serverFallback === "true" && getProcessingBoundary(tool) === "server";
   const realImageTool = !deferredTool && tool.category === "image" && isImplementedImageTool(tool.slug);
+  const backgroundRemovalTool = !deferredTool && tool.slug === "remove-background";
+  const realBackgroundRemovalTool = !deferredTool && tool.slug === "remove-background" && !serverTool;
+  const realImageUpscalerTool = !deferredTool && tool.slug === "upscale-image" && tool.processor === "image-upscaler";
+  const realDocumentTool = !deferredTool && tool.category === "word" && tool.processor === "document";
   const realPdfTool = !deferredTool && !serverTool && tool.category === "pdf" && isImplementedPdfTool(tool.slug);
   const realMediaTool = !deferredTool && !serverTool && (tool.category === "audio" || tool.category === "video") && isImplementedMediaTool(tool.slug);
-  const realServerTool = !deferredTool && serverTool && (tool.slug === "compress-pdf" || tool.slug === "compress-video");
+  const realServerTool = !deferredTool && serverTool && ["compress-pdf", "compress-video", "docx-to-pdf", "pdf-to-docx"].includes(tool.slug);
   const fileInput = workspace.querySelector<HTMLInputElement>("[data-file-input]");
   const uploadZone = workspace.querySelector<HTMLElement>("[data-upload-zone]");
   const chooseFiles = workspace.querySelector<HTMLButtonElement>("[data-choose-files]");
@@ -253,6 +328,10 @@ const initWorkspace = (workspace: HTMLElement) => {
   const processingProgress = workspace.querySelector<HTMLElement>("[data-processing-progress]");
   const processingProgressBar = workspace.querySelector<HTMLProgressElement>("[data-processing-progress-bar]");
   const processingProgressLabel = workspace.querySelector<HTMLElement>("[data-processing-progress-label]");
+  const backgroundPreview = workspace.querySelector<HTMLElement>("[data-background-removal-preview]");
+  const backgroundOriginal = workspace.querySelector<HTMLImageElement>("[data-background-original]");
+  const backgroundProcessed = workspace.querySelector<HTMLImageElement>("[data-background-processed]");
+  const backgroundProcessedPlaceholder = workspace.querySelector<HTMLElement>("[data-background-processed-placeholder]");
   if (!fileInput || !uploadZone || !chooseFiles || !addMore || !fileListWrap || !fileList || !fileCount || !fileError || !uploadStepStatus || !processButton || !processAnother || !downloadAll || !status || !resultCard || !resultSummary || !resultList || !resultTitle) return;
 
   let files: File[] = [];
@@ -267,12 +346,18 @@ const initWorkspace = (workspace: HTMLElement) => {
   let cropPreparationId = 0;
   let previewManager: WorkspacePreviewManager | undefined;
 
-  if (processingNote) processingNote.textContent = realImageTool
+  if (processingNote) processingNote.textContent = realBackgroundRemovalTool
+    ? "The image and model run on this device. The model loads only when processing starts; the image is not uploaded."
+    : realDocumentTool
+      ? "The document is parsed or written on this device. Word parsers load only when this tool starts processing."
+    : realImageUpscalerTool
+      ? "The super-resolution model loads only when processing starts. The image is processed in this browser and is not uploaded."
+    : realImageTool
     ? "Images are processed on this device. Originals are not uploaded, stored, or changed."
     : realPdfTool
       ? "PDFs are parsed and processed on this device. Originals are not uploaded, stored, or changed."
       : realServerTool
-        ? "This file is uploaded temporarily, compressed in an isolated job, and deleted automatically after processing."
+        ? "This file is uploaded temporarily to an isolated native job and deleted automatically after processing."
       : realMediaTool
         ? tool.category === "video"
           ? "Supported video files are processed on this device. Originals are not uploaded, stored, or changed."
@@ -287,6 +372,33 @@ const initWorkspace = (workspace: HTMLElement) => {
   const cleanupResultUrls = () => {
     resultUrls.forEach((url) => URL.revokeObjectURL(url));
     resultUrls.clear();
+  };
+
+  const clearBackgroundProcessedPreview = () => {
+    if (backgroundProcessed) {
+      backgroundProcessed.removeAttribute("src");
+      backgroundProcessed.hidden = true;
+    }
+    if (backgroundProcessedPlaceholder) backgroundProcessedPlaceholder.hidden = false;
+  };
+
+  const renderBackgroundPreview = () => {
+    if (!backgroundRemovalTool || !backgroundPreview || !backgroundOriginal) return;
+    const source = files[0];
+    if (!source) {
+      backgroundPreview.hidden = true;
+      backgroundOriginal.removeAttribute("src");
+      clearBackgroundProcessedPreview();
+      return;
+    }
+    let previewUrl = previewUrls.get(source);
+    if (!previewUrl) {
+      previewUrl = URL.createObjectURL(source);
+      previewUrls.set(source, previewUrl);
+    }
+    backgroundOriginal.src = previewUrl;
+    backgroundOriginal.alt = `Original ${source.name}`;
+    backgroundPreview.hidden = false;
   };
 
   const showFileError = (message: string) => {
@@ -369,7 +481,7 @@ const initWorkspace = (workspace: HTMLElement) => {
       const { pageCount } = await module.pdfEngine.inspect(sourceFile);
       if (preparationId !== organizePreparationId || files[0] !== sourceFile) return;
       renderOrganizeControls(Array.from({ length: pageCount }, (_, index) => index + 1));
-      setStatus(status, "ready", "Files ready.", getReadyDetail(tool.category));
+      setStatus(status, "ready", "Files ready.", getReadyDetail(tool.category, serverTool));
     } catch (error) {
       if (preparationId !== organizePreparationId || files[0] !== sourceFile) return;
       const module = await loadPdfEngine().catch(() => undefined);
@@ -397,7 +509,7 @@ const initWorkspace = (workspace: HTMLElement) => {
         if (!end.value || Number(end.value) <= 0) end.value = String(duration);
       }
       if (durationLabel) durationLabel.textContent = `Detected duration: ${duration.toFixed(2)} seconds. Choose a range within it.`;
-      setStatus(status, "ready", "Files ready.", getReadyDetail(tool.category));
+      setStatus(status, "ready", "Files ready.", getReadyDetail(tool.category, serverTool));
     } catch (error) {
       if (preparationId !== mediaPreparationId || files[0] !== sourceFile) return;
       const module = await loadMediaEngine().catch(() => undefined);
@@ -425,7 +537,7 @@ const initWorkspace = (workspace: HTMLElement) => {
         if (!end.value || Number(end.value) <= 0) end.value = String(duration);
       }
       if (durationLabel) durationLabel.textContent = `Detected duration: ${duration.toFixed(2)} seconds. Start must match a verified video keyframe; the streams are copied locally.`;
-      setStatus(status, "ready", "Files ready.", getReadyDetail(tool.category));
+      setStatus(status, "ready", "Files ready.", getReadyDetail(tool.category, serverTool));
     } catch (error) {
       if (preparationId !== mediaPreparationId || files[0] !== sourceFile) return;
       const module = await loadMediaEngine().catch(() => undefined);
@@ -542,6 +654,7 @@ const initWorkspace = (workspace: HTMLElement) => {
       fileList.append(item);
     });
     updateReadyState();
+    renderBackgroundPreview();
   };
 
   const moveFileTo = (fromIndex: number, targetIndex: number) => {
@@ -552,7 +665,7 @@ const initWorkspace = (workspace: HTMLElement) => {
     clearResult();
     clearStatus(status);
     renderFiles();
-    if (hasEnoughFiles()) setStatus(status, "ready", "Files ready.", getReadyDetail(tool.category));
+    if (hasEnoughFiles()) setStatus(status, "ready", "Files ready.", getReadyDetail(tool.category, serverTool));
     previewManager?.update(files);
   };
 
@@ -568,6 +681,7 @@ const initWorkspace = (workspace: HTMLElement) => {
     resultCard.hidden = true;
     resultList.replaceChildren();
     resultSummary.textContent = "";
+    clearBackgroundProcessedPreview();
   };
 
   if (realImageTool && tool.slug === "crop-image") {
@@ -647,7 +761,7 @@ const initWorkspace = (workspace: HTMLElement) => {
       clearResult();
       clearStatus(status);
       previewManager?.update(files);
-      if (files.length >= (tool.minimumFiles ?? 1)) setStatus(status, "ready", "Files ready.", getReadyDetail(tool.category));
+      if (files.length >= (tool.minimumFiles ?? 1)) setStatus(status, "ready", "Files ready.", getReadyDetail(tool.category, serverTool));
       if (tool.slug === "organize-pdf") void prepareOrganizePages();
       if (tool.slug === "trim-audio") void prepareTrimAudio();
       if (tool.slug === "trim-video") void prepareTrimVideo();
@@ -682,7 +796,7 @@ const initWorkspace = (workspace: HTMLElement) => {
       const controls = workspace.querySelector<HTMLElement>("[data-pdf-page-controls]");
       controls?.replaceChildren(createTextElement("p", "option-help", "Choose a PDF to load its page controls."));
     }
-    if (hasEnoughFiles()) setStatus(status, "ready", "Files ready.", getReadyDetail(tool.category));
+    if (hasEnoughFiles()) setStatus(status, "ready", "Files ready.", getReadyDetail(tool.category, serverTool));
   };
 
   const formatMime = (mime: ImageMime) => mime === "image/jpeg" ? "JPG" : mime === "image/png" ? "PNG" : "WebP";
@@ -737,17 +851,31 @@ const initWorkspace = (workspace: HTMLElement) => {
     resultCard.scrollIntoView({ behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start" });
   };
 
-  const formatPdfMime = (mime: PdfProcessItem["mime"]) => mime === "application/pdf" ? "PDF" : "JPG";
+  const formatPdfMime = (mime: PdfProcessItem["mime"]) => {
+    if (mime === "application/pdf") return "PDF";
+    if (mime === "image/jpeg") return "JPG";
+    if (mime === "image/png") return "PNG";
+    if (mime === "image/webp") return "WEBP";
+    if (mime === "application/json") return "JSON";
+    if (mime === "text/html") return "HTML";
+    return "TXT";
+  };
 
   const renderPdfResult = () => {
     const pdfResults = resultItems.filter((item): item is PdfResult => item.kind === "pdf");
-    const isJpg = tool.slug === "pdf-to-jpg";
-    const outputPages = isJpg ? pdfResults.length : pdfResults.reduce((total, item) => total + (item.item.pageCount ?? 0), 0);
-    resultTitle.textContent = isJpg
-      ? (pdfResults.length === 1 ? "JPG page ready to download" : "JPG pages ready to download")
-      : (pdfResults.length === 1 ? "PDF ready to download" : "PDFs ready to download");
+    const isRasterPages = ["pdf-to-jpg", "pdf-to-png", "pdf-to-webp"].includes(tool.slug);
+    const outputPages = isRasterPages || tool.slug === "extract-images-from-pdf"
+      ? pdfResults.length
+      : pdfResults.reduce((total, item) => total + (item.item.pageCount ?? 0), 0);
+    const outputLabel = tool.slug === "pdf-to-png" ? "PNG" : tool.slug === "pdf-to-webp" ? "WebP" : tool.slug === "pdf-to-jpg" ? "JPG" : tool.slug === "extract-images-from-pdf" ? "image" : tool.slug === "pdf-to-text" ? "text" : tool.slug === "pdf-to-html" ? "HTML" : tool.slug === "pdf-metadata-viewer" ? "metadata" : "PDF";
+    resultTitle.textContent = isRasterPages
+      ? (pdfResults.length === 1 ? `${outputLabel} page ready to download` : `${outputLabel} pages ready to download`)
+      : tool.slug === "extract-images-from-pdf"
+        ? `${pdfResults.length} extracted image${pdfResults.length === 1 ? "" : "s"} ready to download`
+        : (pdfResults.length === 1 ? `${outputLabel} output ready to download` : `${outputLabel} outputs ready to download`);
     const failureSummary = resultFailures.length ? ` · ${resultFailures.length} skipped` : "";
-    resultSummary.textContent = `${pdfResults.length} ${pdfResults.length === 1 ? "output" : "outputs"} ready · ${outputPages} ${outputPages === 1 ? "page" : "pages"}${failureSummary}.`;
+    const outputUnit = tool.slug === "extract-images-from-pdf" ? "image" : "page";
+    resultSummary.textContent = `${pdfResults.length} ${pdfResults.length === 1 ? "output" : "outputs"} ready · ${outputPages} ${outputUnit}${outputPages === 1 ? "" : "s"}${failureSummary}.`;
     resultList.replaceChildren();
 
     pdfResults.forEach(({ item, url }) => {
@@ -759,9 +887,11 @@ const initWorkspace = (workspace: HTMLElement) => {
       copy.className = "result-item-copy";
       const name = createTextElement("strong", "", item.output.name);
       name.title = item.output.name;
-      const pageDetail = isJpg && item.pageNumber
+      const pageDetail = isRasterPages && item.pageNumber
         ? `page ${item.pageNumber} of ${item.pageCount ?? item.pageNumber}`
-        : `${item.pageCount ?? 0} ${item.pageCount === 1 ? "page" : "pages"}`;
+        : item.width && item.height
+          ? `${item.width} × ${item.height} px`
+          : item.detail ?? `${item.pageCount ?? 0} ${item.pageCount === 1 ? "page" : "pages"}`;
       const detail = createTextElement("span", "", `${formatBytes(item.outputBytes)} · ${pageDetail}`);
       copy.append(name, detail);
       const download = document.createElement("a");
@@ -858,20 +988,154 @@ const initWorkspace = (workspace: HTMLElement) => {
     resultCard.scrollIntoView({ behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start" });
   };
 
+  const renderDocumentResult = () => {
+    const documentResults = resultItems.filter((item): item is DocumentResult => item.kind === "document");
+    const extraction = tool.slug === "extract-images-from-docx";
+    resultTitle.textContent = extraction
+      ? "Extracted images ready to download"
+      : documentResults.length === 1 ? "Document ready to download" : "Documents ready to download";
+    const outputBytes = documentResults.reduce((total, item) => total + item.item.outputBytes, 0);
+    const imageCount = documentResults.filter(({ item }) => item.format === "image").length;
+    resultSummary.textContent = extraction
+      ? `${imageCount} image${imageCount === 1 ? "" : "s"} plus a ZIP archive ready · ${formatBytes(outputBytes)} output.`
+      : `${documentResults.length} ${documentResults.length === 1 ? "document" : "documents"} ready · ${formatBytes(outputBytes)} output.`;
+    resultList.replaceChildren();
+
+    documentResults.forEach(({ item, url }) => {
+      const row = document.createElement("div");
+      row.className = "result-item";
+      const extension = createTextElement("span", "file-item-icon", item.format.toUpperCase());
+      extension.setAttribute("aria-hidden", "true");
+      const copy = document.createElement("span");
+      copy.className = "result-item-copy";
+      const name = createTextElement("strong", "", item.output.name);
+      name.title = item.output.name;
+      const detail = item.format === "html"
+        ? "Semantic HTML document"
+        : item.format === "txt"
+          ? "Plain text extracted locally"
+          : item.format === "image"
+            ? "Embedded image copied from the DOCX package"
+            : item.format === "zip"
+              ? "ZIP archive of extracted images"
+              : "DOCX package created locally";
+      copy.append(name, createTextElement("span", "", `${formatBytes(item.inputBytes)} input → ${formatBytes(item.outputBytes)} output · ${detail}`));
+      const download = document.createElement("a");
+      download.className = "result-download-link";
+      download.href = url;
+      download.download = item.output.name;
+      download.dataset.resultDownload = "true";
+      download.textContent = "Download";
+      row.append(extension, copy, download);
+      resultList.append(row);
+    });
+
+    if (resultFailures.length) {
+      resultFailures.forEach(({ input, error }) => {
+        const row = document.createElement("div");
+        row.className = "result-item";
+        const extension = createTextElement("span", "file-item-icon", "SKIP");
+        extension.setAttribute("aria-hidden", "true");
+        const copy = document.createElement("span");
+        copy.className = "result-item-copy";
+        const name = createTextElement("strong", "", input.name);
+        name.title = input.name;
+        copy.append(name, createTextElement("span", "", error.userMessage));
+        row.append(extension, copy);
+        resultList.append(row);
+      });
+    }
+    resultCard.hidden = false;
+    resultCard.scrollIntoView({ behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start" });
+  };
+
+  const renderBackgroundRemovalResult = () => {
+    const backgroundResults = resultItems.filter((item): item is BackgroundRemovalResultItem => item.kind === "background-removal");
+    const item = backgroundResults[0]?.item;
+    const url = backgroundResults[0]?.url;
+    if (!item || !url) return;
+    resultTitle.textContent = "Transparent PNG ready to download";
+    resultSummary.textContent = `${formatBytes(item.inputBytes)} input → ${formatBytes(item.outputBytes)} transparent PNG output.`;
+    resultList.replaceChildren();
+    const row = document.createElement("div");
+    row.className = "result-item";
+    const extension = createTextElement("span", "file-item-icon", "PNG");
+    extension.setAttribute("aria-hidden", "true");
+    const copy = document.createElement("span");
+    copy.className = "result-item-copy";
+    const name = createTextElement("strong", "", item.output.name);
+    name.title = item.output.name;
+    copy.append(name, createTextElement("span", "", `${formatBytes(item.outputBytes)} · transparent background`));
+    const download = document.createElement("a");
+    download.className = "result-download-link";
+    download.href = url;
+    download.download = item.output.name;
+    download.dataset.resultDownload = "true";
+    download.textContent = "Download PNG";
+    row.append(extension, copy, download);
+    resultList.append(row);
+    resultCard.hidden = false;
+    resultCard.scrollIntoView({ behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start" });
+  };
+
+  const renderImageUpscalerResult = () => {
+    const upscalerResults = resultItems.filter((item): item is ImageUpscalerResultItem => item.kind === "image-upscaler");
+    const item = upscalerResults[0]?.item;
+    const url = upscalerResults[0]?.url;
+    if (!item || !url) return;
+    resultTitle.textContent = "Super-resolution PNG ready to download";
+    resultSummary.textContent = `${item.inputWidth} × ${item.inputHeight} px input → ${item.outputWidth} × ${item.outputHeight} px PNG output.`;
+    resultList.replaceChildren();
+    const row = document.createElement("div");
+    row.className = "result-item";
+    const extension = createTextElement("span", "file-item-icon", "PNG");
+    extension.setAttribute("aria-hidden", "true");
+    const copy = document.createElement("span");
+    copy.className = "result-item-copy";
+    const name = createTextElement("strong", "", item.output.name);
+    name.title = item.output.name;
+    copy.append(name, createTextElement("span", "", `${formatBytes(item.inputBytes)} input → ${formatBytes(item.outputBytes)} · ONNX model · fixed 3×`));
+    const download = document.createElement("a");
+    download.className = "result-download-link";
+    download.href = url;
+    download.download = item.output.name;
+    download.dataset.resultDownload = "true";
+    download.textContent = "Download PNG";
+    row.append(extension, copy, download);
+    resultList.append(row);
+    resultCard.hidden = false;
+    resultCard.scrollIntoView({ behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start" });
+  };
+
   const renderServerResult = () => {
     const serverResults = resultItems.filter((item): item is ServerResult => item.kind === "server");
     const item = serverResults[0]?.item;
     if (!item) return;
-    resultTitle.textContent = tool.slug === "compress-pdf" ? "Compressed PDF ready to download" : "Compressed video ready to download";
-    const reduction = `${item.savingsPercent.toFixed(0)}% smaller`;
-    const detail = tool.slug === "compress-pdf"
-      ? `${formatBytes(item.inputBytes)} → ${formatBytes(item.outputBytes)} · ${reduction}${item.pageCount ? ` · ${item.pageCount} pages` : ""}`
-      : `${formatBytes(item.inputBytes)} → ${formatBytes(item.outputBytes)} · ${reduction} · ${item.width} × ${item.height} px · ${item.durationSeconds?.toFixed(2)} s`;
-    resultSummary.textContent = `${formatBytes(item.inputBytes)} input → ${formatBytes(item.outputBytes)} output · ${reduction}.`;
+    const documentConversion = tool.slug === "docx-to-pdf" || tool.slug === "pdf-to-docx";
+    const backgroundRemoval = tool.slug === "remove-background";
+    if (backgroundRemoval && backgroundProcessed) {
+      backgroundProcessed.src = serverResults[0].url;
+      backgroundProcessed.hidden = false;
+      if (backgroundProcessedPlaceholder) backgroundProcessedPlaceholder.hidden = true;
+    }
+    resultTitle.textContent = documentConversion
+      ? `${item.outputFormat} conversion ready to download`
+      : backgroundRemoval ? "Transparent PNG ready to download" : tool.slug === "compress-pdf" ? "Compressed PDF ready to download" : "Compressed video ready to download";
+    const reduction = `${item.savingsPercent.toFixed(0)}% size change`;
+    const detail = documentConversion
+      ? `${formatBytes(item.inputBytes)} → ${formatBytes(item.outputBytes)} · native document engine${item.pageCount ? ` · ${item.pageCount} pages` : ""}`
+      : backgroundRemoval
+        ? `${formatBytes(item.inputBytes)} input → ${formatBytes(item.outputBytes)} · BiRefNet-lite · native ONNX Runtime`
+      : tool.slug === "compress-pdf"
+        ? `${formatBytes(item.inputBytes)} → ${formatBytes(item.outputBytes)} · ${reduction}${item.pageCount ? ` · ${item.pageCount} pages` : ""}`
+        : `${formatBytes(item.inputBytes)} → ${formatBytes(item.outputBytes)} · ${reduction} · ${item.width} × ${item.height} px · ${item.durationSeconds?.toFixed(2)} s`;
+    resultSummary.textContent = backgroundRemoval
+      ? `${formatBytes(item.inputBytes)} input → ${formatBytes(item.outputBytes)} transparent PNG output.`
+      : `${formatBytes(item.inputBytes)} input → ${formatBytes(item.outputBytes)} ${documentConversion ? "output" : `output · ${reduction}`}.`;
     resultList.replaceChildren();
     const row = document.createElement("div");
     row.className = "result-item";
-    const extension = createTextElement("span", "file-item-icon", item.outputFormat);
+    const extension = createTextElement("span", "file-item-icon", backgroundRemoval ? "PNG" : item.outputFormat);
     extension.setAttribute("aria-hidden", "true");
     const copy = document.createElement("span");
     copy.className = "result-item-copy";
@@ -883,11 +1147,31 @@ const initWorkspace = (workspace: HTMLElement) => {
     download.href = serverResults[0].url;
     download.download = item.output.name;
     download.dataset.resultDownload = "true";
-    download.textContent = "Download";
+    download.textContent = backgroundRemoval ? "Download PNG" : "Download";
     row.append(extension, copy, download);
     resultList.append(row);
     resultCard.hidden = false;
     resultCard.scrollIntoView({ behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start" });
+  };
+
+  const processImageUpscalerTool = async () => {
+    const sourceFile = files[0];
+    if (!sourceFile) return;
+    const module = await loadImageUpscaler();
+    activeController = new AbortController();
+    setStatus(status, "processing", "Enhancing image…", "The super-resolution model runs locally; the selected image is not uploaded.");
+    const item = await module.imageUpscalerEngine.process(sourceFile, { scale: 3 }, activeController.signal, (progress, label) => {
+      updateProgress(progress);
+      if (label) setStatus(status, "processing", label, "The model and image are running locally in this browser.");
+    });
+    const url = URL.createObjectURL(item.output);
+    resultUrls.add(url);
+    resultItems = [{ kind: "image-upscaler", item, url }];
+    resultFailures = [];
+    previewManager?.setResults([{ input: item.input, inputBytes: item.inputBytes, outputBytes: item.outputBytes, width: item.outputWidth, height: item.outputHeight }]);
+    setStatus(status, "success", "Super-resolution complete.", "The enhanced PNG is ready to download. The original image was not changed.");
+    updateProgress(1);
+    renderImageUpscalerResult();
   };
 
   const processImageTool = async () => {
@@ -976,6 +1260,57 @@ const initWorkspace = (workspace: HTMLElement) => {
     renderMediaResult();
   };
 
+  const processDocumentTool = async () => {
+    const documentTool = tool.slug as DocumentToolSlug;
+    activeController = new AbortController();
+    const compressionPreset = workspace.querySelector<HTMLSelectElement>("#documentCompressionPreset")?.value;
+    setStatus(status, "processing", "Processing document…", "The document stays on this device while the parser or writer is loaded and run locally.");
+    const result = await documentEngine.process(files, { tool: documentTool, compressionPreset: compressionPreset === "light" || compressionPreset === "strong" ? compressionPreset : "balanced" }, activeController.signal);
+    resultFailures = result.failures;
+    const documentOutputs = result.archive ? [...result.items, result.archive] : result.items;
+    resultItems = documentOutputs.map((item) => {
+      const url = URL.createObjectURL(item.output);
+      resultUrls.add(url);
+      return { kind: "document", item, url };
+    });
+
+    if (!result.items.length) {
+      const firstFailure = result.failures[0];
+      setStatus(status, "error", "No document was generated.", firstFailure?.error.userMessage ?? "Try a different supported document.");
+      return;
+    }
+    setStatus(
+      status,
+      "success",
+      result.failures.length ? "Processing finished with skipped files." : "Processing complete.",
+      result.failures.length ? `${result.items.length} output ready; ${result.failures.length} file was skipped.` : "Your document output is ready to download.",
+    );
+    renderDocumentResult();
+  };
+
+  const processBackgroundRemovalTool = async () => {
+    const sourceFile = files[0];
+    if (!sourceFile) return;
+    activeController = new AbortController();
+    setStatus(status, "processing", "Removing background…", "The local model may download the first time. Your image stays on this device.");
+    const result = await backgroundRemovalEngine.process(sourceFile, activeController.signal, (progress, label) => {
+      updateProgress(progress);
+      if (label) setStatus(status, "processing", label, "The image and background-removal model are running locally.");
+    });
+    const url = URL.createObjectURL(result.output);
+    resultUrls.add(url);
+    resultItems = [{ kind: "background-removal", item: result, url }];
+    resultFailures = [];
+    if (backgroundProcessed) {
+      backgroundProcessed.src = url;
+      backgroundProcessed.hidden = false;
+    }
+    if (backgroundProcessedPlaceholder) backgroundProcessedPlaceholder.hidden = true;
+    setStatus(status, "success", "Background removed.", "A transparent PNG is ready to download. The original image was not changed.");
+    updateProgress(1);
+    renderBackgroundRemovalResult();
+  };
+
   const processServerTool = async () => {
     const sourceFile = files[0];
     if (!sourceFile || !realServerTool) return;
@@ -988,11 +1323,11 @@ const initWorkspace = (workspace: HTMLElement) => {
       else if (jobStatus.status === "uploading" || jobStatus.status === "queued") updateProgress(undefined);
       const labels: Record<string, [string, string]> = {
         created: ["Preparing temporary job…", "The file will be deleted automatically after processing."],
-        uploading: ["Uploading temporarily…", "Your file is sent only to the approved compression path."],
-        queued: ["Waiting to process…", "The compression job is queued with a strict resource limit."],
+        uploading: ["Uploading temporarily…", "Your file is sent only to the approved native processing path."],
+        queued: ["Waiting to process…", "The job is queued with a strict resource limit and short expiry."],
         validating: ["Validating file…", "The server is checking the file signature and safe resource envelope."],
-        processing: ["Compressing…", "The native engine is working in an isolated temporary container."],
-        verifying: ["Checking output…", "The result must be valid and smaller before it can be offered."],
+        processing: [tool.slug === "docx-to-pdf" || tool.slug === "pdf-to-docx" ? "Converting with the native document engine…" : tool.slug === "remove-background" ? "Segmenting the foreground…" : "Compressing…", tool.slug === "remove-background" ? "The allowlisted BiRefNet model is running in an isolated temporary container." : "The allowlisted engine is working in an isolated temporary container."],
+        verifying: ["Checking output…", tool.slug === "docx-to-pdf" || tool.slug === "pdf-to-docx" ? "The converted file must pass output validation before download." : "The result must be valid and smaller before it can be offered."],
       };
       const label = labels[jobStatus.status];
       if (label) setStatus(status, "processing", label[0], label[1]);
@@ -1004,19 +1339,21 @@ const initWorkspace = (workspace: HTMLElement) => {
         file: sourceFile,
         inputMime: getServerInputMime(sourceFile, tool),
         options: getServerOptions(workspace),
-        outputName: getServerOutputName(serverToolId),
+        outputName: tool.slug === "remove-background" ? getBackgroundRemovalOutputName(sourceFile.name) : getServerOutputName(serverToolId),
         signal: activeController.signal,
         onStatus: updateServerStatus,
       });
       const url = URL.createObjectURL(result.output);
       resultUrls.add(url);
       resultItems = [{ kind: "server", item: result, url }];
-      setStatus(status, "success", "Compression complete.", `${result.savingsPercent.toFixed(0)}% smaller · the validated output is ready to download.`);
+      const documentConversion = tool.slug === "docx-to-pdf" || tool.slug === "pdf-to-docx";
+      const backgroundRemoval = tool.slug === "remove-background";
+      setStatus(status, "success", backgroundRemoval ? "Background removed." : documentConversion ? "Document conversion complete." : "Compression complete.", backgroundRemoval ? "A validated transparent PNG is ready to download." : documentConversion ? "The validated native conversion is ready to download." : `${result.savingsPercent.toFixed(0)}% smaller · the validated output is ready to download.`);
       updateProgress(1);
       renderServerResult();
     } catch (error) {
       if (activeController.signal.aborted) return;
-      setStatus(status, "error", "Compression could not finish.", getServerErrorMessage(error));
+      setStatus(status, "error", tool.slug === "remove-background" ? "Background removal could not finish." : tool.slug === "docx-to-pdf" || tool.slug === "pdf-to-docx" ? "Document conversion could not finish." : "Compression could not finish.", getServerErrorMessage(error));
     }
   };
 
@@ -1026,7 +1363,10 @@ const initWorkspace = (workspace: HTMLElement) => {
     clearResult();
     updateReadyState();
     try {
-      if (realImageTool) await processImageTool();
+      if (realBackgroundRemovalTool) await processBackgroundRemovalTool();
+      else if (realImageUpscalerTool) await processImageUpscalerTool();
+      else if (realDocumentTool) await processDocumentTool();
+      else if (realImageTool) await processImageTool();
       else if (realPdfTool) await processPdfTool();
       else if (realMediaTool) await processMediaTool();
       else if (realServerTool) await processServerTool();
@@ -1041,6 +1381,12 @@ const initWorkspace = (workspace: HTMLElement) => {
         const module = await loadMediaEngine().catch(() => undefined);
         message = module?.getMediaErrorMessage(error) ?? (tool.category === "video" ? "The video could not be processed in this browser." : "The audio could not be processed in this browser.");
       }
+      if (realDocumentTool) message = getDocumentErrorMessage(error);
+      if (realImageUpscalerTool) {
+        const module = await loadImageUpscaler().catch(() => undefined);
+        message = module?.getImageUpscalerErrorMessage(error) ?? "The image could not be enhanced in this browser.";
+      }
+      if (realBackgroundRemovalTool) message = getBackgroundRemovalErrorMessage(error);
       if (realServerTool) message = getServerErrorMessage(error);
       if (message !== "Processing was cancelled.") setStatus(status, "error", "Processing could not finish.", message);
     } finally {
@@ -1061,6 +1407,7 @@ const initWorkspace = (workspace: HTMLElement) => {
       cropReady = false;
       cropEditor?.clear();
     }
+    if (realImageUpscalerTool) void loadImageUpscaler().then((module) => module.imageUpscalerEngine.dispose()).catch(() => undefined);
     previewManager?.dispose();
     cleanupPreviewUrls();
     files = [];
@@ -1180,10 +1527,41 @@ const initWorkspace = (workspace: HTMLElement) => {
     previewManager?.setPageOrder(pageNumbers);
     setStatus(status, "ready", "Page order updated.", "The selected order will be used when you process this PDF.");
   });
+  workspace.querySelector<HTMLButtonElement>("[data-pdf-reverse]")?.addEventListener("click", () => {
+    const pageNumbers = Array.from(workspace.querySelectorAll<HTMLElement>("[data-pdf-page-number]"))
+      .map((page) => Number(page.dataset.pdfPageNumber))
+      .reverse();
+    if (!pageNumbers.length) return;
+    clearResult();
+    renderOrganizeControls(pageNumbers);
+    previewManager?.setPageOrder(pageNumbers);
+    setStatus(status, "ready", "Page order reversed.", "The reversed order will be used when you process this PDF.");
+  });
   processButton.addEventListener("click", () => void processCurrentTool());
   processAnother.addEventListener("click", clearWorkspace);
-  downloadAll.addEventListener("click", () => {
+  downloadAll.addEventListener("click", async () => {
     const downloads = Array.from(resultList.querySelectorAll<HTMLAnchorElement>("[data-result-download]"));
+    const zipTools = new Set(["pdf-to-jpg", "pdf-to-png", "pdf-to-webp", "extract-images-from-pdf"]);
+    if (tool.category === "pdf" && zipTools.has(tool.slug) && resultItems.some((item) => item.kind === "pdf")) {
+      downloadAll.disabled = true;
+      try {
+        const { default: JSZip } = await import("jszip");
+        const zip = new JSZip();
+        const pdfOutputs = resultItems.filter((item): item is PdfResult => item.kind === "pdf");
+        for (const { item } of pdfOutputs) zip.file(item.output.name, await item.output.arrayBuffer());
+        const blob = await zip.generateAsync({ type: "blob", compression: "DEFLATE", compressionOptions: { level: 6 } });
+        const url = URL.createObjectURL(blob);
+        const anchor = document.createElement("a");
+        anchor.href = url;
+        anchor.download = `${tool.slug}.zip`;
+        anchor.click();
+        window.setTimeout(() => URL.revokeObjectURL(url), 5000);
+        setStatus(status, "success", "ZIP download started.", `${pdfOutputs.length} output${pdfOutputs.length === 1 ? "" : "s"} packed into one local archive.`);
+      } finally {
+        downloadAll.disabled = false;
+      }
+      return;
+    }
     downloads.forEach((download, index) => window.setTimeout(() => download.click(), index * 120));
     setStatus(status, "success", "Downloads started.", `${downloads.length} local file${downloads.length === 1 ? "" : "s"} queued by your browser.`);
   });
@@ -1228,6 +1606,9 @@ const initWorkspace = (workspace: HTMLElement) => {
     cleanupPreviewUrls();
     cleanupResultUrls();
     if (realImageTool) imageEngine.dispose();
+    if (realImageUpscalerTool) void imageUpscalerModulePromise?.then((module) => module.imageUpscalerEngine.dispose());
+    if (realBackgroundRemovalTool) backgroundRemovalEngine.dispose();
+    if (realDocumentTool) documentEngine.dispose();
     cropEditor?.dispose();
     if (realPdfTool) void pdfEngineModulePromise?.then((module) => module.pdfEngine.dispose());
     if (realMediaTool) void mediaEngineModulePromise?.then((module) => module.mediaEngine.dispose());

@@ -1,6 +1,6 @@
-export type ToolCategory = "image" | "pdf" | "audio" | "video";
+export type ToolCategory = "image" | "pdf" | "word" | "audio" | "video";
 
-export type ProcessorKey = "image" | "pdf" | "media" | "server";
+export type ProcessorKey = "image" | "image-upscaler" | "pdf" | "document" | "background-removal" | "media" | "server";
 
 export type ProcessingBoundary = "browser" | "server";
 

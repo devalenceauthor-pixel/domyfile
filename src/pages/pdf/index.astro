@@ -6,11 +6,16 @@ import { getCategoryStructuredData } from "../../lib/seo";
 ---
 
 <SiteLayout
-  title="PDF and document tools — DoMyFile"
-  description="Merge, split, rotate, watermark, organize PDFs, and convert JPG, PNG, or WebP images to PDF in a browser-first DoMyFile workspace."
+  title="PDF Tools: Organize, Convert, Edit, and Extract — DoMyFile"
+  description="Merge, split, reorder, rotate, convert, extract, watermark, crop, clean, and flatten PDFs with focused DoMyFile tools."
   structuredData={getCategoryStructuredData("pdf")}
 >
   <main id="main-content">
+    <div class="container category-intro-copy">
+      <p class="eyebrow">PDF toolkit</p>
+      <h2>Focused PDF tools for pages, files, and document content</h2>
+      <p>Organize pages, convert PDF content to images or text, add lightweight overlays, inspect or clean supported metadata, and flatten supported forms. Each route keeps one clear input/output intent inside the shared DoMyFile workspace.</p>
+    </div>
     <ToolCatalog category="pdf" />
     <div class="container category-related-wrap"><RelatedCategories current="pdf" /></div>
   </main>

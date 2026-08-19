@@ -1942,6 +1942,65 @@ kbd {
   background: var(--surface);
 }
 
+.background-removal-preview {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  padding-top: 12px;
+}
+
+.background-removal-preview-card {
+  display: grid;
+  min-width: 0;
+  gap: 7px;
+  padding: 8px;
+  border: 1px solid var(--border);
+  border-radius: 11px;
+  background: var(--surface);
+}
+
+.background-removal-preview-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.background-removal-preview-heading strong {
+  color: var(--text);
+  font-size: 11px;
+}
+
+.background-removal-preview-heading span,
+[data-background-processed-placeholder] {
+  color: var(--text-muted);
+  font-size: 10px;
+}
+
+.background-removal-image-frame {
+  display: grid;
+  min-height: 152px;
+  place-items: center;
+  overflow: hidden;
+  border-radius: 8px;
+  background: var(--surface-subtle);
+}
+
+.background-removal-image-frame img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  min-height: 152px;
+  object-fit: contain;
+}
+
+.background-removal-checkerboard {
+  background-color: var(--surface);
+  background-image: linear-gradient(45deg, var(--surface-subtle) 25%, transparent 25%), linear-gradient(-45deg, var(--surface-subtle) 25%, transparent 25%), linear-gradient(45deg, transparent 75%, var(--surface-subtle) 75%), linear-gradient(-45deg, transparent 75%, var(--surface-subtle) 75%);
+  background-position: 0 0, 0 8px, 8px -8px, -8px 0;
+  background-size: 16px 16px;
+}
+
 .pdf-page-preview-strip,
 .pdf-page-preview-grid {
   display: grid;
@@ -3034,6 +3093,15 @@ button.pdf-page-preview-tile {
 
   .result-actions {
     flex-direction: column;
+  }
+
+  .background-removal-preview {
+    grid-template-columns: 1fr;
+  }
+
+  .background-removal-image-frame,
+  .background-removal-image-frame img {
+    min-height: 180px;
   }
 
   .result-item {

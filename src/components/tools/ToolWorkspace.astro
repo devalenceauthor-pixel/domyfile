@@ -14,6 +14,7 @@ const { tool, page } = Astro.props;
 const availability = getToolAvailability(tool);
 const isServerFallback = getProcessingBoundary(tool) === "server";
 const isDeferred = availability !== "production-ready";
+const noConfiguration = (tool.category === "word" && tool.slug !== "compress-docx") || tool.slug === "remove-background" || tool.slug === "upscale-image";
 const statusReason = tool.statusReason ?? "This route is not enabled for V1 processing.";
 const fallbackUrl = import.meta.env.PUBLIC_FALLBACK_URL ?? "/__server-fallback";
 ---
@@ -25,7 +26,7 @@ const fallbackUrl = import.meta.env.PUBLIC_FALLBACK_URL ?? "/__server-fallback";
   </div>
 
   <div class="workspace-heading">
-    <p class="section-kicker">{tool.category === "pdf" ? "PDF & Document" : tool.category[0].toUpperCase() + tool.category.slice(1)} tool</p>
+    <p class="section-kicker">{tool.category === "pdf" || tool.category === "word" ? `${tool.category === "pdf" ? "PDF" : "Word"} & Document` : tool.category[0].toUpperCase() + tool.category.slice(1)} tool</p>
     <h1>{page.h1}</h1>
     <p>{page.intro}</p>
   </div>
@@ -67,6 +68,21 @@ const fallbackUrl = import.meta.env.PUBLIC_FALLBACK_URL ?? "/__server-fallback";
         <div class="file-list-heading"><h3>Selected files</h3><span data-file-count>0 files</span></div>
         <ul class="file-list" data-file-list></ul>
         <div class="workspace-preview-region" hidden data-workspace-preview></div>
+        {tool.slug === "remove-background" && (
+          <div class="background-removal-preview" hidden data-background-removal-preview>
+            <div class="background-removal-preview-card">
+              <div class="background-removal-preview-heading"><strong>Original</strong><span>Input image</span></div>
+              <div class="background-removal-image-frame"><img data-background-original alt="Original image preview" /></div>
+            </div>
+            <div class="background-removal-preview-card">
+              <div class="background-removal-preview-heading"><strong>Processed PNG</strong><span>Transparent result</span></div>
+              <div class="background-removal-image-frame background-removal-checkerboard">
+                <img data-background-processed alt="Processed transparent PNG preview" hidden />
+                <span data-background-processed-placeholder>Start processing to preview the transparent PNG.</span>
+              </div>
+            </div>
+          </div>
+        )}
         <button class="add-more-button" type="button" data-add-more><span aria-hidden="true">+</span> Add more files</button>
       </div>
       <p class="inline-error" role="alert" hidden data-file-error></p>
@@ -75,10 +91,10 @@ const fallbackUrl = import.meta.env.PUBLIC_FALLBACK_URL ?? "/__server-fallback";
     <aside class="workspace-card options-card" aria-labelledby="optionsHeading">
       <div class="workspace-card-heading">
         <div>
-          <p class="section-kicker">02 <span>Configure</span></p>
-          <h2 id="optionsHeading">Set your preferences</h2>
+          <p class="section-kicker">02 <span>{noConfiguration ? "Review" : "Configure"}</span></p>
+          <h2 id="optionsHeading">{noConfiguration ? "Output is fixed" : "Set your preferences"}</h2>
         </div>
-        <span class="optional-label">Optional</span>
+        <span class="optional-label">{noConfiguration ? "No options" : "Optional"}</span>
       </div>
       <div id="optionsContent"><ToolOptions tool={tool} /></div>
       <div class="options-footer">
@@ -98,7 +114,7 @@ const fallbackUrl = import.meta.env.PUBLIC_FALLBACK_URL ?? "/__server-fallback";
     <p class="result-summary" data-result-summary></p>
     <div class="result-list" data-result-list></div>
     <div class="result-actions">
-      <button class="button button--primary" type="button" data-download-all>Download files</button>
+      <button class="button button--primary" type="button" data-download-all>{tool.slug === "remove-background" ? "Download PNG" : ["pdf-to-jpg", "pdf-to-png", "pdf-to-webp", "extract-images-from-pdf"].includes(tool.slug) ? "Download ZIP" : "Download files"}</button>
       <button class="button button--secondary" type="button" data-process-another>Process another</button>
     </div>
   </section>

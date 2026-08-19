@@ -1,4 +1,4 @@
-export type ServerToolId = "PDF-01" | "VID-01";
+export type ServerToolId = "PDF-01" | "VID-01" | "DOC-04" | "DOC-05" | "IMG-12";
 
 export type ServerPreset = "quality" | "balanced" | "smaller";
 
@@ -37,8 +37,8 @@ export type ServerJobResult = {
   inputBytes: number;
   outputBytes: number;
   savingsPercent: number;
-  outputMime: "application/pdf" | "video/webm";
-  outputFormat: "PDF" | "WebM";
+  outputMime: "application/pdf" | "video/webm" | "application/vnd.openxmlformats-officedocument.wordprocessingml.document" | "image/png";
+  outputFormat: "PDF" | "WebM" | "DOCX" | "PNG";
   durationSeconds?: number;
   width?: number;
   height?: number;
@@ -70,6 +70,7 @@ export type ServerJobLimits = {
   maxConcurrentJobs: number;
   ttlSeconds: number;
   minimumSavingsPercent: number;
+  requireReduction: boolean;
 };
 
 export const SERVER_FALLBACK_LIMITS: Record<ServerToolId, ServerJobLimits> = {
@@ -84,6 +85,7 @@ export const SERVER_FALLBACK_LIMITS: Record<ServerToolId, ServerJobLimits> = {
     maxConcurrentJobs: 2,
     ttlSeconds: 900,
     minimumSavingsPercent: 5,
+    requireReduction: true,
   },
   "VID-01": {
     maxUploadBytes: 256 * 1024 * 1024,
@@ -98,15 +100,65 @@ export const SERVER_FALLBACK_LIMITS: Record<ServerToolId, ServerJobLimits> = {
     maxConcurrentJobs: 2,
     ttlSeconds: 900,
     minimumSavingsPercent: 5,
+    requireReduction: true,
+  },
+  "DOC-04": {
+    maxUploadBytes: 50 * 1024 * 1024,
+    maxOutputBytes: 100 * 1024 * 1024,
+    maxPages: 200,
+    maxMemoryBytes: 2 * 1024 * 1024 * 1024,
+    maxCpuSeconds: 120,
+    maxWallSeconds: 180,
+    maxConcurrentJobs: 1,
+    ttlSeconds: 900,
+    minimumSavingsPercent: 0,
+    requireReduction: false,
+  },
+  "DOC-05": {
+    maxUploadBytes: 50 * 1024 * 1024,
+    maxOutputBytes: 100 * 1024 * 1024,
+    maxPages: 200,
+    maxMemoryBytes: 2 * 1024 * 1024 * 1024,
+    maxCpuSeconds: 120,
+    maxWallSeconds: 180,
+    maxConcurrentJobs: 1,
+    ttlSeconds: 900,
+    minimumSavingsPercent: 0,
+    requireReduction: false,
+  },
+  "IMG-12": {
+    maxUploadBytes: 40 * 1024 * 1024,
+    maxOutputBytes: 80 * 1024 * 1024,
+    maxDecodedPixels: 50_000_000,
+    maxWidth: 6000,
+    maxHeight: 6000,
+    maxMemoryBytes: 7 * 1024 * 1024 * 1024,
+    maxCpuSeconds: 180,
+    maxWallSeconds: 240,
+    maxConcurrentJobs: 1,
+    ttlSeconds: 900,
+    minimumSavingsPercent: 0,
+    requireReduction: false,
   },
 };
 
-export const SERVER_TOOL_OUTPUTS: Record<ServerToolId, { mime: ServerJobResult["outputMime"]; format: ServerJobResult["outputFormat"] }> = {
-  "PDF-01": { mime: "application/pdf", format: "PDF" },
-  "VID-01": { mime: "video/webm", format: "WebM" },
+export const SERVER_TOOL_INPUTS: Record<ServerToolId, { mimes: readonly string[]; magic: "pdf" | "zip" | "video" | "image" }> = {
+  "PDF-01": { mimes: ["application/pdf"], magic: "pdf" },
+  "VID-01": { mimes: ["video/mp4", "video/quicktime"], magic: "video" },
+  "DOC-04": { mimes: ["application/vnd.openxmlformats-officedocument.wordprocessingml.document"], magic: "zip" },
+  "DOC-05": { mimes: ["application/pdf"], magic: "pdf" },
+  "IMG-12": { mimes: ["image/jpeg", "image/png", "image/webp"], magic: "image" },
 };
 
-export const isServerToolId = (value: string): value is ServerToolId => value === "PDF-01" || value === "VID-01";
+export const SERVER_TOOL_OUTPUTS: Record<ServerToolId, { mime: ServerJobResult["outputMime"]; format: ServerJobResult["outputFormat"]; fileName: string; magic: "pdf" | "zip" | "video" | "png" }> = {
+  "PDF-01": { mime: "application/pdf", format: "PDF", fileName: "compressed-document.pdf", magic: "pdf" },
+  "VID-01": { mime: "video/webm", format: "WebM", fileName: "compressed-video.webm", magic: "video" },
+  "DOC-04": { mime: "application/pdf", format: "PDF", fileName: "converted-document.pdf", magic: "pdf" },
+  "DOC-05": { mime: "application/vnd.openxmlformats-officedocument.wordprocessingml.document", format: "DOCX", fileName: "converted-document.docx", magic: "zip" },
+  "IMG-12": { mime: "image/png", format: "PNG", fileName: "no-background.png", magic: "png" },
+};
+
+export const isServerToolId = (value: string): value is ServerToolId => value === "PDF-01" || value === "VID-01" || value === "DOC-04" || value === "DOC-05" || value === "IMG-12";
 
 export const normalizeServerOptions = (toolId: ServerToolId, value: unknown): ServerJobOptions => {
   if (!value || typeof value !== "object" || Array.isArray(value)) return { preset: "balanced" };
@@ -115,4 +167,4 @@ export const normalizeServerOptions = (toolId: ServerToolId, value: unknown): Se
   throw new Error(`Unsupported ${toolId} preset`);
 };
 
-export const getServerOutputName = (toolId: ServerToolId) => toolId === "PDF-01" ? "compressed-document.pdf" : "compressed-video.webm";
+export const getServerOutputName = (toolId: ServerToolId) => SERVER_TOOL_OUTPUTS[toolId].fileName;

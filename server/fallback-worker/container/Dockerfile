@@ -6,6 +6,9 @@ ARG LIBVPX_VERSION=1.15.2
 ARG LIBVPX_SHA256=26fcd3db88045dee380e581862a6ef106f49b74b6396ee95c2993a260b4636aa
 ARG OPUS_VERSION=1.5.2
 ARG OPUS_SHA256=65c1d2f78b9f2fb20082c38cbe47c951ad5839345876e46941612ee87f9a7ce1
+ARG LIBREOFFICE_VERSION=4:7.4.7-1+deb12u14
+ARG BIREFNET_LITE_MODEL_URL=https://huggingface.co/onnx-community/BiRefNet_lite-ONNX/resolve/de15b22ba131738a16dff04aab8bdf8dc32e3ac1/onnx/model.onnx
+ARG BIREFNET_LITE_MODEL_SHA256=5600024376f572a557870a5eb0afb1e5961636bef4e1e22132025467d0f03333
 
 RUN apt-get update \
     && apt-get install --no-install-recommends -y \
@@ -91,16 +94,35 @@ RUN curl -fsSL "https://ffmpeg.org/releases/ffmpeg-${FFMPEG_VERSION}.tar.xz" -o 
     && make install \
     && strip /opt/ffmpeg/bin/ffmpeg /opt/ffmpeg/bin/ffprobe
 
+RUN mkdir -p /opt/models \
+    && curl -fsSL "${BIREFNET_LITE_MODEL_URL}" -o /opt/models/birefnet-lite.onnx \
+    && echo "${BIREFNET_LITE_MODEL_SHA256}  /opt/models/birefnet-lite.onnx" | sha256sum -c -
+
 FROM python:3.12.11-slim-bookworm@sha256:c00fc7b44d844b6da22861ec24af43968a5200eac4ec607b4725d585165d6b49
+
+ARG LIBREOFFICE_VERSION=4:7.4.7-1+deb12u14
+
+RUN apt-get update \
+    && apt-get install --no-install-recommends -y \
+      "libreoffice-core-nogui=${LIBREOFFICE_VERSION}" \
+      "libreoffice-draw-nogui=${LIBREOFFICE_VERSION}" \
+      "libreoffice-writer-nogui=${LIBREOFFICE_VERSION}" \
+      fontconfig \
+      fonts-dejavu \
+      fonts-liberation \
+    && rm -rf /var/lib/apt/lists/*
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     FFMPEG_BIN=/opt/ffmpeg/bin/ffmpeg \
     FFPROBE_BIN=/opt/ffmpeg/bin/ffprobe \
+    SOFFICE_BIN=/usr/bin/soffice \
+    BACKGROUND_MODEL_PATH=/opt/models/birefnet-lite.onnx \
     LD_LIBRARY_PATH=/opt/ffmpeg/lib:/opt/codec/lib
 
 COPY --from=build /opt/codec /opt/codec
 COPY --from=build /opt/ffmpeg /opt/ffmpeg
+COPY --from=build /opt/models /opt/models
 COPY requirements.txt /app/requirements.txt
 RUN pip install --no-cache-dir -r /app/requirements.txt
 
@@ -113,7 +135,7 @@ RUN useradd --uid 10001 --create-home --shell /usr/sbin/nologin dmf \
     && mkdir -p /tmp/domyfile \
     && chmod 0555 /app/verify-build.sh \
     && /app/verify-build.sh \
-    && chown -R dmf:dmf /app /tmp/domyfile
+    && chown -R dmf:dmf /tmp/domyfile
 USER dmf
 WORKDIR /app
 EXPOSE 8080

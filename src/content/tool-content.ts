@@ -34,7 +34,7 @@ export type ToolContentMatrixEntry = {
     formats: string[];
     behavior: string;
   };
-  processingMode: "browser-local" | "temporary-server";
+  processingMode: "browser-local" | "temporary-server" | "temporary-native";
   keyControls: string[];
   batchBehavior: {
     supported: boolean;
@@ -45,7 +45,7 @@ export type ToolContentMatrixEntry = {
   qualityCompatibility: string[];
   resultDownload: string;
   faqTopics: string[];
-  relatedTools: [string, string, string];
+  relatedTools: string[];
   primaryLongTailOpportunity: string;
   canonicalDecision: string;
   page: ToolPageContent;

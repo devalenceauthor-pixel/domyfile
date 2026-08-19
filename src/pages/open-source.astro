@@ -9,7 +9,7 @@ const heicRuntime = "/runtime/heic-to-1.5.2/";
 
 <TrustPage
   title="Open source and licenses — DoMyFile"
-  description="Find DoMyFile's browser runtime license texts, notices, source-offer records, HEIC decoder files, and server dependency information."
+  description="Find DoMyFile's browser runtime license texts, Word conversion notices, held background-removal runtime/model disclosures, and server dependency information."
   label={label}
   intro="DoMyFile uses open-source runtimes and native fallback dependencies. This page points to the exact public notices and records currently available for the shipped components."
   structuredData={getTrustPageStructuredData(label, "/open-source/")}
@@ -40,16 +40,49 @@ const heicRuntime = "/runtime/heic-to-1.5.2/";
         </ul>
       </article>
     </div>
+
+    <div class="info-grid info-grid--two" style="margin-top: 18px;">
+      <article class="info-card">
+        <h3>Word/document runtimes</h3>
+        <p>DOCX to TXT and DOCX to HTML use <code>mammoth@1.12.1</code> under BSD-2-Clause. TXT/HTML writing and bounded DOCX package operations use <code>docx@9.7.1</code> under MIT and <code>jszip@3.10.1</code> under its MIT option. These browser dependencies are lazy-loaded only when a Word tool starts processing.</p>
+        <ul class="link-list link-list--external">
+          <li><a class="inline-link" href="https://github.com/mwilliamson/mammoth.js">Mammoth source and license</a></li>
+          <li><a class="inline-link" href="https://github.com/dolanmiu/docx">docx source and license</a></li>
+        </ul>
+      </article>
+      <article class="info-card">
+        <h3>Image Upscaler runtime and model</h3>
+        <p>Image Upscaler uses <code>onnxruntime-web@1.21.0</code> under MIT and the pinned <code>super-resolution-10.onnx</code> model from ONNX Model Zoo under Apache-2.0. The model is approximately 240 KB and is fetched only when processing starts; Canvas is not used as the claimed enhancement engine.</p>
+        <ul class="link-list link-list--external">
+          <li><a class="inline-link" href="https://github.com/microsoft/onnxruntime">ONNX Runtime source and license</a></li>
+          <li><a class="inline-link" href="https://huggingface.co/onnxmodelzoo/super-resolution-10">Super-resolution model card</a></li>
+          <li><a class="inline-link" href="/models/super-resolution-10.NOTICE.md">Pinned model notice and hash</a></li>
+        </ul>
+        <p class="info-note">The ONNX Runtime library license and model license are separate. Model quality is enhancement-based and cannot guarantee recovery of missing source detail.</p>
+      </article>
+      <article class="info-card">
+        <h3>Held background-removal runtime and model</h3>
+        <p>The held Remove Background implementation uses the temporary native fallback with <code>onnxruntime@1.20.1</code> under MIT and the pinned BiRefNet-lite ONNX checkpoint recorded as MIT by its model card. It is not enabled in the public catalog or deployed for public processing.</p>
+        <ul class="link-list link-list--external">
+          <li><a class="inline-link" href="https://github.com/microsoft/onnxruntime/tree/v1.20.1">ONNX Runtime 1.20.1 source and license</a></li>
+          <li><a class="inline-link" href="https://huggingface.co/onnx-community/BiRefNet_lite-ONNX">BiRefNet-lite model card</a></li>
+          <li><a class="inline-link" href="/runtime/birefnet-lite.MODEL-STATUS.md">Pinned checkpoint status and hash</a></li>
+        </ul>
+        <p class="info-note">The runtime license and checkpoint license are separate. The exact commit and SHA-256 are recorded in the server container inventory; this summary is not a blanket model or commercial compliance clearance.</p>
+      </article>
+    </div>
   </section>
 
   <section class="info-section" aria-labelledby="licenses-server-title">
     <p class="section-kicker">Temporary server dependencies</p>
-    <h2 id="licenses-server-title">Compress PDF and Compress Video.</h2>
-    <p>These two tools use the isolated fallback plane and are separate from the browser runtime. The current engineering inventory identifies the following pinned components:</p>
+    <h2 id="licenses-server-title">Temporary native processing dependencies.</h2>
+    <p>Compress PDF, Compress Video, DOCX to PDF, and PDF to DOCX use the isolated fallback plane and are separate from the browser runtime. The current engineering inventory also records the held Remove Background components, which are not enabled for public processing:</p>
     <ul class="info-list">
       <li>Native FFmpeg 8.1.2: LGPL 2.1-or-later build, with libvpx 1.15.2 and libopus 1.5.2 under their recorded BSD-3-Clause classifications.</li>
       <li>pikepdf 10.11.0: MPL-2.0; qpdf is a pinned wheel dependency with its Apache-2.0 and optional Artistic-2.0 notice recorded in the deployment inventory.</li>
       <li>Pillow 12.3.0: HPND/PIL license; pypdf 6.16.1: BSD-3-Clause.</li>
+      <li>LibreOffice 7.4.7 Debian Writer/Draw packages: MPL-2.0 for the LibreOffice source with additional bundled third-party notices; DejaVu fonts are under their recorded license and Liberation fonts under SIL OFL-1.1.</li>
+      <li>Remove Background: ONNX Runtime 1.20.1 under MIT and the pinned BiRefNet-lite checkpoint with a separate model-card license statement and SHA-256 record.</li>
     </ul>
     <ul class="link-list link-list--external">
       <li><a class="inline-link" href="https://ffmpeg.org/releases/ffmpeg-8.1.2.tar.xz">FFmpeg 8.1.2 source</a></li>
@@ -58,6 +91,7 @@ const heicRuntime = "/runtime/heic-to-1.5.2/";
       <li><a class="inline-link" href="https://github.com/pikepdf/pikepdf/tree/v10.11.0">pikepdf 10.11.0 source</a></li>
       <li><a class="inline-link" href="https://github.com/python-pillow/Pillow/tree/12.3.0">Pillow 12.3.0 source</a></li>
       <li><a class="inline-link" href="https://github.com/py-pdf/pypdf/tree/6.16.1">pypdf 6.16.1 source</a></li>
+      <li><a class="inline-link" href="https://www.libreoffice.org/licenses/">LibreOffice license information</a></li>
     </ul>
     <p class="info-note">The exact license texts, corresponding source archives, build inputs, and deployment hashes must remain tied to the deployed fallback image. Software-license classifications do not resolve codec patents or royalties; the required commercial and legal review remains outstanding.</p>
   </section>

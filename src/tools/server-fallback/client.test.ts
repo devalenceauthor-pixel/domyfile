@@ -7,6 +7,20 @@ const jsonResponse = (body: unknown, status = 200) => new Response(JSON.stringif
 });
 
 describe("ServerFallbackClient", () => {
+  it("rejects the held Remove Background tool before creating a server job", async () => {
+    const fetchImpl = vi.fn();
+    const client = new ServerFallbackClient("/__server-fallback", { fetchImpl });
+
+    await expect(client.process({
+      toolId: "IMG-12",
+      file: new File([new Uint8Array([1, 2, 3])], "source.jpg", { type: "image/jpeg" }),
+      inputMime: "image/jpeg",
+      options: { preset: "balanced" },
+      outputName: "no-background.png",
+    })).rejects.toMatchObject({ code: "INVALID_INPUT", message: "This temporary processing route is currently unavailable." });
+    expect(fetchImpl).not.toHaveBeenCalled();
+  });
+
   it("creates, uploads, polls, and downloads a validated PDF result without sending a filename", async () => {
     const jobId = "a".repeat(32);
     const outputBytes = new Uint8Array([37, 80, 68, 70, 45, 49, 46, 55]);

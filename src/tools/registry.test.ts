@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { findMatchingTools, getToolAvailability, getToolPath, tools } from "./registry";
+import { findMatchingTools, getProductionReadyTools, getToolAvailability, getToolPath, tools } from "./registry";
 
 describe("tool registry", () => {
   it("contains the complete V1 catalog with unique routes", () => {
     expect(tools.length).toBeGreaterThan(0);
-    expect(tools.every((tool) => getToolAvailability(tool) === "production-ready")).toBe(true);
+    expect(tools.some((tool) => getToolAvailability(tool) === "deferred" && tool.slug === "remove-background")).toBe(true);
     expect(new Set(tools.map((tool) => tool.slug)).size).toBe(tools.length);
     expect(new Set(tools.map((tool) => getToolPath(tool))).size).toBe(tools.length);
     expect(tools.some((tool) => tool.slug === "image-converter")).toBe(false);
@@ -20,14 +20,15 @@ describe("tool registry", () => {
   });
 
   it("keeps the production/server inventory explicit", () => {
-    expect(tools.filter((tool) => getToolAvailability(tool) === "production-ready")).toHaveLength(tools.length);
-    expect(tools.filter((tool) => getToolAvailability(tool) === "deferred")).toHaveLength(0);
+    expect(getProductionReadyTools()).toHaveLength(tools.length - 1);
+    expect(tools.filter((tool) => getToolAvailability(tool) === "deferred").map((tool) => tool.slug)).toEqual(["remove-background"]);
     expect(tools.find((tool) => tool.slug === "video-to-mp3") && getToolAvailability(tools.find((tool) => tool.slug === "video-to-mp3")!)).toBe("production-ready");
     expect(tools.find((tool) => tool.slug === "mov-to-mp4") && getToolAvailability(tools.find((tool) => tool.slug === "mov-to-mp4")!)).toBe("production-ready");
     expect(tools.find((tool) => tool.slug === "trim-video") && getToolAvailability(tools.find((tool) => tool.slug === "trim-video")!)).toBe("production-ready");
     expect(getToolAvailability(tools.find((tool) => tool.slug === "compress-video")!)).toBe("production-ready");
     expect(getToolAvailability(tools.find((tool) => tool.slug === "compress-pdf")!)).toBe("production-ready");
-    expect(tools.filter((tool) => tool.processingBoundary === "server").map((tool) => tool.slug)).toEqual(["compress-pdf", "compress-video"]);
+    expect(tools.filter((tool) => tool.processingBoundary === "server").map((tool) => tool.slug)).toEqual(["remove-background", "compress-pdf", "docx-to-pdf", "pdf-to-docx", "compress-video"]);
     expect(getToolAvailability(tools.find((tool) => tool.slug === "video-converter")!)).toBe("production-ready");
+    expect(findMatchingTools("background remover").some((tool) => tool.slug === "remove-background")).toBe(false);
   });
 });

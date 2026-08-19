@@ -8,6 +8,18 @@ export const pdfToolSlugs = [
   "webp-to-pdf",
   "pdf-to-jpg",
   "watermark-pdf",
+  "pdf-to-png",
+  "pdf-to-webp",
+  "extract-images-from-pdf",
+  "add-page-numbers",
+  "header-footer-pdf",
+  "crop-pdf",
+  "pdf-to-text",
+  "pdf-to-html",
+  "pdf-metadata-viewer",
+  "clean-pdf-metadata",
+  "txt-to-pdf",
+  "flatten-pdf",
 ] as const;
 
 export type PdfToolSlug = (typeof pdfToolSlugs)[number];
@@ -18,7 +30,14 @@ export type ImageToPdfToolSlug = (typeof imageToPdfToolSlugs)[number];
 
 export const isImageToPdfTool = (slug: PdfToolSlug): slug is ImageToPdfToolSlug => imageToPdfToolSlugs.includes(slug as ImageToPdfToolSlug);
 
-export type PdfMime = "application/pdf" | "image/jpeg";
+export type PdfMime =
+  | "application/pdf"
+  | "image/jpeg"
+  | "image/png"
+  | "image/webp"
+  | "text/plain"
+  | "text/html"
+  | "application/json";
 
 export type PdfPageSelection = "all" | string;
 
@@ -34,6 +53,16 @@ export type PdfOptions = {
   pageOrientation?: "auto" | "portrait" | "landscape";
   jpgScale?: number;
   jpgQuality?: number;
+  rasterFormat?: "jpg" | "png" | "webp";
+  extractImageFormat?: "png" | "webp";
+  extractImageQuality?: number;
+  pageNumberStart?: number;
+  pageNumberPlacement?: PdfWatermarkPlacement;
+  headerText?: string;
+  footerText?: string;
+  headerFooterScope?: PdfPageSelection;
+  cropMargin?: number;
+  textFontSize?: number;
   watermarkMode?: "text" | "image";
   watermarkText?: string;
   watermarkImage?: File;
@@ -62,6 +91,9 @@ export type PdfProcessItem = {
   pageNumber?: number;
   inputBytes: number;
   outputBytes: number;
+  width?: number;
+  height?: number;
+  detail?: string;
 };
 
 export type PdfProcessFailure = {

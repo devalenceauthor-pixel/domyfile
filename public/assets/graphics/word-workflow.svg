@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 420 320" fill="none">
+  <defs>
+    <linearGradient id="word-wash" x1="34" y1="26" x2="384" y2="292" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F8FBFF"/>
+      <stop offset="1" stop-color="#EEF6FF"/>
+    </linearGradient>
+    <filter id="word-shadow" x="-20%" y="-20%" width="140%" height="160%">
+      <feDropShadow dx="0" dy="8" stdDeviation="9" flood-color="#0F172A" flood-opacity=".08"/>
+    </filter>
+  </defs>
+  <rect x="12" y="12" width="396" height="296" rx="24" fill="#F6F9FD"/>
+  <rect x="30" y="28" width="360" height="264" rx="22" fill="url(#word-wash)" stroke="#DFE9F5"/>
+  <rect x="46" y="44" width="328" height="32" rx="10" fill="#FFFFFF" stroke="#E7EEF7"/>
+  <circle cx="62" cy="60" r="4" fill="#2563EB"/>
+  <circle cx="75" cy="60" r="4" fill="#CBD5E1"/>
+  <circle cx="88" cy="60" r="4" fill="#CBD5E1"/>
+  <text x="104" y="64" fill="#334155" font-family="Arial,sans-serif" font-size="10" font-weight="700" letter-spacing="1.1">WORD WORKSPACE</text>
+  <path d="M46 90H374" stroke="#DDE8F4"/>
+  <g filter="url(#word-shadow)">
+    <rect x="46" y="108" width="120" height="116" rx="16" fill="#FFFFFF" stroke="#DCE7F3"/>
+    <path d="M66 124h38l16 16v42H66z" fill="#DBEAFE"/>
+    <path d="M104 124v17h16" stroke="#2563EB" stroke-width="2" stroke-linejoin="round"/>
+    <path d="M77 157h24M77 166h31M77 175h27" stroke="#2563EB" stroke-width="2" stroke-linecap="round"/>
+    <text x="66" y="202" fill="#0F172A" font-family="Arial,sans-serif" font-size="13" font-weight="750">brief.docx</text>
+  </g>
+  <g>
+    <text x="180" y="151" fill="#2563EB" font-family="Arial,sans-serif" font-size="8" font-weight="800" letter-spacing="1">EXTRACT</text>
+    <path d="M178 168H218" stroke="#2563EB" stroke-width="2.5" stroke-linecap="round"/>
+    <circle cx="178" cy="168" r="4" fill="#2563EB"/>
+    <path d="m213 163 6 5-6 5" stroke="#2563EB" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+  <g filter="url(#word-shadow)">
+    <rect x="230" y="108" width="144" height="116" rx="16" fill="#FFFFFF" stroke="#DCE7F3"/>
+    <rect x="245" y="123" width="42" height="32" rx="10" fill="#EFF6FF"/>
+    <path d="M255 137h22M255 144h18M255 151h14" stroke="#2563EB" stroke-width="2" stroke-linecap="round"/>
+    <text x="300" y="142" fill="#64748B" font-family="Arial,sans-serif" font-size="8" font-weight="800" letter-spacing=".9">OUTPUT</text>
+    <text x="245" y="181" fill="#0F172A" font-family="Arial,sans-serif" font-size="14" font-weight="750">text.html</text>
+    <text x="245" y="200" fill="#64748B" font-family="Consolas,monospace" font-size="10">readable · local</text>
+    <circle cx="350" cy="211" r="5" fill="#22C55E"/>
+  </g>
+  <path d="M46 260H374" stroke="#DDE8F4"/>
+  <text x="46" y="278" fill="#64748B" font-family="Arial,sans-serif" font-size="9" font-weight="600">DOCX · TXT · HTML</text>
+  <text x="302" y="278" fill="#2563EB" font-family="Arial,sans-serif" font-size="9" font-weight="800" letter-spacing=".6">LOCAL</text>
+</svg>

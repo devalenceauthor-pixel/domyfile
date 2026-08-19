@@ -1,0 +1,18 @@
+---
+import SiteLayout from "../../layouts/SiteLayout.astro";
+import ToolPage from "../../components/tools/ToolPage.astro";
+import { getProductionReadyToolsByCategory } from "../../tools/registry";
+import { getToolContent } from "../../content/tool-content";
+import { getToolStructuredData } from "../../lib/seo";
+
+export function getStaticPaths() {
+  return getProductionReadyToolsByCategory("word").map((tool) => ({ params: { slug: tool.slug }, props: { tool } }));
+}
+
+const { tool } = Astro.props;
+const content = getToolContent(tool);
+---
+
+<SiteLayout title={content.page.title} description={content.page.metaDescription} structuredData={getToolStructuredData(tool)}>
+  <ToolPage tool={tool} />
+</SiteLayout>

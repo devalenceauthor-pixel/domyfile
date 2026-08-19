@@ -106,6 +106,56 @@ describe("shared PDF operations", () => {
       expect(output.pageCount).toBe(1);
     }
   });
+
+  it("adds page numbers and header/footer overlays without changing page count", async () => {
+    const source = await createPdf([[300, 400], [500, 600]]);
+    const [numbered] = await runPdfOperation("add-page-numbers", [pdfInput(source)], { pageNumberStart: 7, pageNumberPlacement: "bottom-right" });
+    const [furnished] = await runPdfOperation("header-footer-pdf", [pdfInput(source)], { headerText: "Report {{page}}/{{pages}}", footerText: "Internal", headerFooterScope: "1" });
+
+    expect(isPdfSignature(numbered.bytes)).toBe(true);
+    expect(isPdfSignature(furnished.bytes)).toBe(true);
+    expect(numbered.pageCount).toBe(2);
+    expect(furnished.pageCount).toBe(2);
+    expect(numbered.bytes.byteLength).toBeGreaterThan(source.byteLength);
+    expect(furnished.bytes.byteLength).toBeGreaterThan(source.byteLength);
+  });
+
+  it("applies a conservative crop box and removes supported PDF metadata", async () => {
+    const document = await PDFDocument.create();
+    document.setTitle("Private title");
+    document.setAuthor("Fixture author");
+    document.addPage([300, 400]);
+    const source = new Uint8Array(await document.save());
+    const [cropped] = await runPdfOperation("crop-pdf", [pdfInput(source)], { cropMargin: 24 });
+    const croppedDocument = await PDFDocument.load(cropped.bytes);
+    const croppedPage = croppedDocument.getPage(0);
+    expect(croppedPage.getCropBox()).toMatchObject({ width: 252, height: 352 });
+
+    const [cleaned] = await runPdfOperation("clean-pdf-metadata", [pdfInput(source)], {});
+    const cleanedDocument = await PDFDocument.load(cleaned.bytes);
+    expect(cleanedDocument.getTitle()).toBeUndefined();
+    expect(cleanedDocument.getAuthor()).toBeUndefined();
+    expect(cleaned.pageCount).toBe(1);
+  });
+
+  it("flattens a supported form and creates selectable PDF text from UTF-8 TXT", async () => {
+    const formDocument = await PDFDocument.create();
+    const page = formDocument.addPage([300, 200]);
+    const field = formDocument.getForm().createTextField("fixture-name");
+    field.setText("Ada");
+    field.addToPage(page, { x: 24, y: 120, width: 180, height: 24 });
+    const formSource = new Uint8Array(await formDocument.save());
+    const [flattened] = await runPdfOperation("flatten-pdf", [pdfInput(formSource)], {});
+    const flattenedDocument = await PDFDocument.load(flattened.bytes);
+    expect(flattenedDocument.getForm().getFields()).toHaveLength(0);
+    expect(flattened.pageCount).toBe(1);
+
+    const [textPdf] = await runPdfOperation("txt-to-pdf", [{ name: "notes.txt", mime: "text/plain", bytes: new TextEncoder().encode("Heading\nSecond line") }], { pageSize: "letter", textFontSize: 12 });
+    const textDocument = await PDFDocument.load(textPdf.bytes);
+    expect(isPdfSignature(textPdf.bytes)).toBe(true);
+    expect(textPdf.pageCount).toBe(1);
+    expect(textDocument.getPage(0).getWidth()).toBeCloseTo(612, 0);
+  });
 });
 
 describe("PDF validation helpers", () => {

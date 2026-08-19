@@ -4,6 +4,8 @@ set -eu
 ffmpeg_bin="${FFMPEG_BIN:-ffmpeg}"
 ffprobe_bin="${FFPROBE_BIN:-ffprobe}"
 
+test -s "${BACKGROUND_MODEL_PATH:-/opt/models/birefnet-lite.onnx}"
+
 version_output="$(${ffmpeg_bin} -hide_banner -version 2>/dev/null)"
 license_output="$(${ffmpeg_bin} -hide_banner -L 2>/dev/null)"
 printf '%s\n' "$license_output" | grep -F "Lesser General Public License" >/dev/null

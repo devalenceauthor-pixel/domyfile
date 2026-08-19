@@ -65,9 +65,9 @@
       "image": "./container/Dockerfile",
       "max_instances": 2,
       "instance_type": {
-        "vcpu": 0.5,
-        "memory_mib": 4096,
-        "disk_mb": 8192
+        "vcpu": 2,
+        "memory_mib": 8192,
+        "disk_mb": 16384
       }
     }
   ]
