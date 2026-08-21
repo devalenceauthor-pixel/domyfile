@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: domyfile-render-backend
+    runtime: docker
+    plan: free
+    rootDir: server/render-backend
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /health
+    envVars:
+      - key: FRONTEND_ORIGIN
+        value: https://domyfile.web.id
