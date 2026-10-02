@@ -1,6 +1,7 @@
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { expect, test, type Page } from "@playwright/test";
+import { SITE_ORIGIN } from "../../src/config/site";
 
 const fixture = (relativePath: string) => join(process.cwd(), "tests", "fixtures", relativePath);
 
@@ -42,7 +43,7 @@ test("focused conversion routes expose unique intent metadata and fixed outputs"
     const metaDescription = await page.locator("meta[name='description']").getAttribute("content");
     expect(metaDescription).toContain(tool.input);
     expect(metaDescription).toContain(tool.output);
-    await expect(page.locator("link[rel='canonical']")).toHaveAttribute("href", tool.route);
+    await expect(page.locator("link[rel='canonical']")).toHaveAttribute("href", `${SITE_ORIGIN}${tool.route}`);
     await expect(page.locator(".supported-formats")).toContainText(tool.input);
     await expect(page.locator("[data-process-button]")).toHaveText(tool.action);
     await expect(page.locator(".tool-info-card").first()).toContainText(`${tool.input} → ${tool.output}`);
